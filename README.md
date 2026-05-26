@@ -1,176 +1,226 @@
 # DoUrStuff
 
-DoUrStuff is a learning project for building a task manager that feels practical on both mobile and desktop, works offline, can sync across devices, and leaves room for AI-assisted task creation later.
+DoUrStuff is a local-first task manager built with `Next.js`, `React`, `Tailwind CSS`, and `Dexie` for offline storage. It is designed to work well on desktop and mobile, keep task data available offline, and be installable on phones as a Progressive Web App (PWA).
 
-The goal is not just to build another todo app. The goal is to learn how to design a reliable, offline-capable productivity product with reminders, recurring work, flexible task states, authentication, syncing, sharing, backups, and future analytics.
+## Current status
 
-This is also a personal project, so low maintenance cost matters. The architecture should prefer free-tier-friendly services, local-first behavior, and optional hosted features instead of assuming paid infrastructure from the beginning.
+The app already includes:
 
-## Product goals
+- a responsive task UI for mobile and desktop
+- local task storage with `IndexedDB`
+- offline support via a service worker
+- a web app manifest so it can be installed as a PWA
 
-- Work well on mobile and desktop from day one.
-- Keep working without an internet connection.
-- Support login and syncing across multiple devices.
-- Support backups and task sharing.
-- Support flexible task timing and lifecycle options.
-- Make adding tasks quick, especially on mobile.
-- Keep the interface modern, simple, and calm.
-- Keep ongoing hosting and maintenance costs as close to free as possible.
-- Leave clean foundations for stats, grouping, and AI features.
+The project does not currently ship as a native Android or iOS app. Mobile installation today is done through the browser as an installable PWA.
 
-## Core requirements
+## Tech stack
 
-The current product direction is based on these requirements:
+- `Next.js 15`
+- `React 19`
+- `TypeScript`
+- `Tailwind CSS`
+- `Dexie` for `IndexedDB`
+- `Vitest` + Testing Library
 
-1. Responsive experience for mobile and desktop.
-2. Offline support with local-first behavior.
-3. Task metadata such as:
-   - status
-   - due date or due datetime
-   - relative deadlines like "end in 2 hours" or "end in 3 days"
-   - notification preferences
-   - recurring schedules
-4. Future statistics such as completed vs not completed.
-5. Easy task creation on mobile, ideally from notification-driven flows.
-6. AI support for task creation and structuring.
-7. Mandatory title, with optional description and tags.
-8. Login/backend architecture for syncing across multiple devices.
-9. Backups and task sharing features.
-10. Modern and simple design.
-11. Cost of maintaining the project should stay minimal, ideally within free tiers.
+## Prerequisites
 
-## Proposed product shape
+Install these before running the project locally:
 
-At a high level, DoUrStuff should feel like:
+- `Node.js` 20 or newer
+- `npm` 10 or newer
 
-- a fast local task manager first
-- a reminder system second
-- a sync-capable product with accounts
-- a shareable and backup-friendly product
-- an AI-enhanced assistant after the foundations are stable
+To confirm your versions:
 
-That ordering still matters. Offline reliability and clean task modeling should come before advanced sync behavior, sharing rules, and AI automation.
+```bash
+node -v
+npm -v
+```
 
-## Suggested architecture direction
+## Local setup
 
-For a learning project, a web-first stack is a strong fit:
+1. Clone the repository.
+2. Move into the project folder.
+3. Install dependencies.
 
-- Frontend: `Next.js` PWA
-- Styling: `Tailwind CSS` with a small, intentional design system
-- Local data: `IndexedDB` via `Dexie`
-- Offline support: Service worker + app shell caching
-- Authentication: free-tier-friendly auth
-- Backend API: only when needed for sync/sharing
-- Primary database: free-tier-friendly hosted `PostgreSQL` or equivalent
-- Sync layer: task change tracking + conflict resolution
-- Backups: scheduled database backups and optional user export
-- Sharing: workspace/list/task sharing with permissions
-- Notifications: Web Notifications API + service worker notifications where supported
-- Background reminders: best effort in web, stronger support later if wrapped as a mobile app
-- AI integration later: API-backed assistant for parsing natural language into structured tasks
+```bash
+npm install
+```
 
-Why this direction:
+## Run locally
 
-- One codebase can target both desktop and mobile browsers.
-- PWA support helps with installability and offline use.
-- IndexedDB is a good fit for structured local task storage.
-- Local-first behavior reduces dependency on always-on infrastructure.
-- `Next.js` gives a clean place to grow into auth, sync APIs, and AI endpoints only when needed.
-- This keeps the learning path approachable while still allowing real multi-device architecture on low-cost infrastructure.
+Start the development server:
 
-## Recommended build phases
+```bash
+npm run dev
+```
 
-### Phase 1: Local-first MVP
+Then open:
 
-- Create, edit, complete, and delete tasks
-- Required title, optional description and tags
-- Basic statuses
-- Due date and due datetime support
-- Works fully offline
-- Responsive UI for phone and desktop
-- Modern, simple design foundations
+```text
+http://localhost:3000
+```
 
-### Phase 2: Accounts and sync
+The app uses the default Next.js development port unless that port is already taken.
 
-- Login and account model
-- Backend task persistence
-- Sync between devices
-- Backup/export strategy
-- Initial sharing model
+## Available scripts
 
-### Phase 3: Reminder system
+- `npm run dev` starts the local development server
+- `npm run build` creates a production build
+- `npm run start` runs the production build locally
+- `npm run test:run` runs the test suite once
+- `npm run test` starts Vitest in watch mode
+- `npm run typecheck` runs TypeScript checks
 
-- Notification preferences per task
-- Reminder timing rules
-- Recurring task support
-- Mobile-friendly quick add flow
+## Recommended local verification
 
-### Phase 4: Insights and organization
+Before deploying, run:
 
-- Task stats
-- Filters and tag grouping
-- Completed vs pending reports
-- Basic history/audit views
+```bash
+npm run typecheck
+npm run test:run
+npm run build
+```
 
-### Phase 5: AI assistance
+This gives a quick check that the app type-checks, tests pass, and the production build succeeds.
 
-- Natural language task creation
-- AI extraction of title, due date, tags, and reminders
-- Suggest recurring schedules
-- Optional task breakdown suggestions
+## How offline support works
 
-## Design principles
+- Tasks are stored in the browser with `IndexedDB`
+- The service worker caches the app shell and fetched assets
+- After the first successful load, the app should reopen even when the device is offline
 
-- Local-first: the app should assume the network may disappear.
-- Fast capture: adding a task should take a few seconds.
-- Simple task model: avoid overengineering the first version.
-- Modern and calm UI: clean typography, strong spacing, minimal clutter.
-- Extensible schema: design fields so reminders, recurrence, and AI fit naturally later.
-- Sync-safe architecture: local edits should be compatible with eventual server sync.
-- Cost-aware architecture: avoid paid dependencies unless usage clearly justifies them.
-- Graceful degradation: features like notifications should fail safely when a platform does not support them fully.
+Important notes:
 
-## What should be built first
+- Offline data is browser-local right now
+- If you clear browser storage, local tasks will be removed
+- Cross-device sync is planned, but not implemented yet
 
-The first implementation should focus on:
+## Production run locally
 
-- task data model
-- offline storage
-- authentication model
-- sync-ready identifiers and timestamps
-- responsive layout
-- modern visual system
-- create/edit/complete flows
-- date handling
+If you want to test the production build on your machine:
 
-That foundation will make reminders, analytics, and AI much easier to add without rewriting core pieces.
+1. Build the app:
 
-## Cost strategy
+```bash
+npm run build
+```
 
-The product should be built so that:
+2. Start the production server:
 
-- offline and single-device use work with no paid backend
-- sync and sharing can run on generous free tiers
-- backups rely on managed free-tier features plus export options
-- AI stays optional and user-invoked so it does not create recurring cost pressure
-- expensive always-on infrastructure is avoided in early versions
+```bash
+npm run start
+```
 
-## Documentation
+3. Open `http://localhost:3000`
+
+This is the best way to test installability and production behavior before deploying.
+
+## Deploying
+
+The simplest deployment target for this app is `Vercel`, because this is a standard `Next.js` application.
+
+### Deploy with Vercel
+
+1. Push the repository to GitHub.
+2. Import the repository into [Vercel](https://vercel.com/).
+3. Keep the default framework setting as `Next.js`.
+4. Build command: `npm run build`
+5. Output setting: leave it as Vercel's default for Next.js
+6. Deploy
+
+At the moment, this project does not require any environment variables for the current local-first feature set.
+
+### Deploy to another Node host
+
+You can also deploy it anywhere that supports `Next.js`:
+
+1. Install dependencies with `npm install`
+2. Build with `npm run build`
+3. Start with `npm run start`
+
+The host must support running a Node server for Next.js.
+
+## Installing on mobile devices
+
+This app is installed on phones as a PWA, not from an app store package.
+
+### iPhone or iPad
+
+1. Open the deployed app URL in `Safari`
+2. Tap the `Share` button
+3. Tap `Add to Home Screen`
+4. Confirm the name and add it
+
+After that, the app should launch from the home screen in a standalone app-like window.
+
+### Android
+
+1. Open the deployed app URL in `Chrome`
+2. Open the browser menu
+3. Tap `Install app` or `Add to Home screen`
+4. Confirm the installation
+
+Android wording varies slightly by device and browser version, but the flow is usually close to the steps above.
+
+## Important install limitations
+
+- The app must usually be served over `https` in production for full PWA behavior
+- Some install prompts behave differently across browsers
+- iOS PWA support is more limited than Android in areas like background behavior and notifications
+- This project currently supports browser-based installation, not App Store or Google Play submission
+
+## If install does not appear
+
+Check these first:
+
+- the app is opened from a deployed URL, not just a local network page
+- the site is using `https`
+- the page has fully loaded at least once
+- you are using a supported browser such as `Safari` on iPhone or `Chrome` on Android
+
+## Project structure
+
+```text
+src/
+  app/                Next.js app router files
+  components/         shared UI and PWA setup
+  db/                 local IndexedDB layer
+  features/tasks/     task domain logic, hooks, tests, and components
+public/
+  icons/              PWA icons
+  sw.js               service worker
+docs/
+  architecture-plan.md
+```
+
+## Architecture notes
 
 - Product and architecture plan: [docs/architecture-plan.md](C:/Projects/DoUrStuff/docs/architecture-plan.md)
 
-## Initial success criteria
+## Future roadmap
 
-The first meaningful milestone is:
+Planned areas that are not fully implemented yet:
 
-- installable web app
-- works offline after first load
-- create and edit tasks on mobile and desktop
-- support login and account-backed persistence
-- support title, description, tags, status, and due date fields
-- preserve data locally across refreshes and offline sessions
-- sync tasks across signed-in devices
+- account sign-in
+- cloud sync across devices
+- reminders and recurring tasks
+- backup and sharing features
+- AI-assisted task creation
 
-## Notes
+## Troubleshooting
 
-This repository is currently documentation-first. The docs are meant to guide implementation decisions and keep the learning project focused as development starts.
+### Port 3000 is already in use
+
+Stop the other local server using port `3000`, or run Next.js on another port.
+
+### Changes are not reflected in the installed app
+
+PWAs may continue using cached assets for a short time. Try:
+
+- refreshing the page
+- closing and reopening the installed app
+- clearing site data if you need a clean local reset
+
+### Local tasks disappeared
+
+The app currently stores tasks in browser-local storage through `IndexedDB`. If browser storage is cleared, that data is lost until sync is added in a future version.
