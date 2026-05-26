@@ -119,6 +119,21 @@ This is the best way to test installability and production behavior before deplo
 
 The simplest deployment target for this app is `Vercel`, because this is a standard `Next.js` application.
 
+### GitHub Actions build artifact
+
+This repository includes a GitHub Actions workflow at [`.github/workflows/build-test-artifact.yml`](C:/Projects/DoUrStuff/.github/workflows/build-test-artifact.yml).
+
+The workflow:
+
+- installs dependencies with `npm ci`
+- runs `npm run typecheck`
+- runs `npm run test:run`
+- runs `npm run build`
+- packages a deployable standalone Node bundle
+- uploads that bundle as a downloadable Actions artifact named `dourstuff-deployable`
+
+For full usage steps, see [docs/deployable-artifact.md](C:/Projects/DoUrStuff/docs/deployable-artifact.md).
+
 ### Deploy with Vercel
 
 1. Push the repository to GitHub.
@@ -139,6 +154,21 @@ You can also deploy it anywhere that supports `Next.js`:
 3. Start with `npm run start`
 
 The host must support running a Node server for Next.js.
+
+### Deploy from the GitHub Actions artifact
+
+If you want a prebuilt bundle from CI instead of building on the server:
+
+1. Open the completed GitHub Actions run.
+2. Download the `dourstuff-deployable` artifact.
+3. Extract the archive on a machine with `Node.js 20` or newer.
+4. Start the app with:
+
+```bash
+node server.js
+```
+
+By default, the server listens on port `3000`. Set `PORT` if your host requires a different port.
 
 ## Installing on mobile devices
 
@@ -191,6 +221,7 @@ public/
   sw.js               service worker
 docs/
   architecture-plan.md
+  deployable-artifact.md
 ```
 
 ## Architecture notes

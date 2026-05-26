@@ -1,0 +1,52 @@
+name: Build, Test, and Package App
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build-test-package:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run typecheck
+        run: npm run typecheck
+
+      - name: Run tests
+        run: npm run test:run
+
+      - name: Build application
+        run: npm run build
+
+      - name: Assemble deployable bundle
+        run: |
+          mkdir -p deployable
+          cp -r .next/standalone/* deployable/
+          cp -r .next/static deployable/.next/static
+          cp -r public deployable/public
+          cp package.json deployable/package.json
+
+      - name: Create downloadable archive
+        run: tar -czf dourstuff-deployable.tar.gz -C deployable .
+
+      - name: Upload deployable artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dourstuff-deployable
+          path: dourstuff-deployable.tar.gz
+          if-no-files-found: error
