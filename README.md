@@ -70,6 +70,9 @@ The app uses the default Next.js development port unless that port is already ta
 - `npm run test:run` runs the test suite once
 - `npm run test` starts Vitest in watch mode
 - `npm run typecheck` runs TypeScript checks
+- `npm run release:patch` creates a patch version commit and Git tag
+- `npm run release:minor` creates a minor version commit and Git tag
+- `npm run release:major` creates a major version commit and Git tag
 
 ## Recommended local verification
 
@@ -82,6 +85,25 @@ npm run build
 ```
 
 This gives a quick check that the app type-checks, tests pass, and the production build succeeds.
+
+## Versioning and releases
+
+The project uses semantic versioning and Git tags for releases.
+
+- Patch release: bug fixes, for example `0.1.0` to `0.1.1`
+- Minor release: new non-breaking features, for example `0.1.1` to `0.2.0`
+- Major release: breaking changes, for example `0.9.0` to `1.0.0`
+
+Before creating a release, update `CHANGELOG.md`, run the verification commands, then run one of the release scripts.
+
+```bash
+npm run release:patch
+git push origin main --follow-tags
+```
+
+Pushing a `v*` tag starts the GitHub Actions release workflow and publishes a deployable archive.
+
+Full release guide: [docs/release-workflow.md](C:/Projects/DoUrStuff/docs/release-workflow.md)
 
 ## How offline support works
 

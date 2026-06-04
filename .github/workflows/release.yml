@@ -1,0 +1,55 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run typecheck
+        run: npm run typecheck
+
+      - name: Run tests
+        run: npm run test:run
+
+      - name: Build application
+        run: npm run build
+
+      - name: Assemble deployable bundle
+        run: |
+          mkdir -p deployable
+          cp -a .next/standalone/. deployable/
+          mkdir -p deployable/.next
+          cp -r .next/static deployable/.next/
+          cp -r public deployable/public
+
+      - name: Create downloadable archive
+        run: tar -czf dourstuff-${{ github.ref_name }}-deployable.tar.gz -C deployable .
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ github.ref_name }}" \
+            "dourstuff-${{ github.ref_name }}-deployable.tar.gz" \
+            --title "DoUrStuff ${{ github.ref_name }}" \
+            --notes-file CHANGELOG.md
