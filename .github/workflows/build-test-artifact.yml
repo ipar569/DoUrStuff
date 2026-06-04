@@ -36,10 +36,10 @@ jobs:
       - name: Assemble deployable bundle
         run: |
           mkdir -p deployable
-          cp -r .next/standalone/* deployable/
-          cp -r .next/static deployable/.next/static
+          cp -a .next/standalone/. deployable/
+          mkdir -p deployable/.next
+          cp -r .next/static deployable/.next/
           cp -r public deployable/public
-          cp package.json deployable/package.json
 
       - name: Create downloadable archive
         run: tar -czf dourstuff-deployable.tar.gz -C deployable .
