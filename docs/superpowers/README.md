@@ -78,6 +78,16 @@ Use this prompt to resume with minimal context:
 Please resume DoUrStuff roadmap work. Start by reading docs/superpowers/README.md, then docs/superpowers/specs/2026-07-14-planning-views-design.md, then docs/superpowers/plans/2026-07-14-planning-views.md. The Planning Views design is approved and the implementation plan is ready. Do not redesign unless the local files conflict with the plan. Execute the plan task by task, keeping commits small and running npm.cmd run typecheck, npm.cmd run test:run, and npm.cmd run build before completion.
 ```
 
+## Future Slice Plans
+
+For roadmap-level plans after Planning Views, read:
+
+```text
+docs/superpowers/future-slices.md
+```
+
+Status: future slices are documented as planning handoffs. Each future slice still needs its own design spec and implementation plan before code changes.
+
 ## Future Slice Notes
 
 Future slices still need their own design specs and implementation plans before code changes:
