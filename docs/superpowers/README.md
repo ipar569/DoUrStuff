@@ -88,6 +88,16 @@ docs/superpowers/future-slices.md
 
 Status: future slices are documented as planning handoffs. Each future slice still needs its own design spec and implementation plan before code changes.
 
+## Slice Session Prompts
+
+For copy-paste prompts that start each slice in a fresh session, read:
+
+```text
+docs/superpowers/slice-prompts.md
+```
+
+Status: prompts are available for design/spec sessions, implementation-plan sessions, Planning Views execution, and roadmap status checks.
+
 ## Future Slice Notes
 
 Future slices still need their own design specs and implementation plans before code changes:
