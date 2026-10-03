@@ -1,0 +1,11 @@
+{
+  "protocol_version": 1,
+  "operation_id": "92c984ef-e496-4f84-b4b6-a09c0c84bb49",
+  "device_epoch": "e9d39cd9-bdab-4679-8dfc-d4f53db46ef3",
+  "sequence": 1,
+  "entity_id": "529e5f9f-3a5b-4b66-a46f-0e922df72720",
+  "command": "task.create",
+  "changes": {"title": "Fixture task"},
+  "base_versions": {},
+  "dependencies": []
+}

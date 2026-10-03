@@ -1,0 +1,21 @@
+name: Bug report
+description: Report incorrect behavior or data preservation concerns.
+body:
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Expected and actual behavior
+      description: Include reproducible steps using synthetic tasks; omit credentials and private contents.
+    validations:
+      required: true
+  - type: input
+    id: build
+    attributes:
+      label: App version, OS version and installation type
+    validations:
+      required: true
+  - type: textarea
+    id: state
+    attributes:
+      label: Offline, account and reminder context
+      description: Include network state and whether a restart changes the behavior.

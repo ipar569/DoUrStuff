@@ -1,31 +1,10 @@
-# Release vX.Y.Z
+Foundation review artifacts only.
 
-## Summary
+Android APK is unsigned and cannot be installed until signed. Windows ZIP is an
+unpackaged application, not a signed installer or MSIX. Neither artifact is a
+store publication. Extract the whole Windows ZIP and keep its data/DLL files
+together. No reminder or cloud-sync support is claimed.
 
-- 
-
-## Changes
-
-### Added
-
-- 
-
-### Fixed
-
-- 
-
-### Changed
-
-- 
-
-## Verification
-
-- [ ] `npm run typecheck`
-- [ ] `npm run test:run`
-- [ ] `npm run build`
-- [ ] GitHub Actions release workflow passed
-
-## Deployment notes
-
-- 
-
+See docs/verification/phase-1.md at this tag for exact checks and remaining
+platform prerequisites. SHA256SUMS.txt records artifact hashes. Do not replace a
+personal installation signed with a different key.

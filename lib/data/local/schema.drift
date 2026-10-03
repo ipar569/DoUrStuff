@@ -1,0 +1,167 @@
+CREATE TABLE profile_metadata (
+  singleton INTEGER NOT NULL PRIMARY KEY CHECK (singleton = 1),
+  profile_id TEXT NOT NULL,
+  lineage_id TEXT NOT NULL,
+  device_epoch TEXT NOT NULL,
+  next_sequence INTEGER NOT NULL DEFAULT 1 CHECK (next_sequence > 0)
+);
+
+CREATE TABLE tasks (
+  id TEXT NOT NULL PRIMARY KEY,
+  title TEXT NOT NULL CHECK (length(trim(title)) BETWEEN 1 AND 500),
+  description TEXT NOT NULL DEFAULT '',
+  status TEXT NOT NULL DEFAULT 'todo' CHECK (status IN ('todo','in_progress','completed','cancelled')),
+  priority INTEGER NOT NULL DEFAULT 0 CHECK (priority BETWEEN 0 AND 3),
+  due_kind TEXT NOT NULL DEFAULT 'none' CHECK (due_kind IN ('none','date','timed')),
+  due_date TEXT,
+  due_instant INTEGER,
+  due_zone TEXT,
+  due_wall_time TEXT,
+  estimate_minutes INTEGER CHECK (estimate_minutes > 0),
+  occurrence_id TEXT UNIQUE,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL,
+  completed_at INTEGER,
+  deleted_at INTEGER,
+  CHECK ((status = 'completed') = (completed_at IS NOT NULL)),
+  CHECK ((due_kind = 'none' AND due_date IS NULL AND due_instant IS NULL AND due_zone IS NULL AND due_wall_time IS NULL)
+      OR (due_kind = 'date' AND due_date IS NOT NULL AND length(due_date) = 10 AND due_instant IS NULL AND due_zone IS NULL AND due_wall_time IS NULL)
+      OR (due_kind = 'timed' AND due_date IS NULL AND due_instant IS NOT NULL AND due_zone IS NOT NULL AND due_wall_time IS NOT NULL))
+);
+CREATE INDEX tasks_status ON tasks(status, deleted_at);
+CREATE INDEX tasks_due ON tasks(due_date, due_instant);
+
+CREATE TABLE tags (
+  id TEXT NOT NULL PRIMARY KEY,
+  name TEXT NOT NULL CHECK (length(trim(name)) BETWEEN 1 AND 80),
+  normalized_name TEXT NOT NULL,
+  deleted_at INTEGER
+);
+CREATE TABLE task_tags (
+  task_id TEXT NOT NULL REFERENCES tasks(id),
+  tag_id TEXT NOT NULL REFERENCES tags(id),
+  removed INTEGER NOT NULL DEFAULT 0 CHECK (removed IN (0,1)),
+  PRIMARY KEY (task_id, tag_id)
+);
+CREATE TABLE milestones (
+  id TEXT NOT NULL PRIMARY KEY,
+  task_id TEXT NOT NULL REFERENCES tasks(id),
+  title TEXT NOT NULL CHECK (length(trim(title)) BETWEEN 1 AND 500),
+  position INTEGER NOT NULL CHECK (position >= 0),
+  completed_at INTEGER,
+  deleted_at INTEGER
+);
+CREATE INDEX milestones_parent ON milestones(task_id, position, id);
+
+CREATE TABLE recurrence_series (
+  id TEXT NOT NULL PRIMARY KEY,
+  template_json TEXT NOT NULL,
+  deleted_at INTEGER
+);
+CREATE TABLE recurrence_segments (
+  id TEXT NOT NULL PRIMARY KEY,
+  series_id TEXT NOT NULL REFERENCES recurrence_series(id),
+  rule_json TEXT NOT NULL,
+  engine_version INTEGER NOT NULL CHECK (engine_version > 0),
+  tzdata_version TEXT NOT NULL,
+  cutoff_ordinal INTEGER CHECK (cutoff_ordinal >= 0)
+);
+CREATE TABLE occurrence_state (
+  id TEXT NOT NULL PRIMARY KEY,
+  segment_id TEXT NOT NULL REFERENCES recurrence_segments(id),
+  ordinal INTEGER NOT NULL CHECK (ordinal >= 0),
+  original_slot TEXT NOT NULL,
+  overrides_json TEXT NOT NULL,
+  skip_reason TEXT,
+  UNIQUE (segment_id, ordinal)
+);
+CREATE TABLE reminder_rules (
+  id TEXT NOT NULL PRIMARY KEY,
+  task_id TEXT REFERENCES tasks(id),
+  series_id TEXT REFERENCES recurrence_series(id),
+  rule_json TEXT NOT NULL,
+  deleted_at INTEGER,
+  CHECK ((task_id IS NULL) != (series_id IS NULL))
+);
+CREATE TABLE snoozes (
+  task_id TEXT NOT NULL PRIMARY KEY REFERENCES tasks(id),
+  until_instant INTEGER NOT NULL,
+  generation INTEGER NOT NULL CHECK (generation > 0),
+  suppressed_through INTEGER NOT NULL
+);
+CREATE TABLE saved_views (
+  id TEXT NOT NULL PRIMARY KEY,
+  name TEXT NOT NULL CHECK (length(trim(name)) BETWEEN 1 AND 80),
+  spec_version INTEGER NOT NULL CHECK (spec_version > 0),
+  spec_json TEXT NOT NULL,
+  deleted_at INTEGER
+);
+CREATE TABLE shared_preferences ("key" TEXT NOT NULL PRIMARY KEY, value_json TEXT NOT NULL);
+CREATE TABLE device_preferences ("key" TEXT NOT NULL PRIMARY KEY, value_json TEXT NOT NULL);
+
+CREATE TABLE sync_shadow (
+  entity_id TEXT NOT NULL PRIMARY KEY,
+  value_json TEXT NOT NULL,
+  versions_json TEXT NOT NULL,
+  revision INTEGER NOT NULL CHECK (revision >= 0)
+);
+CREATE TABLE outbox (
+  operation_id TEXT NOT NULL PRIMARY KEY,
+  sequence INTEGER NOT NULL UNIQUE CHECK (sequence > 0),
+  entity_id TEXT NOT NULL,
+  envelope_json TEXT NOT NULL,
+  state TEXT NOT NULL DEFAULT 'local' CHECK (state IN ('local','pending','sending','acknowledged','conflict','rejected')),
+  attempts INTEGER NOT NULL DEFAULT 0 CHECK (attempts >= 0),
+  retry_at INTEGER,
+  created_at INTEGER NOT NULL
+);
+CREATE TABLE sync_checkpoint (
+  singleton INTEGER NOT NULL PRIMARY KEY CHECK (singleton = 1),
+  server_epoch TEXT,
+  cursor INTEGER NOT NULL DEFAULT 0 CHECK (cursor >= 0),
+  bootstrap_token TEXT,
+  bootstrap_page INTEGER,
+  last_success INTEGER
+);
+CREATE TABLE conflicts (
+  id TEXT NOT NULL PRIMARY KEY,
+  entity_id TEXT NOT NULL,
+  base_json TEXT NOT NULL,
+  local_json TEXT NOT NULL,
+  server_json TEXT NOT NULL,
+  resolved_at INTEGER
+);
+CREATE TABLE history (
+  id TEXT NOT NULL PRIMARY KEY,
+  entity_id TEXT NOT NULL,
+  operation_id TEXT NOT NULL,
+  kind TEXT NOT NULL,
+  occurred_at INTEGER NOT NULL,
+  detail_json TEXT NOT NULL
+);
+CREATE TABLE tombstones (
+  entity_id TEXT NOT NULL PRIMARY KEY,
+  entity_kind TEXT NOT NULL,
+  revision INTEGER,
+  deleted_at INTEGER NOT NULL
+);
+CREATE TABLE notification_dirty (
+  entity_id TEXT NOT NULL PRIMARY KEY,
+  generation INTEGER NOT NULL DEFAULT 1 CHECK (generation > 0)
+);
+CREATE TABLE device_notifications (
+  logical_key TEXT NOT NULL PRIMARY KEY,
+  os_id INTEGER NOT NULL UNIQUE,
+  scheduled_at INTEGER NOT NULL,
+  generation INTEGER NOT NULL,
+  fingerprint TEXT NOT NULL,
+  registration_state TEXT NOT NULL
+);
+CREATE TABLE import_journal (
+  source_lineage TEXT NOT NULL,
+  source_id TEXT NOT NULL,
+  destination_id TEXT NOT NULL,
+  batch_id TEXT NOT NULL,
+  state TEXT NOT NULL,
+  PRIMARY KEY (source_lineage, source_id)
+);

@@ -1,55 +1,48 @@
-name: Release
-
+name: Versioned review artifacts
 on:
   push:
-    tags:
-      - "v*"
-
+    tags: ['v*']
 permissions:
-  contents: write
-
+  contents: read
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
 jobs:
-  release:
+  quality:
+    uses: ./.github/workflows/quality.yml
+  build:
+    uses: ./.github/workflows/native-builds.yml
+    with:
+      release: true
+  draft:
+    needs: [quality, build]
     runs-on: ubuntu-latest
-
+    timeout-minutes: 10
+    environment: release-artifacts
+    permissions:
+      contents: write
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
-          node-version: 20
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run typecheck
-        run: npm run typecheck
-
-      - name: Run tests
-        run: npm run test:run
-
-      - name: Build application
-        run: npm run build
-
-      - name: Assemble deployable bundle
+          persist-credentials: false
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with:
+          flutter-version: '3.47.6'
+          channel: stable
+      - name: Verify release metadata
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: dart run tool/verify_release.dart "$RELEASE_TAG"
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          path: artifacts
+      - name: Hash artifacts
         run: |
-          mkdir -p deployable
-          cp -a .next/standalone/. deployable/
-          mkdir -p deployable/.next
-          cp -r .next/static deployable/.next/
-          cp -r public deployable/public
-
-      - name: Create downloadable archive
-        run: tar -czf dourstuff-${{ github.ref_name }}-deployable.tar.gz -C deployable .
-
-      - name: Publish GitHub release
+          find artifacts -type f \( -name '*.apk' -o -name '*.zip' \) -print0 | sort -z | xargs -0 sha256sum > artifacts/SHA256SUMS.txt
+      - name: Create draft release
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
         run: |
-          gh release create "${{ github.ref_name }}" \
-            "dourstuff-${{ github.ref_name }}-deployable.tar.gz" \
-            --title "DoUrStuff ${{ github.ref_name }}" \
-            --notes-file CHANGELOG.md
+          gh release create "$RELEASE_TAG" --verify-tag --draft --prerelease --title "DoUrStuff $RELEASE_TAG — unsigned review artifacts" --notes-file .github/RELEASE_TEMPLATE.md artifacts/android-unsigned-release/*.apk artifacts/windows-unpackaged-release/*.zip artifacts/SHA256SUMS.txt

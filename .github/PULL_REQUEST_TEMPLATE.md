@@ -1,22 +1,13 @@
-## Summary
+## Change
+Describe the user-visible behavior and phase/backlog item.
 
-- 
+## Verification
+List exact checks, results, platform/device evidence and unverified behavior.
 
-## Release type
+## Data and integration impact
+Document schema/protocol changes, fixtures, recovery, account isolation and
+notification effects where relevant. Link ADRs for changed decisions.
 
-- [ ] Patch: bug fix or small correction
-- [ ] Minor: new non-breaking feature
-- [ ] Major: breaking change
-- [ ] Not a release change
-
-## Checks
-
-- [ ] `npm run typecheck`
-- [ ] `npm run test:run`
-- [ ] `npm run build`
-- [ ] `CHANGELOG.md` updated when user-facing behavior changed
-
-## Notes
-
-- 
-
+## UI
+Attach actual screenshots for visible changes when available. Note text scaling,
+keyboard and screen-reader checks.

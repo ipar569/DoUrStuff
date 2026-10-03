@@ -1,0 +1,31 @@
+name: Quality
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_call:
+permissions:
+  contents: read
+concurrency:
+  group: quality-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with:
+          flutter-version: '3.47.6'
+          channel: stable
+      - run: flutter pub get --enforce-lockfile
+      - run: dart run build_runner build
+      - run: git diff --exit-code -- lib/data/local/database.g.dart
+      - run: dart format --output=none --set-exit-if-changed lib test tool
+      - run: flutter analyze
+      - run: flutter test --reporter expanded
+      - run: dart run drift_dev schema dump lib/data/local/database.dart drift_schemas/drift_schema_v1.json
+      - run: git diff --exit-code -- drift_schemas

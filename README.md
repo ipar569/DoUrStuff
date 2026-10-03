@@ -1,279 +1,70 @@
 # DoUrStuff
 
-DoUrStuff is a local-first task manager built with `Next.js`, `React`, `Tailwind CSS`, and `Dexie` for offline storage. It is designed to work well on desktop and mobile, keep task data available offline, and be installable on phones as a Progressive Web App (PWA).
+An offline-first personal task manager for everyday progress, built with Flutter
+and SQLite. Start without an account; cloud sync will be optional.
 
-## Current status
+**Current delivery: phase 1 foundation preview.** Capture tasks, complete and
+reopen them, and retain them in a local database. Dark UI adapts to narrow touch
+screens and desktop windows. Ctrl+N focuses capture. The current app makes no
+network requests and requires no account.
 
-The app already includes:
+Full task editing, tags, milestones, priorities, views, calendar, recurrence,
+reminders, export/import and Supabase sync are planned in phases 2–5.
+Their schemas/contracts do not mean those features are implemented.
 
-- a responsive task UI for mobile and desktop
-- local task storage with `IndexedDB`
-- offline support via a service worker
-- a web app manifest so it can be installed as a PWA
+| Platform | Status |
+| --- | --- |
+| Android arm64 | Native project; build/device evidence in the phase report |
+| Windows x64 | Native project; local build blocked by missing C++ workload |
+| iOS, macOS, Linux | Planned; native projects and runtime support unverified |
 
-The project does not currently ship as a native Android or iOS app. Mobile installation today is done through the browser as an installable PWA.
+Actual Flutter widget render with synthetic local data (not a native-device screenshot):
 
-## Tech stack
+![Foundation desktop preview](docs/screenshots/foundation-1100.png)
 
-- `Next.js 15`
-- `React 19`
-- `TypeScript`
-- `Tailwind CSS`
-- `Dexie` for `IndexedDB`
-- `Vitest` + Testing Library
+[Narrow-screen preview](docs/screenshots/foundation-390.png). Regenerate with
+`flutter test tool/render_preview.dart`; set FLUTTER_ROOT to the SDK if needed.
 
-## Prerequisites
+## Quick start
 
-Install these before running the project locally:
+Install Flutter **3.47.6** / Dart 3.13.5 and native prerequisites in
+[setup](docs/runbooks/setup.md). From this repository:
 
-- `Node.js` 20 or newer
-- `npm` 10 or newer
-
-To confirm your versions:
-
-```bash
-node -v
-npm -v
+```sh
+flutter pub get --enforce-lockfile
+flutter run -d windows
+# Or select a connected Android device:
+flutter devices
+flutter run -d DEVICE_ID
 ```
 
-## Local setup
+No backend or configuration file is required. config/sync.example.json describes
+future public settings; phase 1 does not consume it.
 
-1. Clone the repository.
-2. Move into the project folder.
-3. Install dependencies.
-
-```bash
-npm install
+```sh
+dart run build_runner build
+dart format --output=none --set-exit-if-changed lib test tool
+flutter analyze
+flutter test
 ```
 
-## Run locally
-
-Start the development server:
-
-```bash
-npm run dev
-```
-
-Then open:
-
-```text
-http://localhost:3000
-```
-
-The app uses the default Next.js development port unless that port is already taken.
-
-## Available scripts
-
-- `npm run dev` starts the local development server
-- `npm run build` creates a production build
-- `npm run start` runs the production build locally
-- `npm run test:run` runs the test suite once
-- `npm run test` starts Vitest in watch mode
-- `npm run typecheck` runs TypeScript checks
-- `npm run release:patch` creates a patch version commit and Git tag
-- `npm run release:minor` creates a minor version commit and Git tag
-- `npm run release:major` creates a major version commit and Git tag
-
-## Recommended local verification
-
-Before deploying, run:
-
-```bash
-npm run typecheck
-npm run test:run
-npm run build
-```
-
-This gives a quick check that the app type-checks, tests pass, and the production build succeeds.
-
-## Versioning and releases
-
-The project uses semantic versioning and Git tags for releases.
-
-- Patch release: bug fixes, for example `0.1.0` to `0.1.1`
-- Minor release: new non-breaking features, for example `0.1.1` to `0.2.0`
-- Major release: breaking changes, for example `0.9.0` to `1.0.0`
-
-Before creating a release, update `CHANGELOG.md`, run the verification commands, then run one of the release scripts.
-
-```bash
-npm run release:patch
-git push origin main --follow-tags
-```
-
-Pushing a `v*` tag starts the GitHub Actions release workflow and publishes a deployable archive.
-
-Full release guide: [docs/release-workflow.md](C:/Projects/DoUrStuff/docs/release-workflow.md)
-
-## How offline support works
-
-- Tasks are stored in the browser with `IndexedDB`
-- The service worker caches the app shell and fetched assets
-- After the first successful load, the app should reopen even when the device is offline
-
-Important notes:
-
-- Offline data is browser-local right now
-- If you clear browser storage, local tasks will be removed
-- Cross-device sync is planned, but not implemented yet
-
-## Production run locally
-
-If you want to test the production build on your machine:
-
-1. Build the app:
-
-```bash
-npm run build
-```
-
-2. Start the production server:
-
-```bash
-npm run start
-```
-
-3. Open `http://localhost:3000`
-
-This is the best way to test installability and production behavior before deploying.
-
-## Deploying
-
-The simplest deployment target for this app is `Vercel`, because this is a standard `Next.js` application.
-
-### GitHub Actions build artifact
-
-This repository includes a GitHub Actions workflow at [`.github/workflows/build-test-artifact.yml`](C:/Projects/DoUrStuff/.github/workflows/build-test-artifact.yml).
-
-The workflow:
-
-- installs dependencies with `npm ci`
-- runs `npm run typecheck`
-- runs `npm run test:run`
-- runs `npm run build`
-- packages a deployable standalone Node bundle
-- uploads that bundle as a downloadable Actions artifact named `dourstuff-deployable`
-
-For full usage steps, see [docs/deployable-artifact.md](C:/Projects/DoUrStuff/docs/deployable-artifact.md).
-
-### Deploy with Vercel
-
-1. Push the repository to GitHub.
-2. Import the repository into [Vercel](https://vercel.com/).
-3. Keep the default framework setting as `Next.js`.
-4. Build command: `npm run build`
-5. Output setting: leave it as Vercel's default for Next.js
-6. Deploy
-
-At the moment, this project does not require any environment variables for the current local-first feature set.
-
-### Deploy to another Node host
-
-You can also deploy it anywhere that supports `Next.js`:
-
-1. Install dependencies with `npm install`
-2. Build with `npm run build`
-3. Start with `npm run start`
-
-The host must support running a Node server for Next.js.
-
-### Deploy from the GitHub Actions artifact
-
-If you want a prebuilt bundle from CI instead of building on the server:
-
-1. Open the completed GitHub Actions run.
-2. Download the `dourstuff-deployable` artifact.
-3. Extract the archive on a machine with `Node.js 20` or newer.
-4. Start the app with:
-
-```bash
-node server.js
-```
-
-By default, the server listens on port `3000`. Set `PORT` if your host requires a different port.
-
-## Installing on mobile devices
-
-This app is installed on phones as a PWA, not from an app store package.
-
-### iPhone or iPad
-
-1. Open the deployed app URL in `Safari`
-2. Tap the `Share` button
-3. Tap `Add to Home Screen`
-4. Confirm the name and add it
-
-After that, the app should launch from the home screen in a standalone app-like window.
-
-### Android
-
-1. Open the deployed app URL in `Chrome`
-2. Open the browser menu
-3. Tap `Install app` or `Add to Home screen`
-4. Confirm the installation
-
-Android wording varies slightly by device and browser version, but the flow is usually close to the steps above.
-
-## Important install limitations
-
-- The app must usually be served over `https` in production for full PWA behavior
-- Some install prompts behave differently across browsers
-- iOS PWA support is more limited than Android in areas like background behavior and notifications
-- This project currently supports browser-based installation, not App Store or Google Play submission
-
-## If install does not appear
-
-Check these first:
-
-- the app is opened from a deployed URL, not just a local network page
-- the site is using `https`
-- the page has fully loaded at least once
-- you are using a supported browser such as `Safari` on iPhone or `Chrome` on Android
-
-## Project structure
-
-```text
-src/
-  app/                Next.js app router files
-  components/         shared UI and PWA setup
-  db/                 local IndexedDB layer
-  features/tasks/     task domain logic, hooks, tests, and components
-public/
-  icons/              PWA icons
-  sw.js               service worker
-docs/
-  architecture-plan.md
-  deployable-artifact.md
-```
-
-## Architecture notes
-
-- Product and architecture plan: [docs/architecture-plan.md](C:/Projects/DoUrStuff/docs/architecture-plan.md)
-
-## Future roadmap
-
-Planned areas that are not fully implemented yet:
-
-- account sign-in
-- cloud sync across devices
-- reminders and recurring tasks
-- backup and sharing features
-- AI-assisted task creation
-
-## Troubleshooting
-
-### Port 3000 is already in use
-
-Stop the other local server using port `3000`, or run Next.js on another port.
-
-### Changes are not reflected in the installed app
-
-PWAs may continue using cached assets for a short time. Try:
-
-- refreshing the page
-- closing and reopening the installed app
-- clearing site data if you need a clean local reset
-
-### Local tasks disappeared
-
-The app currently stores tasks in browser-local storage through `IndexedDB`. If browser storage is cleared, that data is lost until sync is added in a future version.
+Data lives in the platform application-support directory under
+profiles/guest/tasks.sqlite. Do not copy only this file while the app is running:
+committed data can still be in its WAL. See [recovery](docs/runbooks/recovery.md).
+Android OS app-data backup is disabled to avoid restoring transport identity
+without a recovery policy. Portable in-app export is phase 5 work.
+
+## Project guide
+
+- [Architecture](docs/architecture/README.md) and [accepted plan](docs/proposals/2026-10-03-offline-first-architecture.md)
+- [Decision records](docs/adr/README.md)
+- [Verification](docs/verification/phase-1.md) and [backlog](docs/backlog.md)
+- [Fresh-session prompts for later phases](docs/prompts/README.md)
+- [Two-device tests](docs/runbooks/two-device-testing.md)
+- [Builds/releases](docs/runbooks/releases.md)
+- [Optional backend](docs/runbooks/backend.md) and [costs](docs/runbooks/costs.md)
+- [Repository conventions](AGENTS.md)
+
+No cloud deployment, signed installer, store publication or notification support
+exists yet. CI definitions are supplied; hosted execution remains unverified.
+Platform support requires installed-device evidence, not only passing widget tests.

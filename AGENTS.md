@@ -1,53 +1,60 @@
-# DoUrStuff Agent Guidance
+# Working on DoUrStuff
 
-## Release management
+DoUrStuff is a fresh Flutter Android/Windows app. The accepted design is in
+`docs/proposals/2026-10-03-offline-first-architecture.md`; implementation status
+is in `docs/verification/phase-1.md`. Earlier web application code is not a
+compatibility target. Do not restore it or rewrite Git history.
 
-When working in this repository, treat `main` as the stable deployable branch and keep release changes small, reviewable, and traceable.
+## Structure and boundaries
 
-### Branches
+- `lib/domain`: pure Dart values and ports; no Flutter or provider imports.
+- `lib/data/local`: Drift schema, file opening, migrations and command transactions.
+- `lib/app`: responsive presentation and theme. All task reads/writes use SQLite.
+- `test`: real SQLite durability/invariant tests, domain and widget tests.
+- `drift_schemas`: versioned schema snapshots. Generated Dart is committed.
+- `docs`: accepted decisions, contracts, setup, operational and test evidence.
+- `.agents/skills`: migration, sync and release workflows; read the relevant skill.
 
-- Prefer `codex/<short-name>` for Codex-created work.
-- Use `feature/<short-name>` for feature branches.
-- Use `fix/<short-name>` for focused bug fixes.
-- Keep each branch scoped to one feature, bug fix, or release preparation task.
+## Commands
 
-### Versioning
+Use Flutter pinned in `.flutter-version`; `pubspec.lock` is committed. On this
+machine the optional ignored SDK is `.tools/flutter/bin`; do not require that
+path on other machines. Run from the repo root:
 
-Use semantic versioning in `package.json`:
+```
+flutter pub get --enforce-lockfile
+dart run build_runner build
+dart format --output=none --set-exit-if-changed lib test
+flutter analyze
+flutter test
+flutter build apk --debug
+flutter build windows --release
+```
 
-- Patch: bug fixes and small corrections, for example `0.1.0` to `0.1.1`.
-- Minor: new non-breaking features, for example `0.1.1` to `0.2.0`.
-- Major: breaking changes, for example `0.9.0` to `1.0.0`.
+Use `dart run drift_dev schema dump lib/data/local/database.dart drift_schemas/drift_schema_v1.json`
+after a schema change. Verify the exact pinned tool help if its CLI changes.
+Run relevant SQLite/domain/widget checks after changes, then the quality suite.
+Native compilation is not device or notification verification. Report exact
+commands/results and unverified behavior; never invent CI/device evidence.
 
-### Release preparation
+## Data and security invariants
 
-Before preparing a release:
+Never perform network calls in a local command transaction. Entity changes,
+history, outbox sequence and reminder-dirty state commit together. Device clocks
+are provenance, never conflict ordering. Separate databases by profile and
+verify immutable profile metadata before use. Never reset a failed migration.
+Do not log task content, tokens or credentials. Do not embed privileged keys.
+No real account data in test fixtures. Do not silently upload guest data.
 
-1. Inspect repo state with `git status --short --branch`.
-2. Review `CHANGELOG.md`, `package.json`, `docs/release-workflow.md`, and `.github/workflows/`.
-3. Confirm the intended release type with the user if it is ambiguous.
-4. Update `CHANGELOG.md` before bumping the version.
-5. Run or recommend these checks:
-   - `npm run typecheck`
-   - `npm run test:run`
-   - `npm run build`
+Keep provider code behind the domain ports; add abstractions only for real
+boundaries. Avoid paid dependencies/services. Dark theme uses shared tokens;
+controls need labels, keyboard focus and text scaling.
 
-### Release commands
+## Changes and releases
 
-Only run these after the user explicitly approves the release action:
-
-- `npm run release:patch`
-- `npm run release:minor`
-- `npm run release:major`
-
-Only push release commits or tags after the user explicitly approves publishing:
-
-- `git push origin main --follow-tags`
-
-### Safety rules
-
-- Do not create Git tags without explicit user approval.
-- Do not push branches, tags, or releases without explicit user approval.
-- Do not overwrite local changes without explicit user approval.
-- If checks fail, stop and summarize the failure before making fixes.
-- Keep release notes user-facing and concise.
+Keep phases usable; update the backlog and verification report. Do not represent
+planned cloud sync, recurrence, reminders or workflows as working. Never hide a
+failed check. Preserve unrelated changes and existing deletions. Publishing,
+production migration execution and store distribution require user authorization
+for that action. Ordinary local implementation/tests do not require another
+approval. No production secrets in PR workflows; pin Actions to commit SHAs.
