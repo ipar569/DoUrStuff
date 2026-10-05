@@ -2,7 +2,7 @@
 
 DoUrStuff is a fresh Flutter Android/Windows app. The accepted design is in
 `docs/proposals/2026-10-03-offline-first-architecture.md`; implementation status
-is in `docs/verification/phase-1.md`. Earlier web application code is not a
+is in `docs/verification/phase-2.md` (with retained Phase 1 platform gates). Earlier web application code is not a
 compatibility target. Do not restore it or rewrite Git history.
 
 ## Structure and boundaries

@@ -139,3 +139,15 @@ criterion is marked complete by the foundation tests alone.
 Next product phase is the complete offline editor/query/saved-view experience.
 Keep the native verification gates visible while progressing that independent
 work; do not begin recurrence/reminders before phase 3 two-device verification.
+
+## Hosted baseline evidence inspected during Phase 2
+
+On 3 October 2026, `gh run list --limit 6` and `gh run view` confirmed both
+runs at commit `86f7eed69cf0f0de966a706ede7499e5745ea210` succeeded:
+[Quality 37097428010](https://github.com/ipar569/DoUrStuff/actions/runs/37097428010)
+and [Native builds 37097428015](https://github.com/ipar569/DoUrStuff/actions/runs/37097428015).
+The native run contains successful Android debug and Windows release compile
+jobs. This closes the previously unverified hosted-run gate for that baseline,
+including hosted Windows compilation. It does not establish installed launch,
+notification/secure-storage feasibility, or validation of the unpushed Phase 2
+changes. Earlier local build/toolchain observations above remain historical.

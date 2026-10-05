@@ -9,18 +9,35 @@ Source delivered: Flutter guest shell, capture/complete/reopen, schema v1,
 atomic journal/history/dirty writes, profile guard, migration/downgrade boundary,
 protocol/occurrence fixtures, docs/skills and quality/native/release CI.
 
-Remaining gates: installed Android/Windows launch evidence, Windows C++ tooling,
-hosted CI run, secure-storage and notification feasibility on installed targets.
+Remaining gates: installed Android/Windows package evidence,
+secure-storage and notification feasibility on installed targets. Hosted quality
+and Android/Windows native jobs passed for the Phase 1 baseline.
 See the phase report for actual compilation results. Phase 1 is not fully
 platform-verified and does not implement cloud sync or reminders.
 
 ## Phase 2: offline application
 
-Full task CRUD/edit/delete/undo; due date/time and duration validation; priority
-indicators; tags/milestones; search/filter/group/sort queries; Today/Upcoming/
-Overdue/All; saved views and preferences; responsive navigation and accessibility.
-Add Riverpod only when shared controller state warrants it. All commands remain
-atomic with the journal.
+Source delivered: full task capture/view/edit/status/delete, guarded deletion and
+status undo; civil and timed due values with IANA gap/fold resolution; estimates,
+labelled priority, reusable tags and independent ordered milestones; token
+search and combined filters, deterministic sorts/groups; built-in and saved
+views with a persistent default; responsive dark navigation/editor, keyboard
+shortcuts, failed-save draft retention and bulk-delete confirmation.
+The 5 October capture refinement places title and optional due date together,
+with Today/Tomorrow/custom-date shortcuts. Editors initially collapse the other
+fields under More details; existing values remain intact when saving.
+
+All mutations use SQLite transactions with local journal/history/sequence/dirty
+intent. Schema remains v1; tags, milestones and views now have commands and validators.
+No Riverpod dependency was needed for this screen-owned state.
+
+See [Phase 2 verification](verification/phase-2.md) for exact host checks and
+native build evidence. Remaining acceptance: installed offline launch/edit,
+process-kill/restart, travel/clock-change behavior, native accessibility and
+packaged Windows behavior. Windows prerequisites, local release compilation and
+an unpackaged responding window were verified on 5 October; interactive task
+testing remains with the user. Host/widget tests do not close these gates. Large
+workspace performance and real disk-full/power-loss behavior remain unmeasured.
 
 ## Phase 3: accounts and tested two-device sync
 

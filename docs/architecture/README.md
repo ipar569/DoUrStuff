@@ -19,7 +19,8 @@ flowchart LR
   N -. phase 4 .-> P[Reminder planner and OS]
 ```
 
-Current commands capture, complete and reopen tasks. Each transaction writes
+Current commands include full task edits/deletion/restore, tag membership,
+independent milestones, saved views and the default preference. Each transaction writes
 entity state, history, an immutable command envelope with contiguous sequence,
 and reminder-dirty generation together. Repeated completion is a no-op; reopening
 preserves history. UI reads committed streams and keeps failed drafts. No network
@@ -27,8 +28,8 @@ or OS scheduling call occurs inside a database transaction.
 
 Domain ports have no Flutter/provider imports. TaskRepository has a real SQLite
 implementation. Auth storage, transport and notification ports are contracts,
-not mocked integrations exposed as working features. Riverpod is deferred until
-phase 2 shared controller state warrants it.
+not mocked integrations exposed as working features. Screen-owned state and
+SQLite streams suffice for Phase 2; no state-management package was added.
 
 ## Concrete local schema
 
@@ -38,17 +39,18 @@ UUIDs, UTC epoch milliseconds for instants and YYYY-MM-DD for civil dates.
 SQL enforces required titles, status/completion consistency, mutually exclusive
 due representations, priorities, positive estimates and foreign keys.
 
-Active tables: tasks, profile_metadata, outbox, history, notification_dirty,
-sync_checkpoint. Preference storage is tested directly, without an editor yet.
-Reserved tables: tags, task_tags, milestones, recurrence_series,
-recurrence_segments, occurrence_state, reminder_rules, snoozes, saved_views,
-shared_preferences, device_preferences, sync_shadow, conflicts, tombstones,
-device_notifications and import_journal.
+Active tables: tasks, tags, task_tags, milestones, saved_views,
+shared_preferences (default view), profile_metadata, outbox, history,
+notification_dirty, tombstones and sync_checkpoint. Device preferences retain
+local-only storage; no adjustable layout preference is exposed yet.
+Reserved tables: recurrence_series, recurrence_segments, occurrence_state,
+reminder_rules, snoozes, sync_shadow, conflicts, device_notifications and
+import_journal. These still do not imply implemented later-phase features.
 
-Reserved tables do not yet have application commands or all semantic validators.
-Valid civil dates/IANA zones, versioned JSON recurrence/view rules, the five-rule
-reminder limit and occurrence relationships must be enforced before enabling
-those features. Presence in the schema is not a completed feature.
+Phase 2 retains the exact schema v1 snapshot. Civil dates, IANA due values,
+estimates, milestone ownership, names and versioned view JSON are validated by
+commands. See [offline behavior and command contract](phase-2-offline.md).
+Recurrence/reminder validators and their integrations remain later work.
 
 Each profile uses its own SQLite file with immutable profile ID, lineage and
 device epoch. Opening a file under the wrong profile fails. Use foreign keys,

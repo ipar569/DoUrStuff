@@ -17,7 +17,10 @@ void main() {
     await tester.pumpWidget(DoUrStuffApp(repository: LocalTaskRepository(db)));
     await tester.pumpAndSettle();
     expect(find.text('Room for your next step.'), findsOneWidget);
-    await tester.enterText(find.byType(TextField), 'Water the plants');
+    await tester.enterText(
+      find.byKey(const ValueKey('capture')),
+      'Water the plants',
+    );
     await tester.tap(find.text('Add task'));
     await tester.pumpAndSettle();
     expect(find.text('Water the plants'), findsOneWidget);
@@ -74,7 +77,10 @@ void main() {
     addTearDown(db.close);
     await tester.pumpWidget(DoUrStuffApp(repository: LocalTaskRepository(db)));
     await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextField), 'Keep this draft');
+    await tester.enterText(
+      find.byKey(const ValueKey('capture')),
+      'Keep this draft',
+    );
     await tester.tap(find.text('Add task'));
     await tester.pumpAndSettle();
     expect(
@@ -82,7 +88,10 @@ void main() {
       findsOneWidget,
     );
     expect(
-      tester.widget<TextField>(find.byType(TextField)).controller!.text,
+      tester
+          .widget<TextField>(find.byKey(const ValueKey('capture')))
+          .controller!
+          .text,
       'Keep this draft',
     );
     await tester.pumpWidget(const SizedBox());
