@@ -26,6 +26,8 @@ shortcuts, failed-save draft retention and bulk-delete confirmation.
 The 5 October capture refinement places title and optional due date together,
 with Today/Tomorrow/custom-date shortcuts. Editors initially collapse the other
 fields under More details; existing values remain intact when saving.
+Search now starts as a compact button beside Filters & sort. Clicking opens and
+focuses the field; collapsing preserves the query and shows Search (active).
 
 All mutations use SQLite transactions with local journal/history/sequence/dirty
 intent. Schema remains v1; tags, milestones and views now have commands and validators.
@@ -36,10 +38,22 @@ native build evidence. Remaining acceptance: installed offline launch/edit,
 process-kill/restart, travel/clock-change behavior, native accessibility and
 packaged Windows behavior. Windows prerequisites, local release compilation and
 an unpackaged responding window were verified on 5 October; interactive task
-testing remains with the user. Host/widget tests do not close these gates. Large
+testing was confirmed by the user on 9 October, including offline editing,
+closing/reopening, and persistence of tasks and the default saved view. Exact
+Windows build/device details were not supplied. Android fresh-install/offline
+and process-restart acceptance remains open, so Phase 2 is feature-implemented
+but not fully accepted. Host/widget tests do not close these gates. Large
 workspace performance and real disk-full/power-loss behavior remain unmeasured.
 
 ## Phase 3: accounts and tested two-device sync
+
+Planning only: [9 October delivery plan](proposals/2026-10-09-phase-3-plan.md)
+and [Phase 3 verification status](verification/phase-3.md). Start implementation
+after the Phase 2 entry gate closes. Milestones: protocol/readiness, server
+foundation, account storage/auth, first sync slice, full replication/recovery,
+account lifecycle, then installed two-device acceptance/deployment readiness.
+The [prompt index](prompts/README.md) includes copy-and-paste launch messages for
+new sessions; each phase prompt requires a durable verification handoff to resume.
 
 Real Supabase migrations/RPC/RLS tests; secure tokens and GitHub PKCE; explicit
 adoption; resumable bootstrap; field conflicts and recovery UI; cursor/receipts/

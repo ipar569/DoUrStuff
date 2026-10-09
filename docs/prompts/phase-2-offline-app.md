@@ -8,10 +8,14 @@ before editing; preserve useful work and unrelated changes.
 
 The architecture is approved: Flutter with Drift/SQLite, Android and Windows
 first, optional Supabase later, no account required for core features. Do not
-restore the old web application or repeat stack selection. At the initial phase-1
-baseline, only capture/complete/reopen UI is implemented. Reserved tables and
-domain interfaces do not imply complete features. Check what has since changed
-and resume unfinished work. Proceed with implementation and testing without
+restore the old web application or repeat stack selection. At the 9 October
+review, core Phase 2 features are implemented and host checks pass, while Android
+installed offline/restart acceptance remains open. Read the latest dated evidence
+and resume remaining fixes/acceptance rather than rebuilding the feature list.
+Preserve the title/due-date capture flow, collapsed More details editor and
+collapsible search refinements unless new requirements justify changing them.
+Reserved tables and domain interfaces do not imply complete later-phase features.
+Proceed with implementation and testing without
 another architecture approval; ask only focused questions that materially affect
 the design. Verify new dependencies/capabilities with official documentation.
 
@@ -65,3 +69,5 @@ their accepted boundaries must remain compatible. Update README, backlog and
 docs/verification/phase-2.md with exact checks, results, remaining acceptance
 gates and next actions. Do not push, deploy or publish unless separately
 authorized. Finish with what changed, how it was verified and any limitations.
+Keep a dated next-session handoff in docs/verification/phase-2.md with remaining
+acceptance, exact device/setup prerequisites and the next executable action.

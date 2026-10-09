@@ -19,6 +19,8 @@ class TaskHome extends StatefulWidget {
 class _TaskHomeState extends State<TaskHome> with WidgetsBindingObserver {
   final title = TextEditingController(), search = TextEditingController();
   final captureFocus = FocusNode();
+  final searchFocus = FocusNode(), searchButtonFocus = FocusNode();
+  bool searchExpanded = false;
   final selected = <String>{}, busyTasks = <String>{};
   late StreamSubscription<Workspace> subscription;
   late Timer timer;
@@ -87,6 +89,8 @@ class _TaskHomeState extends State<TaskHome> with WidgetsBindingObserver {
     title.dispose();
     search.dispose();
     captureFocus.dispose();
+    searchFocus.dispose();
+    searchButtonFocus.dispose();
     super.dispose();
   }
 
@@ -498,25 +502,50 @@ class _TaskHomeState extends State<TaskHome> with WidgetsBindingObserver {
                             const SizedBox(height: 24),
                             captureForm(),
                             const SizedBox(height: 24),
-                            TextField(
-                              key: const ValueKey('search'),
-                              maxLength: 2000,
-                              controller: search,
-                              onChanged: (v) => setState(() {
-                                query.search = v;
-                                selected.clear();
-                              }),
-                              decoration: const InputDecoration(
-                                labelText: 'Search tasks',
-                                counterText: '',
-                                prefixIcon: Icon(Icons.search),
+                            if (searchExpanded) ...[
+                              TextField(
+                                key: const ValueKey('search'),
+                                maxLength: 2000,
+                                controller: search,
+                                focusNode: searchFocus,
+                                onChanged: (v) => setState(() {
+                                  query.search = v;
+                                  selected.clear();
+                                }),
+                                decoration: InputDecoration(
+                                  labelText: 'Search tasks',
+                                  counterText: '',
+                                  prefixIcon: const Icon(Icons.search),
+                                  suffixIcon: IconButton(
+                                    tooltip: 'Collapse search',
+                                    icon: const Icon(Icons.close),
+                                    onPressed: () {
+                                      setState(() => searchExpanded = false);
+                                      searchButtonFocus.requestFocus();
+                                    },
+                                  ),
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 12),
+                              const SizedBox(height: 12),
+                            ],
                             Wrap(
                               spacing: 8,
                               runSpacing: 8,
                               children: [
+                                if (!searchExpanded)
+                                  OutlinedButton.icon(
+                                    focusNode: searchButtonFocus,
+                                    onPressed: () {
+                                      setState(() => searchExpanded = true);
+                                      searchFocus.requestFocus();
+                                    },
+                                    icon: const Icon(Icons.search),
+                                    label: Text(
+                                      query.search.trim().isEmpty
+                                          ? 'Search'
+                                          : 'Search (active)',
+                                    ),
+                                  ),
                                 OutlinedButton.icon(
                                   onPressed: filters,
                                   icon: const Icon(Icons.tune),

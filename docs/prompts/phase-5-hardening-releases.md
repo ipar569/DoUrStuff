@@ -6,12 +6,29 @@ for recovery, releases, backend, costs and two-device testing. Apply the relevan
 repository migration, sync-protocol and release-verification skills. Preserve
 existing work and never restore the legacy web app.
 
+Read docs/proposals/2026-10-09-phase-3-plan.md and
+docs/architecture/phase-3-sync.md for recovery/account boundaries, and inspect the
+actual implementation rather than treating planned diagrams as working features.
+Read docs/verification/phase-5.md if present; create it when work begins. Resume
+its earliest unfinished milestone. Extend any Phase 3 recovery export into the
+full portability feature rather than introducing a competing format or losing
+unsynced values/conflict candidates.
+
 The architecture is approved. Verify phases 2–4 from code and actual evidence,
 finish necessary product gaps, and carry external verification gaps forward
 honestly. Proceed with implementation and testing; ask only focused material
 questions or for necessary external setup. Verify current build/signing/store
 requirements and costs using official documentation. Target no recurring backend
 cost for small personal use; distinguish it from signing/distribution costs.
+
+Sequence reviewable milestones: (5.0) audit prior acceptance and artifact
+identities; (5.1) versioned export/import with preview and safe recovery;
+(5.2) retained-data migration, restore and security hardening; (5.3) installed
+accessibility and representative performance; (5.4) package/signing preparation
+and upgrade-data retention; (5.5) acceptance ledger, release notes, hashes and
+release-readiness report. Independent portability/hardening work may continue
+with external gates open, but release readiness requires the relevant earlier
+phase/device gates. Never bypass Phase 3's gate to implement Phase 4 dependencies.
 
 Deliver versioned, documented local export/import without an account. Include
 tasks, tags, milestones, priorities, recurrence definitions/history, saved views
@@ -23,6 +40,10 @@ confirm destructive replacement and create a recoverable backup. In account
 profiles, produce valid new sync operations rather than replaying exported
 outboxes/revisions. Reconcile notifications after import. Exercise older-format
 compatibility and document treatment of snooze state and shared preferences.
+Include unresolved recovery data and unsynced current values. Preserve lineage
+mapping compatibility with guest adoption and the existing recovery export.
+Exclude trusted transport state: imported data gets fresh operation identities
+and current authorization, not restored server cursors or old device sequences.
 
 Harden migration and recovery: retain schema snapshots, test real prior-version
 upgrades with data, transaction interruption/rollback, downgrade refusal,
@@ -62,3 +83,10 @@ hashes and the full acceptance ledger. Preserve historical reports and separate
 observed behavior from assumptions. Keep iOS/macOS/Linux and deferred features
 explicitly unverified until actually tested. End with delivered functionality,
 verification results, release readiness and remaining prerequisites.
+
+Keep a dated "Next-session handoff" in docs/verification/phase-5.md with current
+milestone, delivered versus planned behavior, relevant files, exact commands and
+results, artifact paths/hashes and signing status, failed/unverified acceptance
+rows, missing prerequisites without secrets, and the next executable action.
+Distinguish "ready for review", "verified release candidate" and "published";
+the last state requires an authorized publication and its actual result.

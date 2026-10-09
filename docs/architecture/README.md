@@ -5,6 +5,10 @@ The user accepted the seven decisions on 3 October 2026. The
 is the normative design, including source research and tradeoffs. Its original
 audit is historical; current evidence belongs in the phase report.
 
+See the [Phase 3 architecture diagrams](phase-3-sync.md) for the planned
+account/sync components and the sequence of an edit travelling between devices.
+The diagram below describes the existing local foundation.
+
 ```mermaid
 flowchart LR
   UI[Flutter views] --> R[TaskRepository]

@@ -22,7 +22,7 @@ and notification-dirty rows are not working integrations.
 | Platform | Status |
 | --- | --- |
 | Android arm64 | Native compilation evidence and installed-device gaps in the Phase 2 report |
-| Windows x64 | Phase 2 local release build and unpackaged window launch verified on 5 October; interactive and packaged-install checks remain open |
+| Windows x64 | Local release build and unpackaged launch verified; user confirmed offline editing and restart persistence on 9 October. Packaged-install checks remain open |
 | iOS, macOS, Linux | Planned; native projects and runtime support unverified |
 
 Actual Flutter widget render with synthetic SQLite data (not an installed-device screenshot):
@@ -67,6 +67,7 @@ without a recovery policy. Portable in-app export is phase 5 work.
 - [Architecture](docs/architecture/README.md) and [accepted plan](docs/proposals/2026-10-03-offline-first-architecture.md)
 - [Decision records](docs/adr/README.md)
 - [Phase 2 verification](docs/verification/phase-2.md) and [backlog](docs/backlog.md)
+- [Phase 3 delivery plan](docs/proposals/2026-10-09-phase-3-plan.md) (planning only)
 - [Fresh-session prompts for later phases](docs/prompts/README.md)
 - [Two-device tests](docs/runbooks/two-device-testing.md)
 - [Builds/releases](docs/runbooks/releases.md)

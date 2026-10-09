@@ -433,6 +433,9 @@ void main() {
       addTearDown(t.view.resetDevicePixelRatio);
       await t.pumpWidget(DoUrStuffApp(repository: repo));
       await t.pumpAndSettle();
+      expect(find.byKey(const ValueKey('search')), findsNothing);
+      await t.tap(find.text('Search (active)'));
+      await t.pumpAndSettle();
       expect(
         t
             .widget<TextField>(find.byKey(const ValueKey('search')))
@@ -507,11 +510,34 @@ void main() {
     await repo.createTask('One task');
     await t.pumpWidget(DoUrStuffApp(repository: repo));
     await t.pumpAndSettle();
-    await t.tap(find.byKey(const ValueKey('search')));
+    expect(find.byKey(const ValueKey('search')), findsNothing);
+    await t.tap(find.text('Search'));
+    await t.pumpAndSettle();
+    expect(
+      t
+          .widget<TextField>(find.byKey(const ValueKey('search')))
+          .focusNode!
+          .hasFocus,
+      isTrue,
+    );
     await t.enterText(find.byKey(const ValueKey('search')), 'No match');
     await t.pumpAndSettle();
     await reveal(t, find.text('No tasks match these filters.'));
     expect(find.text('No tasks match these filters.'), findsOneWidget);
+    await reveal(t, find.byTooltip('Collapse search'));
+    await t.tap(find.byTooltip('Collapse search'));
+    await t.pumpAndSettle();
+    expect(find.byKey(const ValueKey('search')), findsNothing);
+    expect(find.text('No tasks match these filters.'), findsOneWidget);
+    await t.tap(find.text('Search (active)'));
+    await t.pumpAndSettle();
+    expect(
+      t
+          .widget<TextField>(find.byKey(const ValueKey('search')))
+          .controller!
+          .text,
+      'No match',
+    );
     await t.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
     await t.sendKeyEvent(LogicalKeyboardKey.keyN);
     await t.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);

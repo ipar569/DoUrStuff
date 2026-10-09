@@ -15,7 +15,9 @@ to the developer. [Android setup](https://docs.flutter.dev/platform-integration/
 
 Windows needs a Windows host, Visual Studio Desktop development with C++,
 MSVC/CMake and a Windows SDK. Build Tools without C++ components is insufficient.
-This machine has that gap; the Visual Studio installer was not modified.
+This machine's missing C++ workload was installed on 5 October 2026; the local
+Windows release build and unpackaged launch passed. See the Phase 2 report for
+the installation details and later verification.
 [Windows setup](https://docs.flutter.dev/platform-integration/windows/setup)
 
 Run from the repository root:
@@ -35,7 +37,7 @@ flutter build apk --release --target-platform android-arm64
 flutter build windows --release
 ```
 
-No environment file, backend, account or Docker is needed for phase 1. The
+No environment file, backend, account or Docker is needed for the Phase 2 offline app. The
 config/sync.example.json file describes future public configuration and is not
 consumed yet. Release APKs are unsigned; there is no debug-key release fallback.
 

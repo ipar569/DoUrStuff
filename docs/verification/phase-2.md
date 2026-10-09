@@ -1,7 +1,9 @@
 # Phase 2 verification — 3 October 2026
 
-Status: offline application source implemented; host quality checks and Android
-debug compilation pass. Installed-device acceptance remains open.
+Status (reviewed 9 October 2026): offline application features implemented;
+current host quality checks pass. The user confirmed Windows offline editing
+and restart persistence. Android installed-device acceptance remains open;
+Phase 2 is not yet fully accepted. See the latest review below.
 
 ## Starting state and scope
 
@@ -222,3 +224,107 @@ Checks for this refinement:
 These are host/widget results. Native interaction, accessibility and Android
 installation gates remain open; earlier Android artifacts predate this UI change.
 No push, deployment or publication was performed.
+
+## Collapsible search refinement — 5 October 2026
+
+Search initially occupies a compact button in the filter toolbar. Clicking it
+expands and focuses the input. Collapse search returns focus to the button and
+preserves the query/results; the collapsed button reads Search (active) while
+search text is applied, including saved-view searches. No data contract changed.
+
+Checks from the repository root using the pinned local SDK:
+
+- `.tools/flutter/bin/flutter.bat pub get --enforce-lockfile`: **passed**.
+- `.tools/flutter/bin/dart.bat run build_runner build`: **passed**.
+- `.tools/flutter/bin/dart.bat format --output=none --set-exit-if-changed lib test tool`:
+  **passed**, 26 files, zero changes.
+- `.tools/flutter/bin/flutter.bat analyze`: **passed**, no issues.
+- `.tools/flutter/bin/flutter.bat test test/phase2_widget_test.dart --reporter expanded`:
+  **13 passed**. Updated existing scenarios check initial collapse, input focus,
+  retained text/results after collapse/reopen and a saved default search.
+- `.tools/flutter/bin/flutter.bat test --reporter expanded`: **55 passed**.
+- `git diff --exit-code -- lib/data/local/database.g.dart drift_schemas`:
+  **passed**, generated database/schema unchanged.
+- Initial `.tools/flutter/bin/flutter.bat test tool/render_preview.dart --reporter expanded`:
+  **failed** accessing `build/native_assets/windows/sqlite3.dll` while native
+  build/test commands overlapped. Retrying serially after those commands finish.
+
+Native interaction/accessibility and installed-platform acceptance remain open.
+Android compilation was not repeated for this presentation-only refinement.
+
+## Phase completion review — 9 October 2026
+
+Reviewed the current working tree at HEAD
+`08826fd1355757873368d3f9227c70a4e8001461`, including the pre-existing uncommitted
+collapsible-search change and its widget tests. Compared the Phase 2 prompt and
+accepted proposal section 13 with task/query/time code, repository transactions,
+UI flows and tests. No missing core Phase 2 feature or blocking source defect was
+identified in this review. This is not a claim that every native path was tested.
+Preserved the existing source/test changes; no application code changed during
+this review.
+
+The user explicitly confirmed Windows testing included offline editing, fully
+closing/reopening the application, and persistence of tasks and the default
+saved view. This is user-reported acceptance evidence; exact tested executable,
+Windows version and device details were not supplied. It does not establish
+fresh installation, abrupt process-kill recovery, screen-reader behavior or MSIX
+installation. `adb devices -l` found no Android device.
+
+Fresh checks from the repository root (the optional pinned SDK is under
+`.tools/flutter/bin`; these commands use its `.bat` launchers):
+
+| Exact command | Result |
+| --- | --- |
+| `.tools/flutter/bin/flutter.bat --version` | Flutter 3.47.6 / Dart 3.13.5; framework 5fc346839b |
+| `.tools/flutter/bin/flutter.bat pub get --enforce-lockfile` | Pass; lockfile unchanged |
+| `.tools/flutter/bin/dart.bat run build_runner build` | Pass; zero outputs written |
+| `.tools/flutter/bin/dart.bat format --output=none --set-exit-if-changed lib test tool` | Pass; 26 files, zero changed |
+| `.tools/flutter/bin/flutter.bat analyze` | Pass; no issues, 46.2s |
+| `.tools/flutter/bin/flutter.bat test --reporter expanded` | **55 passed** |
+| `.tools/flutter/bin/flutter.bat test tool/render_preview.dart --reporter expanded` | **3 passed**; all three generated previews visually inspected |
+| `git diff --exit-code -- lib/data/local/database.g.dart drift_schemas` | Pass; retained schema and generated code unchanged |
+| `.tools/flutter/bin/flutter.bat build windows --release` | Pass; 16.6s; no new native interaction test |
+| `./android/gradlew.bat -p android assembleDebug -Ptarget-platform=android-arm64 --no-daemon` | Pass; BUILD SUCCESSFUL in 1m 15s, exit 0; session JDK 21 override as below |
+| `C:/Users/ipar5/AppData/Local/Android/sdk/platform-tools/adb.exe devices -l` | No connected devices |
+| `Get-FileHash build/app/outputs/flutter-apk/app-debug.apk -Algorithm SHA256` | Hash below |
+| `git diff --check` | Pass |
+
+The Android command used
+`$env:JAVA_HOME = (Get-Content .tools/android-java-home.txt -Raw).Trim()`
+in the same PowerShell process, as in the original successful build. No global
+Java/Flutter setting changed. The existing AGP/Kotlin/Gradle deprecation warnings
+remain; the direct `flutter build apk` Java-selection issue was not retested or
+claimed fixed.
+
+Current debug APK: `build/app/outputs/flutter-apk/app-debug.apk`,
+**102,580,888 bytes**, SHA256
+`2a362ba53fccd2e05834637ef68408bab70f7dbdce9b4615011e23d0d24ed151`.
+This artifact includes the current capture/editor/search refinements and is
+ready for Android acceptance testing. It was not installed or published.
+
+The successful serial preview run closes the unresolved render failure in the
+5 October collapsible-search entry. Earlier failures remain recorded above.
+
+### Remaining Phase 2 acceptance and next phase
+
+Phase 2 is feature-implemented, but its fresh-install/offline/process-restart
+gate is not fully met. Phase 3 implementation was not started because the user
+conditioned it on Phase 2 being finished. The next product phase is optional
+accounts and real two-device sync, using the existing Phase 3 prompt.
+
+To close the remaining core gate, use synthetic data on an Android device:
+
+1. Record device model, Android version, app version and tested APK SHA256.
+   Use a fresh test install/profile without deleting any existing personal data.
+2. Disable network access before first launch. Create/edit tasks, complete and
+   reopen them, delete/undo, and exercise tags, milestones, priorities and dates.
+3. Exercise search/filter/sort and save a view as the startup default.
+4. Fully stop the app after a successful local save and reopen while offline.
+   Verify tasks, details, milestone states and the default view persisted.
+5. Record expected/actual results and any failure. Also retain the native
+   keyboard/scaling/accessibility and clock/zone checks listed above.
+
+Windows fresh-install/abrupt-kill evidence and the retained Phase 1
+secure-storage/notification feasibility checks are still separate open items.
+Signed packaging/release acceptance belongs to the later release work; a build
+alone does not satisfy it. No push, deployment or publication was performed.
