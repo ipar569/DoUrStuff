@@ -41,6 +41,45 @@ No environment file, backend, account or Docker is needed for the Phase 2 offlin
 config/sync.example.json file describes future public configuration and is not
 consumed yet. Release APKs are unsigned; there is no debug-key release fallback.
 
+The 10 October readiness check found no connected Android device. On 12 October,
+Android 11 x86_64 emulator acceptance passed and the user accepted it for local
+Phase 3 entry. Physical-device acceptance remains open. To exercise it, enable USB
+debugging and authorize this computer, then verify `adb devices -l` shows it as
+`device`. Use the [Phase 2 checklist](../verification/phase-2.md) to record model,
+OS, APK SHA256, offline first launch/edit and force-stop/reopen persistence of
+tasks and the startup view. Use a fresh test device or isolated Android user;
+do not clear an existing personal profile. Application ID is
+`app.dourstuff.dourstuff`; after saves, stop it for the test with
+`adb -s DEVICE_ID shell am force-stop app.dourstuff.dourstuff`, then reopen from
+its launcher. Record actual outcomes; host tests and compilation cannot
+substitute for them.
+
+The original 32-bit x86 AVD was unsupported by pinned Flutter. A separate
+`DoUrStuff_API_30_x64` AVD used `system-images;android-30;google_apis;x86_64`;
+build its debug APK with `android/gradlew.bat -p android assembleDebug
+-Ptarget-platform=android-x64 --no-daemon` and the session JDK 21 override below.
+Wait for `adb -s DEVICE_ID shell getprop sys.boot_completed` to return 1 before
+installing. The [Phase 2 report](../verification/phase-2.md) records the exact
+tested image/APK/hash, offline actions and retained screenshot. Preserve this
+synthetic profile when resuming; a fresh install must use an isolated profile.
+
+Backend readiness is separately recorded in [backend setup](backend.md): Docker's
+Linux daemon responded on 12 October; after initial policy blocks, CLI 2.120.0
+installation/checksum/version/help checks passed through interactive approval
+on 13 October. `.supabase-version` pins the CLI; the optional ignored executable
+is `.tools/supabase/supabase.exe`. Local configuration is now initialized under
+`supabase/`, with automatic API exposure disabled. Before starting services,
+update this host's Docker Engine 23.0.5 to 28+ for the project's loopback isolation
+requirement; see [backend setup](backend.md) and its official-source rationale.
+That historical engine prerequisite passed later on 16 October: Engine 29.8.2
+and the local stack are verified. The default network binding did not restrict
+ports on this Windows host; explicit localhost bindings were applied while
+preserving data. Use `python tool/local_backend.py --start` for the existing
+stack and follow `supabase/README.md`; plain CLI recreation loses that repair.
+Registration/pull/RLS integration passes. The 17 October apply increment also
+passes real local command checks for existing-task title/priority edits; full
+command coverage, native auth and client integration remain pending.
+
 Schema tooling uses an explicit filename because this Drift CLI cannot infer
 the schema version from the top-level constant:
 

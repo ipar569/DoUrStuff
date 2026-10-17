@@ -1,0 +1,67 @@
+{
+  "register": {
+    "request": {"protocol_version": 2, "device_epoch": "00000000-0000-0000-0000-000000000010", "server_epoch": "00000000-0000-0000-0000-000000000099"},
+    "reply": {"protocol_version": 2, "status": "success", "result": {"cursor": {"server_epoch": "00000000-0000-0000-0000-000000000099", "revision": 2}, "high_water": 0}}
+  },
+  "apply": {
+    "reply": {
+      "protocol_version": 2, "status": "success",
+      "result": {
+        "cursor": {"server_epoch": "00000000-0000-0000-0000-000000000099", "revision": 5},
+        "device_high_water": 3,
+        "results": [
+          {"kind": "receipt", "operation_id": "00000000-0000-0000-0000-000000000001", "sequence": 1, "revision": 3, "disposition": "conflict", "rejection_code": null, "fields": [{"group": "title", "disposition": "conflict", "accepted": null, "recovery_id": "00000000-0000-0000-0000-000000000061"}]},
+          {"kind": "receipt", "operation_id": "00000000-0000-0000-0000-000000000002", "sequence": 2, "revision": 4, "disposition": "held", "rejection_code": null, "fields": [{"group": "title", "disposition": "held", "accepted": null, "recovery_id": "00000000-0000-0000-0000-000000000062"}]},
+          {"kind": "receipt", "operation_id": "00000000-0000-0000-0000-000000000003", "sequence": 3, "revision": 5, "disposition": "applied", "rejection_code": null, "fields": [{"group": "title", "disposition": "applied", "accepted": {"revision": 5, "value": "B2"}, "recovery_id": null}]}
+        ]
+      }
+    }
+  },
+  "pull": {
+    "request": {"protocol_version": 2, "after": {"server_epoch": "00000000-0000-0000-0000-000000000099", "revision": 4}, "limit": 200},
+    "reply": {"protocol_version": 2, "status": "success", "result": {
+      "through": {"server_epoch": "00000000-0000-0000-0000-000000000099", "revision": 5}, "committed_high_water": 5, "has_more": false,
+      "groups": [{"revision": 5, "records": [{"entity": {"kind": "task", "key": ["00000000-0000-0000-0000-000000000030"]}, "fields": {"title": {"revision": 5, "value": "B2"}}, "delete_operation_id": null}], "recovery": []}]
+    }}
+  },
+  "begin_snapshot": {
+    "request": {"protocol_version": 2, "server_epoch": "00000000-0000-0000-0000-000000000099"},
+    "reply": {"protocol_version": 2, "status": "success", "result": {
+      "token": "00000000-0000-0000-0000-000000000080", "at": {"server_epoch": "00000000-0000-0000-0000-000000000099", "revision": 5},
+      "expires_at_utc": "2026-10-14T00:00:00.000Z", "page_count": 1, "record_count": 2,
+      "device_high_waters": {"00000000-0000-0000-0000-000000000010": 3}
+    }}
+  },
+  "snapshot_page": {
+    "request": {"protocol_version": 2, "server_epoch": "00000000-0000-0000-0000-000000000099", "token": "00000000-0000-0000-0000-000000000080", "page": 0},
+    "reply": {"protocol_version": 2, "status": "success", "result": {
+      "token": "00000000-0000-0000-0000-000000000080", "at": {"server_epoch": "00000000-0000-0000-0000-000000000099", "revision": 5}, "page": 0, "is_last": true,
+      "records": [{"entity": {"kind": "task", "key": ["00000000-0000-0000-0000-000000000030"]}, "fields": {"title": {"revision": 5, "value": "B2"}}, "delete_operation_id": null}],
+      "recovery": [{
+        "id": "00000000-0000-0000-0000-000000000061", "revision": 3, "group": "title", "disposition": "conflict", "canonical": {"revision": 2, "value": "Z"},
+        "operation": {
+          "protocol_version": 2, "operation_id": "00000000-0000-0000-0000-000000000001", "device_epoch": "00000000-0000-0000-0000-000000000010", "sequence": 1,
+          "entity": {"kind": "task", "key": ["00000000-0000-0000-0000-000000000020"]}, "command": "task.edit",
+          "patches": {"title": {"base": {"kind": "observed", "revision": 1, "value": "X"}, "value": "Y"}}, "dependencies": [], "provenance": {"occurred_at": 1791800000000}
+        }
+      }]
+    }}
+  },
+  "resolve": {
+    "request": {
+      "protocol_version": 2, "cursor": {"server_epoch": "00000000-0000-0000-0000-000000000099", "revision": 5},
+      "conflict_id": "00000000-0000-0000-0000-000000000061", "expected_conflict_revision": 3,
+      "replacement": {
+        "protocol_version": 2, "operation_id": "00000000-0000-0000-0000-000000000004", "device_epoch": "00000000-0000-0000-0000-000000000010", "sequence": 4,
+        "entity": {"kind": "task", "key": ["00000000-0000-0000-0000-000000000020"]}, "command": "task.edit",
+        "patches": {"title": {"base": {"kind": "observed", "revision": 2, "value": "Z"}, "value": "Y"}}, "dependencies": [], "provenance": {}
+      }
+    },
+    "reply": {"protocol_version": 2, "status": "success", "result": {
+      "cursor": {"server_epoch": "00000000-0000-0000-0000-000000000099", "revision": 6}, "device_high_water": 4,
+      "results": [{"kind": "receipt", "operation_id": "00000000-0000-0000-0000-000000000004", "sequence": 4, "revision": 6, "disposition": "applied", "rejection_code": null,
+        "fields": [{"group": "title", "disposition": "applied", "accepted": {"revision": 6, "value": "Y"}, "recovery_id": null}]}]
+    }}
+  },
+  "failure_codes": ["authenticationRequired", "accountDeleted", "unsupportedProtocol", "serverEpochChanged", "cursorExpired", "snapshotExpired", "sequenceGap", "payloadMismatch", "rateLimited", "unavailable"]
+}

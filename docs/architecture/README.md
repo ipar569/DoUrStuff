@@ -9,6 +9,10 @@ See the [Phase 3 architecture diagrams](phase-3-sync.md) for the planned
 account/sync components and the sequence of an edit travelling between devices.
 The diagram below describes the existing local foundation.
 
+Milestone 3.0 now includes an [account protocol v2 foundation](account-protocol-v2.md)
+with executable causal-chain fixtures. It is not a transport/server integration;
+the app still uses the guest v1 journal and rejects account writes.
+
 ```mermaid
 flowchart LR
   UI[Flutter views] --> R[TaskRepository]

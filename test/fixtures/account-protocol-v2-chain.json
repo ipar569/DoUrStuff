@@ -1,0 +1,40 @@
+{
+  "protocol_version": 2,
+  "server_epoch": "00000000-0000-0000-0000-000000000099",
+  "after_revision": 2,
+  "operations": [
+    {
+      "protocol_version": 2,
+      "operation_id": "00000000-0000-0000-0000-000000000001",
+      "device_epoch": "00000000-0000-0000-0000-000000000010",
+      "sequence": 1,
+      "entity": {"kind": "task", "key": ["00000000-0000-0000-0000-000000000020"]},
+      "command": "task.edit",
+      "patches": {"title": {"base": {"kind": "observed", "revision": 1, "value": "X"}, "value": "Y"}},
+      "dependencies": [],
+      "provenance": {"occurred_at": 1791800000000}
+    },
+    {
+      "protocol_version": 2,
+      "operation_id": "00000000-0000-0000-0000-000000000002",
+      "device_epoch": "00000000-0000-0000-0000-000000000010",
+      "sequence": 2,
+      "entity": {"kind": "task", "key": ["00000000-0000-0000-0000-000000000020"]},
+      "command": "task.edit",
+      "patches": {"title": {"base": {"kind": "predecessor", "operation_id": "00000000-0000-0000-0000-000000000001", "sequence": 1, "value": "Y"}, "value": "W"}},
+      "dependencies": [],
+      "provenance": {"occurred_at": 1791700000000}
+    },
+    {
+      "protocol_version": 2,
+      "operation_id": "00000000-0000-0000-0000-000000000003",
+      "device_epoch": "00000000-0000-0000-0000-000000000010",
+      "sequence": 3,
+      "entity": {"kind": "task", "key": ["00000000-0000-0000-0000-000000000030"]},
+      "command": "task.edit",
+      "patches": {"title": {"base": {"kind": "observed", "revision": 1, "value": "B1"}, "value": "B2"}},
+      "dependencies": [],
+      "provenance": {"occurred_at": 1791600000000}
+    }
+  ]
+}

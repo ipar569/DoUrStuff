@@ -3,6 +3,19 @@
 Official sources were checked on 3 October 2026; recheck before provisioning or
 publishing. Phase 1 has no hosted backend or paid package.
 
+Supabase sources were rechecked on 10 October 2026. The
+[pricing page](https://supabase.com/pricing) still lists the Free quotas below
+and Pro from US$25/month; it separately lists 5 GB cached egress. No paid service
+was selected. Store/CI figures below retain their earlier review date.
+The [pausing guide](https://supabase.com/docs/guides/platform/free-project-pausing)
+describes low database activity over seven days and currently permits restoration
+for up to one year after pausing. Treat that as a recovery deadline, not a backup
+strategy; no keepalive traffic is planned. The
+[database-size guide](https://supabase.com/docs/guides/platform/database-size)
+confirms the Free 500 MB read-only threshold and also describes organization
+fair-use restrictions returning HTTP 402. Future sync must retain pending work
+and surface these conditions without blocking SQLite editing.
+
 Supabase Free targets $0 recurring backend cost: 500 MB DB, 5 GB egress, 50,000
 MAU, two active projects, two million realtime messages and 200 peak connections.
 Projects may pause after a week inactive; oversized databases can become
@@ -10,6 +23,11 @@ read-only. No automatic backups. Local task use must survive those conditions.
 Default SMTP is restricted (currently two messages/hour); GitHub OAuth avoids
 production mail as a dependency. Pro starts at US$25/month; resources/add-ons
 can add cost. Retained history, tombstones, conflicts and snapshots count too.
+
+13 October implementation status: protocol work used only existing local tools
+and tests. No cloud project, paid dependency or resource was provisioned; the
+provider figures above retain their 10 October source-review date.
+
 [Pricing](https://supabase.com/pricing),
 [billing](https://supabase.com/docs/guides/platform/billing-on-supabase),
 [pausing](https://supabase.com/docs/guides/platform/free-project-pausing),
@@ -35,3 +53,13 @@ backend hosting are separate cost categories.
 No paid sync service, custom hosted server or artificial keepalive service is
 planned. Free cloud uptime is not guaranteed; upgrades need observed needs and
 explicit agreement.
+
+16 October: local Docker/Supabase images and synthetic integration tests now run
+on the existing development machine. No hosted project or paid service was
+provisioned. The tested image inventory is `supabase/images.lock.json`; local
+disk/memory use is separate from cloud quotas. No pricing assumptions changed.
+
+17 October command integration uses the same local stack and disposable synthetic
+accounts. No cloud resources or paid services were added. Receipt/candidate
+storage now exists locally; production retention and storage growth still need
+measurement before hosting or enabling accounts.
