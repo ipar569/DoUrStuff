@@ -29,8 +29,11 @@ reserved for a later protocol extension and are rejected by this vocabulary.
 
 Payload identity is exact canonical UTF-8 JSON: object keys sorted by Dart's
 UTF-16 string ordering, unchanged array order, no float/NaN, integers within
-±(2^53−1), at most 16
-nested containers. Strings are not normalized during payload comparison. The
+±(2^53−1), depth at most 16 for values, operations and requests. RPC reply
+envelopes allow depth 24 for revision/recovery/result wrappers; each embedded
+operation and accepted value still receives its own depth-16 validation. This
+keeps accepted operations readable when returned as recovery data. Strings are
+not normalized during payload comparison. The
 constructor defensively freezes nested maps/lists. Compare canonical payloads
 for retained operation identities, not client-provided hashes. A server may index
 a digest, but must retain/compare the authoritative payload while its identity

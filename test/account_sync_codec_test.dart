@@ -26,6 +26,42 @@ void main() {
     'resolve': resolveConflictCodec,
   };
 
+  test(
+    'depth-valid operations survive pull and snapshot recovery wrappers',
+    () {
+      Object nested = 0;
+      for (var i = 0; i < 12; i++) {
+        nested = [nested];
+      }
+      final request = copy(chain);
+      request['operations'][0]['provenance'] = {'nested': nested};
+      final operation = applyCodec.decodeRequest(request).operations.first;
+      final snapshot = copy(fixtures['snapshot_page']['reply']);
+      snapshot['result']['recovery'][0]['operation'] = operation.toJson();
+      final pull = copy(fixtures['pull']['reply']);
+      pull['result']['groups'][0]['recovery'] = snapshot['result']['recovery'];
+      final decoded = pullCodec.decodeReply(pull) as SyncSuccess<PullResult>;
+      expect(
+        decoded.value.groups.single.recovery.single.operation.payloadIdentity,
+        operation.payloadIdentity,
+      );
+      expect(pullCodec.encodeReply(decoded), pull);
+      expect(
+        snapshotPageCodec.encodeReply(snapshotPageCodec.decodeReply(snapshot)),
+        snapshot,
+      );
+
+      // Reply wrapping must not relax the embedded operation's own depth limit.
+      for (var i = 0; i < 3; i++) {
+        nested = [nested];
+      }
+      pull['result']['groups'][0]['recovery'][0]['operation']['provenance'] = {
+        'nested': nested,
+      };
+      expect(() => pullCodec.decodeReply(pull), throwsFormatException);
+    },
+  );
+
   for (final entry in codecs.entries) {
     final golden = fixtures[entry.key] as Map;
     final request = entry.key == 'apply' ? chain : golden['request'];

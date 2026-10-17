@@ -331,6 +331,17 @@ def main():
         require(g.apply(g.op(9, "revoked"))["code"] == "accountDeleted", "Revoked account cannot apply")
         passed_check("UTF-16/Unicode title boundaries, expired cursor and revoked-account apply")
 
+        nested = 0
+        for _ in range(12):
+            nested = [nested]
+        deep = f.op(15, "deep conflict", observed(1, "X"))
+        deep["provenance"] = {"nested": nested}
+        require(f.apply(deep)["result"]["results"][0]["disposition"] == "conflict",
+                "Maximum request-depth provenance can enter recovery")
+        require(f.pull(16)["groups"][0]["recovery"][0]["operation"] == deep,
+                "Pull retains the entire nested original operation")
+        passed_check("maximum-depth accepted request retained through real conflict/pull")
+
         # Capture every successful apply and pull response for production Dart decoding.
         f.pull()
         if args.wire_output:

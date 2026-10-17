@@ -32,6 +32,7 @@ Use the checked restart path for the **existing** repaired containers:
 
 ```powershell
 python tool/local_backend.py --start
+python tool/test_backend_http.py
 python tool/test_backend_foundation.py --supabase .tools/supabase/supabase.exe --wire-output .tools/backend-foundation-wire.json
 .tools/flutter/bin/dart.bat run tool/check_backend_wire.dart .tools/backend-foundation-wire.json
 python tool/test_backend_apply.py --supabase .tools/supabase/supabase.exe --wire-output .tools/backend-apply-wire.json
@@ -78,6 +79,11 @@ retry, receipt expiry, deletion recovery, ownership, injected transaction failur
 and late commits. It seeds existing tasks through SQL because creation is not
 implemented yet. The Dart checker decodes real replies and compares title validity
 with the app's validator, including Unicode whitespace and UTF-16 length cases.
+The HTTP helper explicitly disables environment proxies and rejects redirects;
+the loopback-only dummy-server tests verify that credentials are never forwarded.
+Those two transport tests also run in the Quality workflow without Docker.
+The apply harness includes maximum-depth provenance through conflict and pull,
+with real responses decoded by Dart using a separate reply-envelope depth budget.
 
 Unsupported commands/groups/dependencies fail whole-batch preflight without
 consuming sequences. No scheduled pruning is installed; expiry tests remove only

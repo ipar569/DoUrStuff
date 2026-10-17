@@ -92,6 +92,10 @@ lost-reply retries, receipt expiry, rollback, late commits and ownership denial.
 Next in 3.1: task creation/status and remaining command semantics, then snapshots
 and explicit resolution, full wire/normalization parity and retention policy.
 Account UI/transport stays gated throughout this partial backend work.
+PR #2 delivery review adds safe native integer bounds, a separate recovery-reply
+depth budget and local HTTP proxy/redirect isolation with regression checks.
+The full Flutter suite now passes 102 tests; see the latest verification handoff
+and PR timeline for backend reruns, independent review and CI/merge status.
 The [prompt index](prompts/README.md) includes copy-and-paste launch messages for
 new sessions; each phase prompt requires a durable verification handoff to resume.
 

@@ -5,25 +5,38 @@ const accountSyncProtocolVersion = 2;
 const maxAccountOperationBytes = 65536;
 const maxApplyOperations = 32;
 const maxSyncInteger = 9007199254740991;
+const maxSyncValueDepth = 16;
+// Replies wrap validated operations/values in revision, recovery and result
+// objects. Their envelope budget must not make accepted work unreadable.
+const maxSyncReplyDepth = 24;
 
-Object? _freeze(Object? value, [int depth = 0]) {
-  if (depth > 16) throw const FormatException('Protocol value too deep.');
+Object? _freeze(
+  Object? value, [
+  int depth = 0,
+  int maxDepth = maxSyncValueDepth,
+]) {
+  if (depth > maxDepth) throw const FormatException('Protocol value too deep.');
   if (value == null || value is String || value is bool) return value;
-  if (value is int && value.abs() <= maxSyncInteger) return value;
+  if (value is int && value >= -maxSyncInteger && value <= maxSyncInteger) {
+    return value;
+  }
   if (value is List) {
-    return List<Object?>.unmodifiable(value.map((v) => _freeze(v, depth + 1)));
+    return List<Object?>.unmodifiable(
+      value.map((v) => _freeze(v, depth + 1, maxDepth)),
+    );
   }
   if (value is Map && value.keys.every((k) => k is String)) {
     final keys = value.keys.cast<String>().toList()..sort();
     return Map<String, Object?>.unmodifiable({
-      for (final key in keys) key: _freeze(value[key], depth + 1),
+      for (final key in keys) key: _freeze(value[key], depth + 1, maxDepth),
     });
   }
   throw const FormatException('Expected an exact JSON protocol value.');
 }
 
 /// Canonical identity uses sorted keys and exact JSON integers, never a timestamp.
-String canonicalSyncJson(Object? value) => jsonEncode(_freeze(value));
+String canonicalSyncJson(Object? value, {int maxDepth = maxSyncValueDepth}) =>
+    jsonEncode(_freeze(value, 0, maxDepth));
 
 void _uuid(String value) {
   if (!RegExp(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$')

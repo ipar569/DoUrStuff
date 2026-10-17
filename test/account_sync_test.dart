@@ -10,6 +10,24 @@ import 'support/account_protocol_fixture.dart';
 String id(int n) => '00000000-0000-0000-0000-${n.toString().padLeft(12, '0')}';
 
 void main() {
+  test(
+    'safe JSON integer bounds reject native minimum without abs overflow',
+    () {
+      expect(canonicalSyncJson(-maxSyncInteger), '-9007199254740991');
+      expect(canonicalSyncJson(maxSyncInteger), '9007199254740991');
+      for (final value in [
+        -9223372036854775808,
+        -9007199254740992,
+        9007199254740992,
+      ]) {
+        expect(
+          () => canonicalSyncJson({'value': value}),
+          throwsFormatException,
+        );
+      }
+    },
+  );
+
   late Map<String, dynamic> fixture;
   late List<AccountOperation> chain;
   late FixtureAccount server;

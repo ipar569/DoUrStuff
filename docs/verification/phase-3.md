@@ -621,7 +621,7 @@ transport representability differences with shared fixtures before enabling
 account writes. Title boundary cases now have direct Dart/server comparison;
 other entity/relationship/tag/query/date normalization rules remain unfinished.
 
-## Next-session handoff — 17 October 2026
+## Implementation handoff — 17 October 2026, before PR review
 
 - **Current milestone:** 3.1 server foundation in progress. Phase 3.0 local
   readiness and the user-accepted Phase 2 emulator entry remain passed; physical
@@ -656,3 +656,78 @@ other entity/relationship/tag/query/date normalization rules remain unfinished.
   installed two-device/latency, backend CI and restore/deployment rehearsal.
   Phase 4 remains gated. No additional permission is needed for the next local
   implementation/tests under the user's existing authorization.
+
+## Delivery review — PR #2, 17 October 2026
+
+The user explicitly authorized review and merge of the existing completed Phase 3
+changes. This supersedes the earlier no-push constraint for this delivery only;
+production deployment/migration and release distribution remain unauthorized.
+The separate task-completion workflow was merged in PR #1 at
+`e93455b9b225902fa93cd5a0caeb9ab20e4ab049`. All 37 existing changed files were
+verified byte-for-byte before this delivery branch was created from that main.
+
+[PR #2](https://github.com/ipar569/DoUrStuff/pull/2), branch
+`codex/phase-3-server-foundation`, starts with commit
+`09e6dfce314f0b761acfcc4bf43031dbef35e668`. Staging found an extra blank line at
+the end of migration 002; only that whitespace was removed. Docker was stopped
+at the first runtime recheck; Desktop and the previously repaired containers were
+resumed through the guarded path. No containers or data were reset.
+
+Independent server, domain and harness reviews found three actionable issues:
+
+1. Native Dart's minimum signed integer overflowed `abs()` and passed the safe
+   JSON integer guard. Explicit lower/upper comparisons now reject it.
+2. A valid apply request at depth 16 produced a depth-20 conflict recovery reply
+   which the client rejected. Reply envelopes now allow depth 24; embedded
+   operations/values retain depth-16 validation and unchanged payload identity.
+   Unit regressions cover pull and snapshot wrappers and reject over-deep embedded
+   operations. A real apply/conflict/pull regression captures nested provenance
+   and decodes it through the production Dart checker.
+3. The harness's default HTTP client honored proxy environment variables and
+   followed redirects with authentication headers. Its dedicated opener now
+   disables proxies and rejects redirects. Two dummy-credential, loopback-only
+   HTTP server tests verify that neither destination receives forwarded requests;
+   these tests are included in the Quality workflow without requiring Docker.
+
+Before fixes, both targeted Dart regressions and both HTTP isolation regressions
+failed as expected; those failures are retained in ignored local logs. After
+fixes, the targeted Dart suite passed 41 tests and the HTTP tests passed 2/2.
+Full formatting checked 35 files with zero changes; `flutter analyze` found no
+issues (8.5 seconds); `flutter test --reporter expanded` passed all 102 tests.
+The final backend rerun passed 8 foundation groups and 11 apply groups, including
+the real nested-recovery regression. `check_backend_wire.dart` validated all 10
+foundation replies and 32 apply/pull replies. Exact harness commands are the
+same as in the preceding command table, plus `python tool/test_backend_http.py`.
+The production SQL migrations and guest SQLite schema were not changed by these
+review fixes. The first PR head's Quality/Android/Windows jobs passed; a changed
+head must pass its own CI and independent re-review before merging. Final review
+SHAs, CI links and merge state belong to the PR timeline, not an assumed result.
+
+## Next-session handoff — 17 October 2026, PR delivery
+
+- **State:** Phase 3.0 local readiness passed; Phase 3.1 remains partial. The user
+  accepted emulator entry evidence; physical/native/two-device gates stay open.
+  App accounts and network transport are still disabled.
+- **Source:** Phase 3 work is now committed on `codex/phase-3-server-foundation`
+  in [PR #2](https://github.com/ipar569/DoUrStuff/pull/2), rather than the earlier
+  uncommitted tree. Read its actual merge state and current checkout before
+  resuming; do not recreate or recommit delivered work. Local checks above apply
+  to the reviewed fixes committed with this section; CI/re-review identify the
+  exact subsequent PR head. Preserve historical evidence and ignored local data.
+- **Delivered:** v2 contracts/codecs/policies, three local server migrations,
+  registration/pull and atomic existing-task title/priority edits, receipts,
+  held/conflict/rejected recovery data, and real local integration harnesses.
+  Review fixes add integer/depth guards and proxy/redirect isolation tests.
+- **Next implementation:** task creation and atomic status/completion in a forward
+  migration, with create-collision/replay and both completion/edit concurrency
+  orders. Retain original bases and all-or-nothing creation. Continue remaining
+  command/normalization parity, snapshots/resolution and retention before enabling
+  account writes. JSONB raw-number/NUL representability remains a documented gate.
+- **Runtime:** use `python tool/local_backend.py --start` for existing localhost-
+  bound services. Keep stopped `*-before-loopback` originals and named volumes.
+  Fresh-host binding setup, native GitHub PKCE/secure storage and a restricted
+  device-reachable endpoint still need work. No hosted project is linked.
+- **Remaining acceptance:** profiles/local migration, full client replication and
+  recovery, consent/lifecycle, installed two-device fault/latency tests, full
+  backend CI and restore/deployment rehearsal. Phase 4 remains gated. Use the
+  new completion workflow subject to each task's explicit publication constraints.

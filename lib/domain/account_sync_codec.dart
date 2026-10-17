@@ -58,9 +58,12 @@ void _version(_Json json) {
   }
 }
 
-void _bounded(Object? value, int bytes) {
+void _bounded(Object? value, int bytes, {int maxDepth = maxSyncValueDepth}) {
   // Transport adapters must also bound the raw body BEFORE JSON decoding.
-  if (utf8.encode(canonicalSyncJson(value)).length > bytes) _bad();
+  if (utf8.encode(canonicalSyncJson(value, maxDepth: maxDepth)).length >
+      bytes) {
+    _bad();
+  }
 }
 
 AccountCursor _cursor(Object? value) {
@@ -209,7 +212,9 @@ final class AccountRpcCodec<Q, R> {
   }
 
   SyncReply<R> decodeReply(Object? value) {
-    _bounded(value, 4194304);
+    // Embedded operations and accepted values retain their own depth-16 checks.
+    // This allowance is only for the surrounding RPC/revision/recovery wrappers.
+    _bounded(value, 4194304, maxDepth: maxSyncReplyDepth);
     final json = _map(value);
     _version(json);
     if (json['status'] == 'success') {

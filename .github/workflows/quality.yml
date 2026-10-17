@@ -27,5 +27,7 @@ jobs:
       - run: dart format --output=none --set-exit-if-changed lib test tool
       - run: flutter analyze
       - run: flutter test --reporter expanded
+      - name: Verify local backend HTTP isolation
+        run: python3 tool/test_backend_http.py
       - run: dart run drift_dev schema dump lib/data/local/database.dart drift_schemas/drift_schema_v1.json
       - run: git diff --exit-code -- drift_schemas

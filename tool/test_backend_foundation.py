@@ -41,6 +41,11 @@ def require(condition, label):
         raise AssertionError(label)
 
 
+class RejectRedirects(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        raise RuntimeError("Local backend redirects are forbidden")
+
+
 class Backend:
     def __init__(self, executable):
         state = json.loads(command([executable, "status", "-o", "json"]))
@@ -48,6 +53,8 @@ class Backend:
         require(self.url == "http://127.0.0.1:54321", "Only the fixed local test endpoint is allowed")
         self.anon = state["ANON_KEY"]
         self.admin = state["SERVICE_ROLE_KEY"]
+        # Local credentials must never follow environment proxies or redirects.
+        self.opener = urllib.request.build_opener(urllib.request.ProxyHandler({}), RejectRedirects())
         self.users = []
         self.wire = []
 
@@ -60,7 +67,7 @@ class Backend:
             method=method,
         )
         try:
-            with urllib.request.urlopen(request, timeout=20) as response:
+            with self.opener.open(request, timeout=20) as response:
                 data = response.read()
                 return response.status, json.loads(data) if data else None
         except urllib.error.HTTPError as error:
