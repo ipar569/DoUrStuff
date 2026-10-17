@@ -58,3 +58,21 @@ failed check. Preserve unrelated changes and existing deletions. Publishing,
 production migration execution and store distribution require user authorization
 for that action. Ordinary local implementation/tests do not require another
 approval. No production secrets in PR workflows; pin Actions to commit SHAs.
+
+## Task completion workflow
+
+For each completed repository-change task, use
+[finish-task](.agents/skills/finish-task/SKILL.md): create a `codex/` branch,
+commit only that task's changes, push it, open a PR to `main`, obtain an independent
+review subagent's code review, address findings, wait for applicable checks, then
+merge and verify the merge. Reuse the same branch/PR when resuming a task. Read-only
+questions need no branch or empty PR.
+
+This is the user's standing authorization for task branch pushes, PR creation,
+review comments and merging completed changes to `main`; no repeated permission
+request is needed. Explicit task restrictions such as local-only, no-push or
+no-merge take precedence. This authorization does not include releases, store
+publication or production deployment/migrations, including those triggered by
+push/merge automation. Never bypass review or branch protections. If a required
+check/review or merge is blocked, leave the PR open and report the exact blocker.
+Preserve unrelated working-tree changes; use an isolated worktree when necessary.
