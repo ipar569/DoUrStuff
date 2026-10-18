@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:dourstuff/domain/account_sync_codec.dart';
 import 'package:dourstuff/domain/account_sync_rpc.dart';
+import 'package:dourstuff/domain/account_task_validation.dart';
 import 'package:dourstuff/domain/task.dart';
 
 /// Verifies sanitized synthetic responses captured by the backend harnesses.
@@ -25,6 +26,18 @@ void main(List<String> args) {
         for (var i = 0; i < request.operations.length; i++) {
           final title = request.operations[i].patches['title']?.value;
           final receipt = result.results[i];
+          final patches = request.operations[i].patches;
+          if (receipt is OperationReceipt &&
+              patches.containsKey('status_group')) {
+            final valid = validAccountStatusGroup(
+              patches['status_group']!.value,
+            );
+            if (valid == (receipt.rejectionCode == 'invalid_status_group')) {
+              throw const FormatException(
+                'Server and Dart status rules differ.',
+              );
+            }
+          }
           if (title is! String || receipt is! OperationReceipt) continue;
           var valid = true;
           try {

@@ -65,3 +65,12 @@ that simulated retention boundary. Held successors remain held; missing accepted
 predecessor evidence requires recovery. Deleted tasks cannot be resurrected by
 the implemented edit path. Snapshot download, resolution, physical crash recovery
 and automated retention are still unimplemented; these checks do not close them.
+
+18 October: `.tools/backend-before-create-status.sql` preserves the local
+application schema/data before migration 004. Real HTTP tests now verify that
+creation, status history, receipt, cursor and watermark roll back together on
+an injected log-write failure. Reopening clears only the current completion
+time; earlier status snapshots survive retries and receipt expiry. Creation
+collisions retain all original absent bases; a tombstone blocks recreation.
+History is currently private server storage: download, snapshot inclusion and
+retention/deletion handling remain required before client account activation.

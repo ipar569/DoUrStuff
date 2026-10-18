@@ -80,6 +80,11 @@ Registration/pull/RLS integration passes. The 17 October apply increment also
 passes real local command checks for existing-task title/priority edits; full
 command coverage, native auth and client integration remain pending.
 
+18 October: forward migration 004 and `tool/test_backend_task_create.py` add
+real HTTP core task creation and atomic status/completion checks. Continue using
+the existing guarded stack restart; preserve the stopped backup containers and
+volumes. No native auth configuration or device endpoint was added.
+
 Schema tooling uses an explicit filename because this Drift CLI cannot infer
 the schema version from the top-level constant:
 
