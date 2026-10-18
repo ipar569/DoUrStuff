@@ -34,24 +34,68 @@ intent. Schema remains v1; tags, milestones and views now have commands and vali
 No Riverpod dependency was needed for this screen-owned state.
 
 See [Phase 2 verification](verification/phase-2.md) for exact host checks and
-native build evidence. Remaining acceptance: installed offline launch/edit,
+native build evidence. Remaining acceptance: physical Android offline launch/edit,
 process-kill/restart, travel/clock-change behavior, native accessibility and
 packaged Windows behavior. Windows prerequisites, local release compilation and
 an unpackaged responding window were verified on 5 October; interactive task
 testing was confirmed by the user on 9 October, including offline editing,
 closing/reopening, and persistence of tasks and the default saved view. Exact
-Windows build/device details were not supplied. Android fresh-install/offline
-and process-restart acceptance remains open, so Phase 2 is feature-implemented
-but not fully accepted. Host/widget tests do not close these gates. Large
+Windows build/device details were not supplied. Android 11 x86_64 emulator
+fresh-install/offline and process-restart acceptance passed on 12 October;
+the user accepted this for entry into local Phase 3 work. Physical Android
+acceptance remains open. Host/widget tests do not close these gates. Large
 workspace performance and real disk-full/power-loss behavior remain unmeasured.
 
 ## Phase 3: accounts and tested two-device sync
 
-Planning only: [9 October delivery plan](proposals/2026-10-09-phase-3-plan.md)
-and [Phase 3 verification status](verification/phase-3.md). Start implementation
-after the Phase 2 entry gate closes. Milestones: protocol/readiness, server
+Milestone 3.0 local readiness passed; 3.1 in progress: [9 October delivery plan](proposals/2026-10-09-phase-3-plan.md)
+and [Phase 3 verification status](verification/phase-3.md). The user accepted the
+emulator entry evidence on 12 October. Milestones: protocol/readiness, server
 foundation, account storage/auth, first sync slice, full replication/recovery,
 account lifecycle, then installed two-device acceptance/deployment readiness.
+
+10 October review: user reconfirmed Android acceptance is incomplete; keep the
+entry gate open. [Readiness notes](proposals/2026-10-10-phase-3-readiness.md)
+inventory command/schema gaps and a candidate dependency-sequencing fixture.
+No Phase 3 implementation or executable protocol fixture was added during that
+review. Superseding 12–13 October work adds immutable account v2 operations,
+typed RPC contracts and 16 causal/identity tests. Docker's Linux daemon now
+responds. CLI download/execution was initially blocked, then succeeded through
+interactive approval on 13 October; version 2.120.0 is pinned. At that point,
+complete RPC wire fixtures, relationship/delete/restore and resolution-race
+fixtures, and real stack/dependency verification remained unfinished.
+The later 13 October increment adds all six RPC codecs/goldens, response
+correlation, pure relationship/delete/restore/default/tag/resolution checks and
+a terminal-rejection fixture. Local Supabase configuration is initialized.
+Remaining readiness: upgrade the old Docker engine for loopback port isolation,
+then prove real stack health and image pins. Full server command validation,
+PostgreSQL normalization parity and transactional policy/RLS evidence remain
+3.1 work. No backend or account adapter is implemented; account writes stay
+guarded. See the backend runbook and verification report.
+16 October resume adds registration/snapshot-creation epoch checks and rejects
+expired snapshot manifests before staging; the full suite passes 100 tests.
+The installed Docker Desktop still reports 4.19.0 with its daemon stopped, so
+the runtime update and stack health remain the next prerequisites.
+Later on 16 October the user completed the update: Engine 29.8.2 and the local
+stack now pass health/image checks. The network-default binding failed on this
+host and was repaired with explicit loopback bindings while preserving volumes.
+Use the guarded restart procedure in `supabase/README.md`. Two real migrations
+now provide restricted registration/pull RPCs and private ownership-enforced
+storage. Eight backend integration groups pass, with Dart validation of real
+responses. Next: atomic apply, field/entity validation, receipts/watermarks and
+the conflict/dependent/unrelated fixture against PostgreSQL. These remain 3.1;
+there is no client account integration or two-device sync yet.
+17 October implements the first atomic apply increment: existing-task title and
+priority edits, immutable receipts, contiguous device watermarks and retained
+conflict/held/rejected repair data. Real HTTP tests reproduce the causal fixture,
+lost-reply retries, receipt expiry, rollback, late commits and ownership denial.
+Next in 3.1: task creation/status and remaining command semantics, then snapshots
+and explicit resolution, full wire/normalization parity and retention policy.
+Account UI/transport stays gated throughout this partial backend work.
+PR #2 delivery review adds safe native integer bounds, a separate recovery-reply
+depth budget and local HTTP proxy/redirect isolation with regression checks.
+The full Flutter suite now passes 102 tests; see the latest verification handoff
+and PR timeline for backend reruns, independent review and CI/merge status.
 The [prompt index](prompts/README.md) includes copy-and-paste launch messages for
 new sessions; each phase prompt requires a durable verification handoff to resume.
 

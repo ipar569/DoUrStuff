@@ -5,6 +5,17 @@ components below are not implemented. The existing guest app supplies the
 SQLite command/query foundation. See the [delivery plan](../proposals/2026-10-09-phase-3-plan.md)
 for milestones and [verification tracker](../verification/phase-3.md) for evidence.
 
+12–13 October update: [protocol v2 foundations](account-protocol-v2.md) and an
+executable causal-chain fixture now exist. The integration components in these
+diagrams remain planned; no client auth or replication adapter is enabled.
+16 October: the local backend now has private account/device/log storage and
+tested registration/pull RPCs. Apply, receipts, snapshots and recovery remain
+unfinished; the complete paths below are still acceptance targets.
+17 October: atomic apply for existing-task title/priority edits now has real
+HTTP/PostgreSQL evidence for receipts, held/conflict candidates and contiguous
+progress. Other commands, snapshots, resolution and all client integration remain
+unfinished. The diagrams describe the complete target, not current app behavior.
+
 ## Component overview
 
 The expanded client represents either Android or Windows. Each device has its

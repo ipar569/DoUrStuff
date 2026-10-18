@@ -1,6 +1,6 @@
 # Preservation and recovery
 
-Saved means committed locally. Phase 1 is guest-only; it has no cloud backup or
+Saved means committed locally. The current Phase 2 app is guest-only; it has no cloud backup or
 in-app export. Back up the device and retain the entire profile directory before
 repairs. Never clear app data merely to fix an open/migration failure.
 
@@ -20,3 +20,48 @@ Phase 3 must put restored work into recovery/export mode, create a new device
 epoch, fetch an authoritative snapshot and preserve original conflict bases.
 Server restoration increments server epoch. Account restore does not exist yet.
 Never clear pending operations/tombstones to make synchronization appear healthy.
+
+Phase 3 readiness review, 10 October 2026: reserved v1 sync tables are not an
+account recovery implementation. The planned upgrade must retain original bases,
+held dependent candidates and adoption mappings through snapshot/receipt expiry;
+see the [upgrade inventory](../proposals/2026-10-10-phase-3-readiness.md).
+No upgrade or restore was executed during that review. Supabase's current
+[pausing policy](https://supabase.com/docs/guides/platform/free-project-pausing)
+allows platform restoration for up to one year after pausing. Preserve independent
+backups; recheck that window during an incident. No cloud backup was created.
+
+12–13 October: the [v2 contract foundation](../architecture/account-protocol-v2.md)
+defines durable held candidates separately from transport acknowledgements and
+plans the minimal retained-data SQLite upgrade. Its in-memory snapshot/reload
+fixture preserves original conflict bases and high-water marks after receipt
+expiry; it is not database crash or backend restore evidence. Schema remains v1.
+Android emulator acceptance used a stopped-app archive of the complete synthetic
+guest profile, including WAL/SHM, and checked a read-only copy. No personal data,
+account restore, migration or cloud recovery was involved.
+
+Later 13 October wire checks reject snapshot pages with the wrong token/epoch/
+revision/page, expired manifests, impossible acknowledgements or missing
+original bases. Exact restore deletion identity and the server-time 30-day
+content boundary now have pure policy tests. These checks still do not implement
+durable staging, complete snapshot validation or real backup/restore. An
+expired receipt never authorizes reapplying a consumed operation; the fixture
+also preserves terminally rejected candidates through representation reload.
+
+16 October local backend work preserved the named PostgreSQL volume when fixing
+port bindings. Four original containers remain stopped as `*-before-loopback`;
+do not restart them because they publish on all interfaces. The schema/data dump
+before the identity-boundary forward migration is ignored local evidence at
+`.tools/backend-before-auth-boundary.sql`, not a verified disaster-recovery backup.
+Migration tests rebuild the application schema inside a rollback-only transaction
+and verify an existing device watermark survives the forward fix. No production
+restore, failed-migration reset or account content recovery was performed.
+
+17 October adds a second local pre-migration dump at
+`.tools/backend-before-causal-edits.sql`; it is not a rehearsed restore artifact.
+Real apply tests now prove atomic rollback on an injected log-write failure,
+idempotent retries after a simulated lost reply, and no replay after detailed
+receipt removal. Device watermarks and unresolved original envelopes survive
+that simulated retention boundary. Held successors remain held; missing accepted
+predecessor evidence requires recovery. Deleted tasks cannot be resurrected by
+the implemented edit path. Snapshot download, resolution, physical crash recovery
+and automated retention are still unimplemented; these checks do not close them.

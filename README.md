@@ -19,9 +19,19 @@ Accounts/sync remain Phase 3; recurrence, calendar and reminders remain Phase 4;
 portable export/import and release hardening remain Phase 5. Reserved schemas
 and notification-dirty rows are not working integrations.
 
+Android 11 x86_64 emulator offline/restart acceptance passed on 12 October.
+The user accepted this evidence for local Phase 3 work, retaining physical-device
+testing. Milestone 3.0 now has [strict account wire contracts and policy fixtures](docs/architecture/account-protocol-v2.md);
+[verification](docs/verification/phase-3.md) records results and remaining work.
+Accounts and sync have not been enabled.
+Local Phase 3.1 server work now includes tested device registration, cursor reads,
+ownership isolation and atomic title/priority edits on existing tasks, including
+conflict retention and retry receipts. Other commands and app integration remain pending.
+
 | Platform | Status |
 | --- | --- |
 | Android arm64 | Native compilation evidence and installed-device gaps in the Phase 2 report |
+| Android x86_64 emulator | Fresh offline launch, editing, delete/undo and saved-default persistence after force-stop verified; physical-device acceptance remains open |
 | Windows x64 | Local release build and unpackaged launch verified; user confirmed offline editing and restart persistence on 9 October. Packaged-install checks remain open |
 | iOS, macOS, Linux | Planned; native projects and runtime support unverified |
 
@@ -67,7 +77,7 @@ without a recovery policy. Portable in-app export is phase 5 work.
 - [Architecture](docs/architecture/README.md) and [accepted plan](docs/proposals/2026-10-03-offline-first-architecture.md)
 - [Decision records](docs/adr/README.md)
 - [Phase 2 verification](docs/verification/phase-2.md) and [backlog](docs/backlog.md)
-- [Phase 3 delivery plan](docs/proposals/2026-10-09-phase-3-plan.md) (planning only)
+- [Phase 3 delivery plan](docs/proposals/2026-10-09-phase-3-plan.md) and [current evidence](docs/verification/phase-3.md)
 - [Fresh-session prompts for later phases](docs/prompts/README.md)
 - [Two-device tests](docs/runbooks/two-device-testing.md)
 - [Builds/releases](docs/runbooks/releases.md)

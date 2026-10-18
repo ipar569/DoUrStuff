@@ -1,0 +1,106 @@
+{
+  "cli_version": "2.120.0",
+  "verified_date": "2026-10-16",
+  "project_id": "dourstuff-local",
+  "images": {
+    "db": {
+      "image_id": "sha256:94fe95acfce6e1d41106ff2abd4c08e7932a6941d453499a56f8a620a473de1a",
+      "repo_digests": [
+        "public.ecr.aws/supabase/postgres@sha256:6058a6759ab9268cff8ee70641d61f1bd75953316281b76427cf5a6b4db2eafc"
+      ],
+      "repo_tags": [
+        "public.ecr.aws/supabase/postgres:17.11.0.004"
+      ],
+      "os": "linux",
+      "architecture": "amd64"
+    },
+    "kong": {
+      "image_id": "sha256:3cefb958bcd694597b65adc00053a762b1f9a6df3c6031af528d052d75a64e1a",
+      "repo_digests": [
+        "public.ecr.aws/supabase/kong@sha256:1b53405d8680a09d6f44494b7990bf7da2ea43f84a258c59717d4539abf09f6d"
+      ],
+      "repo_tags": [
+        "public.ecr.aws/supabase/kong:2.8.1"
+      ],
+      "os": "linux",
+      "architecture": "amd64"
+    },
+    "auth": {
+      "image_id": "sha256:1181bff5ba4ce440013a63cef9f4cf13024c432d705c9b1fbc9e5b949e852f48",
+      "repo_digests": [
+        "public.ecr.aws/supabase/gotrue@sha256:1736a63078f5922b198c4cbe50f80ab9a2d3b54fe8b7b6cfb2e9dc5dbbc12c6b"
+      ],
+      "repo_tags": [
+        "public.ecr.aws/supabase/gotrue:v2.197.0"
+      ],
+      "os": "linux",
+      "architecture": "amd64"
+    },
+    "rest": {
+      "image_id": "sha256:1ad5f2ea5501150ec9c7953ae9bf04111ced39a53ca01fc0f08af6d0b7ba67be",
+      "repo_digests": [
+        "public.ecr.aws/supabase/postgrest@sha256:d155c6718ed9a9f990d159a2ab7c0a3f16944dbb6d0a0344557421042acfe0df"
+      ],
+      "repo_tags": [
+        "public.ecr.aws/supabase/postgrest:v16.4"
+      ],
+      "os": "linux",
+      "architecture": "amd64"
+    },
+    "realtime": {
+      "image_id": "sha256:7412151d218fc99aa324e95883f1e29d2008542c9f85e241873f50c3f6476c43",
+      "repo_digests": [
+        "public.ecr.aws/supabase/realtime@sha256:f704b3222e3c772610865e016153d606a3f94f0a55a7548a903b3f6d7f3f8270"
+      ],
+      "repo_tags": [
+        "public.ecr.aws/supabase/realtime:v2.140.10"
+      ],
+      "os": "linux",
+      "architecture": "amd64"
+    },
+    "storage": {
+      "image_id": "sha256:12afd2170c5ca80880a4af472bcb89d28e090e3155a8bcee4246c1fb3991dcdd",
+      "repo_digests": [
+        "public.ecr.aws/supabase/storage-api@sha256:6a32896ae2d1ae2ea2d05ecaf6ed6c8a6b091739b469a8cf860ee89b2604d28f"
+      ],
+      "repo_tags": [
+        "public.ecr.aws/supabase/storage-api:v1.79.36"
+      ],
+      "os": "linux",
+      "architecture": "amd64"
+    },
+    "pg_meta": {
+      "image_id": "sha256:8d72aca55290778ae61a1c5cef261728a04ff8d207bc8b3d5a8255faa2dea0e9",
+      "repo_digests": [
+        "public.ecr.aws/supabase/postgres-meta@sha256:145325b7e39f8ef4931d6e8cfd3f6f4d655de09d72a2ccc96d9513542c2202bd"
+      ],
+      "repo_tags": [
+        "public.ecr.aws/supabase/postgres-meta:v0.100.0"
+      ],
+      "os": "linux",
+      "architecture": "amd64"
+    },
+    "studio": {
+      "image_id": "sha256:7fe04e8673b6b63741dca914cbbdf95de2c4728e0b61e1076aa8bbb42128fecd",
+      "repo_digests": [
+        "public.ecr.aws/supabase/studio@sha256:d878dcd9dba73b66d1c2c19aeaf53d07704e71604d93013225be1d1c51475237"
+      ],
+      "repo_tags": [
+        "public.ecr.aws/supabase/studio:2026.10.05-sha-94b8b06"
+      ],
+      "os": "linux",
+      "architecture": "amd64"
+    },
+    "inbucket": {
+      "image_id": "sha256:1ce65b9a2daa2a01cf4f226dbd4b3758b5b9fe686c2f471cf979273a389aab91",
+      "repo_digests": [
+        "public.ecr.aws/supabase/mailpit@sha256:ed9b00c609e77e99c79b93f1178255ebc271868920f2c69a8d166bd5634ed10d"
+      ],
+      "repo_tags": [
+        "public.ecr.aws/supabase/mailpit:v1.31.3"
+      ],
+      "os": "linux",
+      "architecture": "amd64"
+    }
+  }
+}

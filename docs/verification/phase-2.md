@@ -1,9 +1,10 @@
 # Phase 2 verification — 3 October 2026
 
-Status (reviewed 9 October 2026): offline application features implemented;
-current host quality checks pass. The user confirmed Windows offline editing
-and restart persistence. Android installed-device acceptance remains open;
-Phase 2 is not yet fully accepted. See the latest review below.
+Status (reviewed 13 October 2026): offline application features implemented;
+host checks pass. Windows offline/restart persistence is user-confirmed.
+Android 11 x86_64 emulator acceptance passed on 12 October and the user accepted
+it for entry into local Phase 3 work. Physical Android and retained native gates
+remain open; this is not full platform acceptance. See the latest review below.
 
 ## Starting state and scope
 
@@ -328,3 +329,140 @@ Windows fresh-install/abrupt-kill evidence and the retained Phase 1
 secure-storage/notification feasibility checks are still separate open items.
 Signed packaging/release acceptance belongs to the later release work; a build
 alone does not satisfy it. No push, deployment or publication was performed.
+
+## Phase 3 entry recheck — 10 October 2026
+
+Started from clean HEAD `894766a27e7a241e5f8c8dc260e523d209220f84`.
+Read AGENTS, the Phase 3 task prompt, accepted proposal/ADRs, delivery plan,
+architecture diagrams, runbooks and current code/tests. Applied the sync-protocol
+and database-migrations skills. The user explicitly replied **"Not completed;
+keep the entry gate open"** about Android acceptance. No Android device was
+connected. Phase 2 remains feature-implemented but not fully accepted; Phase 3
+implementation was therefore not started. Only documentation changed.
+
+Fresh checks from the repository root, using the optional pinned SDK:
+
+| Exact command | Actual result |
+| --- | --- |
+| `.tools/flutter/bin/flutter.bat --version` | Pass: Flutter 3.47.6, Dart 3.13.5, framework 5fc346839b |
+| `.tools/flutter/bin/flutter.bat pub get --enforce-lockfile` | Pass; lockfile unchanged |
+| `.tools/flutter/bin/dart.bat run build_runner build` | Pass; 5s, zero outputs written |
+| `.tools/flutter/bin/dart.bat format --output=none --set-exit-if-changed lib test tool` | Pass; 26 files, zero changed |
+| `.tools/flutter/bin/flutter.bat analyze` | Pass; no issues, 8.4s |
+| `.tools/flutter/bin/flutter.bat test --reporter expanded` | **55 passed**, including real SQLite persistence/rollback/profile guards, v1 schema and widget checks |
+| `.tools/flutter/bin/flutter.bat build windows --release` | Pass; 21.3s; incremental build, no app launch or interaction |
+| `./android/gradlew.bat -p android assembleDebug -Ptarget-platform=android-arm64 --no-daemon` | Pass; BUILD SUCCESSFUL in 1m 9s; exit 0 |
+| `C:/Users/ipar5/AppData/Local/Android/sdk/platform-tools/adb.exe version` | 1.0.41 / 31.0.2-7242960 |
+| `C:/Users/ipar5/AppData/Local/Android/sdk/platform-tools/adb.exe devices -l` | Empty device list |
+| `git diff --exit-code -- lib test pubspec.lock drift_schemas` | Pass; application, tests, generated database, lockfile and snapshots unchanged |
+| `Get-Item build/app/outputs/flutter-apk/app-debug.apk,build/app/outputs/apk/debug/app-debug.apk,build/windows/x64/runner/Release/dourstuff.exe` and `Get-FileHash` on those paths with `-Algorithm SHA256` | Artifact metadata below |
+| `git diff --check` | Pass |
+
+Android used the same session-only override as before:
+`$env:JAVA_HOME = (Get-Content .tools/android-java-home.txt -Raw).Trim()`.
+No global JDK configuration changed. Direct `flutter build apk` was not rerun;
+its previously recorded Java-selection failure is not claimed fixed. Builds ran
+serially after host tests. Existing AGP/Kotlin/Gradle deprecations remain; this
+run also warned that SDK tooling understands XML v3 but encountered XML v4.
+Those warnings did not fail compilation and remain tooling maintenance work.
+
+Current debug APK, version `0.1.0+1`, application ID `app.dourstuff.dourstuff`:
+`build/app/outputs/flutter-apk/app-debug.apk`, **121,978,607 bytes**, SHA256
+`854dbf2f1e18a6c4b401e812ec633e55129e2c6ae3a72a85e039209697862f40`.
+The Gradle output at `build/app/outputs/apk/debug/app-debug.apk` has the same
+size/hash. Use this artifact identity for subsequent acceptance; the 9 October
+hash above describes an earlier artifact. This build was not installed.
+
+Windows runner: **90,112 bytes**, SHA256
+`ddc8de4e08cb15784652ed20c7f126b0daba22ec429cb3fb36a39a00330b20ec`.
+This is the runner hash only; the release directory's DLLs/data are required.
+An incremental build can retain the runner hash while rebuilding Dart assets.
+No packaged Windows install, new interaction test, hosted CI, preview render,
+native accessibility, clock-change, secure-storage or notification test ran.
+
+Next action: connect an authorized Android test device and follow the five-step
+checklist above using synthetic data and this APK. Record model/OS and actual
+offline first-launch/edit/default-view/force-stop/reopen results. Preserve any
+personal profile. The retained Windows fresh-install/abrupt-kill and other native
+gates remain separate from prior user-confirmed Windows normal restart.
+
+## Android emulator acceptance — 10–12 October 2026
+
+Recorded 13 October after resuming the session. Tested the guest app at HEAD
+`894766a27e7a241e5f8c8dc260e523d209220f84` with documentation-only changes at
+APK build time. The later account-contract files are unused by the app and were
+added after these interactions. No personal profile was cleared.
+
+The user's original `Pixel_4_XL_API_30` emulator was 32-bit x86, unsupported by
+the pinned Flutter Android build. It was left untouched. Created a separate
+`DoUrStuff_API_30_x64` AVD, serial `emulator-5556`, with Google APIs Android 11
+(API 30), x86_64 image revision 16, emulator 37.2.12 and WHPX. Screen was
+1440×3040 at density 560. Fingerprint:
+`google/sdk_gphone_x86_64/generic_x86_64_arm64:11/RSR1.240422.006/12134477:userdebug/dev-keys`.
+
+Installed app: `app.dourstuff.dourstuff`, version `0.1.0+1`, min SDK 24,
+target SDK 36, primary ABI x86_64. APK **102,584,136 bytes**, SHA256
+`75f5bd8a21810f9bb8bfa36d02b3bb934d810b97edf929eb7b2ad389dc9b1ba6`.
+Preserved locally as ignored `.tools/phase-2-accepted-x64.apk`; later builds can
+replace the usual build output. ADB version remained 1.0.41 / 31.0.2-7242960.
+
+Commands below used the machine's SDK under
+`C:/Users/ipar5/AppData/Local/Android/sdk`; `adb` denotes its `platform-tools/adb.exe`.
+These are executed evidence, not requirements for another machine's paths.
+
+| Command/check | Actual result |
+| --- | --- |
+| `cmdline-tools/23.0/bin/android.exe sdk install 'system-images;android-30;google_apis;x86_64'` | Official x86_64 image installed |
+| `'no' \| & "$env:LOCALAPPDATA/Android/sdk/cmdline-tools/latest/bin/avdmanager.bat" create avd -n DoUrStuff_API_30_x64 -k '"system-images;android-30;google_apis;x86_64"' -d pixel_4_xl` | Separate synthetic-data AVD created; session JDK 21 |
+| `emulator.exe -avd DoUrStuff_API_30_x64 -port 5556 -no-window -no-snapshot -no-boot-anim` | Started through hidden `Start-Process`; resumed on 12 October with retained AVD data |
+| `./android/gradlew.bat -p android assembleDebug -Ptarget-platform=android-x64 --no-daemon` | Pass on 10 October, 36s; session `JAVA_HOME` from `.tools/android-java-home.txt` |
+| `adb -s emulator-5556 shell getprop sys.boot_completed`; `adb -s emulator-5556 install build/app/outputs/flutter-apk/app-debug.apk` | Boot value 1; successful fresh installation |
+| `adb -s emulator-5556 shell svc wifi disable`; `adb -s emulator-5556 shell svc data disable` | Disabled before first app launch; `settings get global wifi_on` and `mobile_data` both 0 |
+| `adb -s emulator-5556 shell ip route get 1.1.1.1` | Expected exit 1, `Network is unreachable` on 12 October |
+| `adb -s emulator-5556 shell am force-stop app.dourstuff.dourstuff`; `adb -s emulator-5556 shell am start -n app.dourstuff.dourstuff/.MainActivity` | Process 3452 stopped (`pidof` empty); relaunch process 5657; saved state restored offline |
+
+UI actions used `adb shell input` and fresh `uiautomator dump` observations;
+the ignored `.tools/android-ui.ps1` helper selected unique labels and saved a
+screenshot. All data was synthetic.
+
+| Scenario | Observed result |
+| --- | --- |
+| Fresh launch with networking disabled | Empty usable guest app; no account required |
+| Create/edit | `Offline test task`, Tomorrow (2026-10-11), notes, high priority, 25-minute estimate and `Acceptance` tag saved |
+| Milestone and task status | `First step` completed; task completed/reopened to todo while retaining 1/1 steps |
+| Emulator shutdown/restart between sessions | Task and details retained on 12 October |
+| Delete/undo | Confirmed deletion showed zero tasks; Undo restored task and completed milestone |
+| Query and saved default | Created a second undated task; search `Offline`, high-priority/tag filters and Title sort produced one match; saved `Offline acceptance` and made it startup default |
+| Force-stop/relaunch offline | Default view, search-active indicator, Title sort and single matching task restored; notes/date/priority/tag/estimate and checked milestone preserved |
+
+After stopping the app, retained the entire guest SQLite profile with WAL/SHM:
+
+```powershell
+adb -s emulator-5556 exec-out run-as app.dourstuff.dourstuff tar -cf - files/profiles/guest > .tools/android-acceptance-profile.tar
+python .tools/check_android_acceptance.py
+```
+
+PowerShell 7.6.5 preserved the native binary stream. The ignored assertion helper
+read a copy, not the installed live database. `PRAGMA integrity_check` returned
+`ok`, foreign-key check had no violations, schema was 1; two active tasks,
+one completed milestone and the expected tag/default-view specification survived.
+There were **13 guest-only local outbox rows**, contiguous sequences 1–13,
+next sequence 14, 13 history rows and no remaining tombstones after undo.
+Delete/restore/status/tag/milestone/view/default commands were present. All
+assertions passed. The app was relaunched afterward.
+
+![Offline saved view after force-stop/relaunch](../screenshots/phase-2-android-restart.png)
+
+Setup failures retained: the older SDK wrapper split the semicolon package name
+and reported missing packages despite exit 0; a guessed `android.bat` path was
+absent. The newer `android.exe` command succeeded. An early APK install before
+boot completion failed `Can't find service: package`; it succeeded after the
+boot check. An initial Delete dialog was cancelled; only the later confirmed
+delete/undo counts as acceptance. SDK XML/deprecation warnings remain.
+
+On 12 October, the user explicitly selected **"Use emulator evidence; proceed
+with local Phase 3"**. This closes the entry gate for authorized local Phase 3
+work. It does not close physical Android acceptance, Windows fresh-install/
+abrupt-kill, native accessibility/scaling/keyboard, travel/clock changes,
+secure storage, notifications, signed packaging or real disk-full/power-loss
+gates. No account sync, hosted CI or notification behavior was tested here.
