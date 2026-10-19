@@ -204,6 +204,62 @@ def main():
                 "Unsupported batch suffix cannot create an earlier task")
         passed_check("status command boundaries, partial content merge and whole-batch capability preflight")
 
+        g = TaskFixture(backend, epoch)
+        create = g.create(initial=status("completed", 100))
+        g.apply(create)
+        noop = g.set_status(2, status("completed", 100), observed(1, status("completed", 100)))
+        receipt = g.apply(noop)["result"]["results"][0]
+        require(receipt["disposition"] == "applied" and g.fields()["status_group"]["revision"] == 2,
+                "Fresh no-op retains accepted field revision semantics")
+        require(len(g.history()) == 1, "Same current-base value is not another completion event")
+        before = g.state()
+        g.apply(noop)
+        require(g.state() == before, "No-op retry has no side effects")
+        sql(f"delete from sync_private.operation_receipts where owner_id='{g.owner}';")
+        before = g.state()
+        changed = deepcopy(create)
+        changed["patches"]["title"]["value"] = "changed old payload"
+        require(g.apply(changed)["code"] == "payloadMismatch" and g.state() == before,
+                "Retained authoritative history payload rejects changed old-sequence retries")
+        reused = g.op(3, "stolen identity")
+        reused["operation_id"] = create["operation_id"]
+        require(g.apply(reused)["code"] == "payloadMismatch" and g.state() == before,
+                "History identity cannot be reused by a title-only operation after receipt expiry")
+        reused = g.set_status(3, status(), observed(2, status("completed", 100)))
+        reused["operation_id"] = create["operation_id"]
+        require(g.apply(reused)["code"] == "payloadMismatch" and g.state() == before,
+                "History identity reuse returns typed failure before history primary-key collision")
+        other_device = uid()
+        g.register(other_device)
+        reused["device_epoch"], reused["sequence"] = other_device, 1
+        before = g.state()
+        require(g.apply(reused)["code"] == "payloadMismatch" and g.state() == before,
+                "Retained operation IDs remain unique across device epochs")
+        require(g.apply(create)["result"]["results"][0]["kind"] == "already_processed",
+                "Original consumed create can still reconcile after receipt expiry")
+        sql(f"update sync_private.task_status_history set operation=null where owner_id='{g.owner}';")
+        before = g.state()
+        require(g.apply(reused)["code"] == "payloadMismatch" and g.state() == before,
+                "Legacy history without an available original payload still prevents identity reuse")
+        require(g.apply(create)["result"]["results"][0]["kind"] == "already_processed",
+                "Legacy unknown payload allows consumed-sequence reconciliation without replay")
+        passed_check("no-op completion history and retained identity protection after receipt expiry")
+
+        g = TaskFixture(backend, epoch)
+        op = g.create()
+        op["patches"]["status_group"]["value"] = status("completed")
+        op["patches"]["title"]["value"] = " "
+        require(g.apply(op)["result"]["results"][0]["rejection_code"] == "invalid_title",
+                "Combined semantic errors return a valid terminal title rejection")
+        op = g.create(2)
+        op["patches"]["status_group"]["value"] = status("todo", 100)
+        op["patches"]["title"]["value"] = " "
+        op["patches"]["priority"]["value"] = "urgent"
+        require(g.apply(op)["result"]["results"][0]["rejection_code"] == "invalid_priority",
+                "Combined semantic errors can instead return priority rejection")
+        require(not g.history(), "Combined invalid commands cannot create history")
+        passed_check("combined invalid status/title/priority preserves terminal rejection parity")
+
         valid_values = [status(s) for s in ("todo", "in_progress", "cancelled")]
         valid_values += [status("completed", v) for v in (-8640000000000000, -1, 0, 8640000000000000)]
         invalid_values = [None, [], "completed", {}, {"status": "todo"}, status("unknown"),
@@ -216,6 +272,8 @@ def main():
             op = g.set_status(2, value)
             receipt = g.apply(op)["result"]["results"][0]
             require((receipt["disposition"] == "applied") == (value in valid_values), "Status validation parity boundary")
+            if value == status():
+                require(len(g.history()) == 1, "Unchanged todo does not create a history event")
             if value in invalid_values:
                 require(receipt["rejection_code"] == "invalid_status_group" and len(g.history()) == 1, "Invalid status leaves history intact")
                 require(g.fields()["status_group"]["value"] == status(), "Invalid atomic group unchanged")

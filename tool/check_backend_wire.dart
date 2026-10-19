@@ -24,29 +24,43 @@ void main(List<String> args) {
         ) as SyncSuccess<ApplyResult>).value;
         validateApplyReply(request, result);
         for (var i = 0; i < request.operations.length; i++) {
-          final title = request.operations[i].patches['title']?.value;
           final receipt = result.results[i];
           final patches = request.operations[i].patches;
-          if (receipt is OperationReceipt &&
-              patches.containsKey('status_group')) {
-            final valid = validAccountStatusGroup(
+          if (receipt is! OperationReceipt) continue;
+          final validity = <String, bool>{};
+          if (patches.containsKey('status_group')) {
+            validity['invalid_status_group'] = validAccountStatusGroup(
               patches['status_group']!.value,
             );
-            if (valid == (receipt.rejectionCode == 'invalid_status_group')) {
-              throw const FormatException(
-                'Server and Dart status rules differ.',
-              );
+          }
+          if (patches.containsKey('title')) {
+            final title = patches['title']!.value;
+            var valid = title is String;
+            if (title is String) {
+              try {
+                TaskDraft(title: title).validate();
+              } on ArgumentError {
+                valid = false;
+              }
             }
+            validity['invalid_title'] = valid;
           }
-          if (title is! String || receipt is! OperationReceipt) continue;
-          var valid = true;
-          try {
-            TaskDraft(title: title).validate();
-          } on ArgumentError {
-            valid = false;
+          if (patches.containsKey('priority')) {
+            validity['invalid_priority'] = TaskPriority.values.any(
+              (priority) => priority.name == patches['priority']!.value,
+            );
           }
-          if (valid == (receipt.rejectionCode == 'invalid_title')) {
-            throw const FormatException('Server and Dart title rules differ.');
+          // A command can contain several invalid groups. Any of them may
+          // explain its terminal rejection; none may be accepted canonically.
+          if ((validity.containsValue(false) &&
+                  receipt.disposition != ReceiptDisposition.rejected) ||
+              (const {
+                    'invalid_title',
+                    'invalid_status_group',
+                    'invalid_priority',
+                  }.contains(receipt.rejectionCode) &&
+                  validity[receipt.rejectionCode] != false)) {
+            throw const FormatException('Server and Dart task rules differ.');
           }
         }
       case 'register_device':

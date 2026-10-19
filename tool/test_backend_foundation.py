@@ -140,17 +140,41 @@ def main():
         before_epoch = sql("select server_epoch from sync_private.backend_state;")
         migration_dir = Path(__file__).resolve().parents[1] / "supabase" / "migrations"
         bootstrap = (migration_dir / "20261016000100_account_foundation.sql").read_text(encoding="utf-8")
-        upgrade = "\n".join(path.read_text(encoding="utf-8") for path in sorted(migration_dir.glob("*.sql"))
-                            if path.name != "20261016000100_account_foundation.sql")
         fixture_owner, fixture_device = str(uuid.uuid4()), str(uuid.uuid4())
+        fixture_task, fixture_op, expired_op = (str(uuid.uuid4()) for _ in range(3))
+        original = {"protocol_version": 2, "operation_id": fixture_op, "device_epoch": fixture_device,
+                    "sequence": 7, "entity": {"kind": "task", "key": [fixture_task]},
+                    "command": "task.status", "patches": {"status_group": {
+                        "base": {"kind": "observed", "revision": 3,
+                                 "value": {"status": "todo", "completed_at": None}},
+                        "value": {"status": "completed", "completed_at": 100}}},
+                    "dependencies": [], "provenance": {"occurred_at": 100}}
+        # Seed durable history immediately after 004, before 005 adds payload
+        # retention. One old event still has its receipt; another has expired it.
+        history_fixture = (
+            f"insert into sync_private.task_shadow(owner_id,task_id,fields) values ('{fixture_owner}','{fixture_task}','{{}}');\n"
+            f"insert into sync_private.operation_receipts(owner_id,device_epoch,sequence,operation_id,operation,receipt) "
+            f"values ('{fixture_owner}','{fixture_device}',7,'{fixture_op}',{literal(json.dumps(original))}::jsonb,'{{}}');\n"
+            "insert into sync_private.task_status_history(owner_id,task_id,operation_id,revision,previous_status,status,fields,provenance) values "
+            f"('{fixture_owner}','{fixture_task}','{fixture_op}',7,null,'{{}}','{{}}','{{}}'),"
+            f"('{fixture_owner}','{fixture_task}','{expired_op}',6,null,'{{}}','{{}}','{{}}');\n")
+        upgrade = "\n".join(path.read_text(encoding="utf-8") +
+                            (history_fixture if path.name == "20261018000100_task_create_status.sql" else "")
+                            for path in sorted(migration_dir.glob("*.sql"))
+                            if path.name != "20261016000100_account_foundation.sql")
         migration_result = sql("begin; drop function if exists public.sync_apply(jsonb); "
             "drop function public.sync_register_device(jsonb); "
             "drop function public.sync_pull(jsonb); drop schema sync_private cascade;\n" + bootstrap +
             f"insert into sync_private.account_state(owner_id) values ('{fixture_owner}');\n"
             f"insert into sync_private.device_state(owner_id,device_epoch,high_water) "
             f"values ('{fixture_owner}','{fixture_device}',7);\n" + upgrade +
-            f"select high_water from sync_private.device_state where owner_id='{fixture_owner}'; rollback;")
-        require(migration_result == "7", "Empty app-schema bootstrap and retained-data forward migration")
+            f"select high_water from sync_private.device_state where owner_id='{fixture_owner}'; "
+            f"select operation={literal(json.dumps(original))}::jsonb from sync_private.task_status_history "
+            f"where owner_id='{fixture_owner}' and operation_id='{fixture_op}'; "
+            f"select operation is null from sync_private.task_status_history "
+            f"where owner_id='{fixture_owner}' and operation_id='{expired_op}'; rollback;")
+        require(migration_result.splitlines() == ["7", "t", "t"],
+                "Empty app-schema and forward upgrade preserve watermark, history and exact available original bases")
         require(sql("select server_epoch from sync_private.backend_state;") == before_epoch,
                 "Migration rehearsal rolls back without replacing existing state")
         passed_check("empty application schema and retained-data forward migration, rolled back safely")

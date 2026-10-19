@@ -110,6 +110,12 @@ retain previous/current groups, canonical fields and provenance in private
 `task_status_history`, atomically with the receipt/log/watermark. Equivalent
 outcomes and retries add no history; reopening retains earlier events. History
 download/snapshot and retention/deletion integration remain unfinished.
+Review migration 005 also excludes current-base unchanged values from history
+even when they receive a fresh accepted field revision. History retains the
+immutable original operation so its ID cannot be reused after receipt expiry.
+Older history is backfilled only from available receipts; unknown originals stay
+unknown, preventing new-sequence reuse while allowing consumed-sequence
+reconciliation without replay.
 
 **Chosen representation to carry into server fixtures:** durable server-held
 processing. Receipt/sequence acknowledgement means the command and any recovery

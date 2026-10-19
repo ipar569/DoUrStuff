@@ -3,7 +3,7 @@
 Local configuration prepared; reviewed 18 October 2026. The local
 `supabase/config.toml` was initialized with pinned CLI 2.120.0 and reviewed.
 There is no remote project, client authentication adapter or deployment workflow.
-A real local stack now runs with four migrations and tested registration/pull
+A real local stack now runs with five migrations and tested registration/pull
 RPCs plus ownership isolation. Atomic apply handles core task creation and
 title/priority/status edits, with receipts, recovery candidates, status history
 and durable sequence progress.
@@ -37,7 +37,7 @@ data. Synthetic fault injection verifies rollback after entity/receipt writes.
 The migration suite rehearses all three migrations without resetting live data.
 See `supabase/README.md` for exact commands, partial scope and wire-parity limits.
 
-## Local configuration / runtime gate — 13 October 2026
+## Core creation/status — 18 October 2026
 
 18 October adds the forward migration `20261018000100_task_create_status.sql`.
 The pre-migration application dump is `.tools/backend-before-create-status.sql`;
@@ -47,6 +47,15 @@ and detailed-receipt removal. History download and deletion/retention integratio
 are pending. Run all three backend suites in `supabase/README.md` sequentially:
 the foundation suite temporarily rebuilds the application schema inside a
 rollback-only transaction, so it must not overlap other integration suites.
+
+Review adds migration 005, `20261018000200_status_history_identity.sql`:
+unchanged status values add no history, and history retains exact operation
+envelopes beyond receipt expiry. Backfill uses available receipts only; older
+events with expired receipts remain intact with unknown payloads. Their operation
+IDs still cannot be assigned to new work. The pre-fix local dump is
+`.tools/backend-before-history-fix.sql`. Neither dump is a restore rehearsal.
+
+## Local configuration / runtime gate — 13 October 2026
 
 `supabase init` succeeded through approved escalation. The project ID is
 `dourstuff-local`; API auto-exposure of new objects, seed execution, analytics

@@ -108,6 +108,9 @@ supported create shape has four required groups; full Phase 2 draft fields,
 history download/snapshot/retention integration, remaining commands, resolution
 and transport representability still gate account activation. Milestones 3.2–3.6
 and the installed two-device/latency gates remain open; Phase 4 stays gated.
+Independent review adds migration 005 to avoid no-op status history and retain
+authoritative operation payloads/identity protection after receipt expiry. The
+wire checker also accepts correctly rejected commands with several invalid groups.
 
 Real Supabase migrations/RPC/RLS tests; secure tokens and GitHub PKCE; explicit
 adoption; resumable bootstrap; field conflicts and recovery UI; cursor/receipts/

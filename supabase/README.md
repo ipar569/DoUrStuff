@@ -2,7 +2,7 @@
 
 Initialized with CLI **2.120.0**, pinned in `../.supabase-version`. Configuration
 is for the synthetic `dourstuff-local` project only. No remote project is linked.
-Four migrations now provide private account/device/log storage, RLS, restricted
+Five migrations now provide private account/device/log storage, RLS, restricted
 device-registration/pull RPCs, atomic core task creation and title/priority/status edits.
 Apply stores canonical fields, immutable receipts, recovery candidates and device
 watermarks together, with durable status history. Creation requires the four
@@ -91,6 +91,11 @@ the loopback-only dummy-server tests verify that credentials are never forwarded
 Those two transport tests also run in the Quality workflow without Docker.
 The apply harness includes maximum-depth provenance through conflict and pull,
 with real responses decoded by Dart using a separate reply-envelope depth budget.
+Migration 005 retains original operation payloads with status history, protects
+those identities after receipt expiry and excludes no-op status values from
+history. The upgrade test preserves both receipt-backed history and older events
+whose original receipt is unavailable. The wire checker accepts terminal commands
+with several invalid groups without insisting on one specific rejection priority.
 
 Unsupported commands/groups/dependencies fail whole-batch preflight without
 consuming sequences. No scheduled pruning is installed; expiry tests remove only
