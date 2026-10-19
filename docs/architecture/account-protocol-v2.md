@@ -117,6 +117,20 @@ Older history is backfilled only from available receipts; unknown originals stay
 unknown, preventing new-sequence reuse while allowing consumed-sequence
 reconciliation without replay.
 
+19 October extends `task.create` with optional description and estimate_minutes
+groups, and `task.edit` with independent patches for both. Supplied create groups
+still require absent bases and commit all-or-nothing. Earlier four-group creates
+remain compatible; their missing optional fields stay absent, so a later first
+edit uses AbsentBase rather than inventing an accepted empty/null revision.
+Description is an untrimmed string of at most 100,000 UTF-16 units; estimate is
+null or an integer from 1 to 5,256,000 inclusive, matching `TaskDraft.validate()`.
+
+The whole-operation 64 KiB limit still applies. Some valid Phase 2 descriptions
+cannot fit that envelope. Tests prove the semantic limit directly and the wire
+limit through HTTP; this is an explicit representation gap to resolve before
+account activation/adoption, alongside NUL/raw-number/other normalization gaps.
+Do not truncate content or advertise full draft replication while it remains open.
+
 **Chosen representation to carry into server fixtures:** durable server-held
 processing. Receipt/sequence acknowledgement means the command and any recovery
 candidates are durably stored; it does not mean every field applied canonically.

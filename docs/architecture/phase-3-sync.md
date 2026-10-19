@@ -20,6 +20,11 @@ unfinished. The diagrams describe the complete target, not current app behavior.
 changes, with private durable history. Full draft creation, other commands,
 history transport and all client paths in these diagrams remain unfinished.
 
+19 October: optional description/estimate creation and independent edits also
+have real server tests. The domain description limit exceeds the current wire
+byte cap; representation parity remains an account-activation gate. No native
+account storage, authentication or replication component is enabled.
+
 ## Component overview
 
 The expanded client represents either Android or Windows. Each device has its

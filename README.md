@@ -25,9 +25,10 @@ testing. Milestone 3.0 now has [strict account wire contracts and policy fixture
 [verification](docs/verification/phase-3.md) records results and remaining work.
 Accounts and sync have not been enabled.
 Local Phase 3.1 server work now includes tested device registration, cursor reads,
-ownership isolation, atomic core task creation and title/priority/status edits,
+ownership isolation, atomic core task creation and title/priority/status/description/estimate edits,
 including conflict retention, retry receipts and durable status history. Creation
-currently requires title, priority, status/completion and existence; other task
+currently requires title, priority, status/completion and existence, with optional
+description and estimate. Other task
 groups, commands, history download and app integration remain pending.
 
 | Platform | Status |

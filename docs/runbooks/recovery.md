@@ -82,3 +82,10 @@ and never authorizes reassignment of its operation ID. Original consumed-sequenc
 retries still reconcile without replay. `.tools/backend-before-history-fix.sql`
 is the preserved pre-fix dump. The upgrade test retains both kinds of history
 inside a rollback-only application-schema rehearsal, not a disaster restore.
+
+19 October: migration 006 adds independent description and nullable estimate
+patches while preserving four-group creation compatibility and original bases.
+The local pre-migration dump is `.tools/backend-before-task-fields.sql`; it has
+not been restore-tested. Long valid descriptions can exceed the 64-KiB operation
+envelope; preflight consumes no sequence. Future adoption/account commands must
+retain that content and provide a supported representation before activation.

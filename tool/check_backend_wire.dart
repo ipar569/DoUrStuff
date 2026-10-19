@@ -28,6 +28,16 @@ void main(List<String> args) {
           final patches = request.operations[i].patches;
           if (receipt is! OperationReceipt) continue;
           final validity = <String, bool>{};
+          if (patches.containsKey('description')) {
+            validity['invalid_description'] = validAccountDescription(
+              patches['description']!.value,
+            );
+          }
+          if (patches.containsKey('estimate_minutes')) {
+            validity['invalid_estimate_minutes'] = validAccountEstimate(
+              patches['estimate_minutes']!.value,
+            );
+          }
           if (patches.containsKey('status_group')) {
             validity['invalid_status_group'] = validAccountStatusGroup(
               patches['status_group']!.value,
@@ -58,6 +68,8 @@ void main(List<String> args) {
                     'invalid_title',
                     'invalid_status_group',
                     'invalid_priority',
+                    'invalid_description',
+                    'invalid_estimate_minutes',
                   }.contains(receipt.rejectionCode) &&
                   validity[receipt.rejectionCode] != false)) {
             throw const FormatException('Server and Dart task rules differ.');

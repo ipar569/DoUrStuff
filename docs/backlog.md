@@ -112,6 +112,17 @@ Independent review adds migration 005 to avoid no-op status history and retain
 authoritative operation payloads/identity protection after receipt expiry. The
 wire checker also accepts correctly rejected commands with several invalid groups.
 
+PR #3 merged at `47e9e7aebaa52969260359e1539950d3772f6bf0` on 19 October after
+independent re-review and passing Quality/Android/Windows CI. The next 3.1
+increment implements optional description/estimate creation and independent edits,
+preserving completion, conflict bases, held successors and nullable clearing.
+Full due/relationship/delete/restore semantics, history/snapshot/resolution and
+retention remain open. The 100,000-unit description domain versus 64-KiB wire
+limit is now an explicit representation gate before enabling accounts/adoption.
+Local verification passes 106 Flutter tests, 35 backend integration groups,
+220 real Dart-validated replies and three HTTP/encoding helper tests. See the
+latest verification handoff and PR timeline for review and CI/merge evidence.
+
 Real Supabase migrations/RPC/RLS tests; secure tokens and GitHub PKCE; explicit
 adoption; resumable bootstrap; field conflicts and recovery UI; cursor/receipts/
 tombstones/high-water; catch-up/realtime/retries; sign-out/switch/deletion.

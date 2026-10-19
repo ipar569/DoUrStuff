@@ -1,14 +1,15 @@
-"""Local-only credential transport regressions; dummy credentials, no Docker."""
+"""Local harness transport/encoding regressions; dummy data, no Docker."""
 from contextlib import contextmanager
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 import os
+import sys
 import threading
 import unittest
 from unittest.mock import patch
 import urllib.request
 
-from test_backend_foundation import Backend
+from test_backend_foundation import Backend, command
 
 
 @contextmanager
@@ -52,6 +53,13 @@ def backend(url):
 
 
 class LocalTransportTests(unittest.TestCase):
+    def test_subprocess_text_is_utf8_independent_of_windows_locale(self):
+        probe = "accent é and supplementary 😀"
+        with patch("locale.getencoding", return_value="cp1252"):
+            actual = command([sys.executable, "-c",
+                              "import sys; sys.stdout.buffer.write(sys.stdin.buffer.read())"], probe)
+        self.assertEqual(actual, probe)
+
     def test_environment_proxy_never_receives_credentials(self):
         with endpoint("backend") as (url, direct), endpoint("proxy") as (proxy_url, proxied):
             with patch.dict(os.environ, {"http_proxy": proxy_url, "no_proxy": ""}, clear=True), \
