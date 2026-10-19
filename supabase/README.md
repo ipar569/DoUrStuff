@@ -2,10 +2,12 @@
 
 Initialized with CLI **2.120.0**, pinned in `../.supabase-version`. Configuration
 is for the synthetic `dourstuff-local` project only. No remote project is linked.
-Three migrations now provide private account/device/log storage, RLS, restricted
-device-registration/pull RPCs and atomic title/priority edits on existing tasks.
+Five migrations now provide private account/device/log storage, RLS, restricted
+device-registration/pull RPCs, atomic core task creation and title/priority/status edits.
 Apply stores canonical fields, immutable receipts, recovery candidates and device
-watermarks together. Other commands, snapshots and resolution remain unfinished.
+watermarks together, with durable status history. Creation requires the four
+core groups documented in the [v2 contract](../docs/architecture/account-protocol-v2.md);
+other task groups, history downloads, commands, snapshots and resolution remain unfinished.
 The Flutter app remains guest-only. Test users are created
 temporarily by the integration harness and removed afterwards.
 New public objects are not automatically exposed to API roles. Seed execution,
@@ -37,6 +39,8 @@ python tool/test_backend_foundation.py --supabase .tools/supabase/supabase.exe -
 .tools/flutter/bin/dart.bat run tool/check_backend_wire.dart .tools/backend-foundation-wire.json
 python tool/test_backend_apply.py --supabase .tools/supabase/supabase.exe --wire-output .tools/backend-apply-wire.json
 .tools/flutter/bin/dart.bat run tool/check_backend_wire.dart .tools/backend-apply-wire.json
+python tool/test_backend_task_create.py --supabase .tools/supabase/supabase.exe --wire-output .tools/backend-create-wire.json
+.tools/flutter/bin/dart.bat run tool/check_backend_wire.dart .tools/backend-create-wire.json
 ```
 
 `local_backend.py` without `--start` checks the existing stack. It verifies the
@@ -76,14 +80,22 @@ registration duplication, log pagination, account-lock concurrency and expired/
 missing logs. The separate apply harness exercises real HTTP/JWT command writes:
 conflict/held/unrelated progress, predecessor binding, partial merge, lost-reply
 retry, receipt expiry, deletion recovery, ownership, injected transaction failure
-and late commits. It seeds existing tasks through SQL because creation is not
-implemented yet. The Dart checker decodes real replies and compares title validity
+and late commits. It retains SQL-seeded legacy shadows for focused regression
+coverage. The new create/status harness creates every task through HTTP, testing
+collisions, completion/edit in both orders, immutable retries, atomic rejection,
+rollback including history, and owner isolation. The Dart checker compares status
+group validity as well as title validity
 with the app's validator, including Unicode whitespace and UTF-16 length cases.
 The HTTP helper explicitly disables environment proxies and rejects redirects;
 the loopback-only dummy-server tests verify that credentials are never forwarded.
 Those two transport tests also run in the Quality workflow without Docker.
 The apply harness includes maximum-depth provenance through conflict and pull,
 with real responses decoded by Dart using a separate reply-envelope depth budget.
+Migration 005 retains original operation payloads with status history, protects
+those identities after receipt expiry and excludes no-op status values from
+history. The upgrade test preserves both receipt-backed history and older events
+whose original receipt is unavailable. The wire checker accepts terminal commands
+with several invalid groups without insisting on one specific rejection priority.
 
 Unsupported commands/groups/dependencies fail whole-batch preflight without
 consuming sequences. No scheduled pruning is installed; expiry tests remove only

@@ -1,6 +1,7 @@
 """Real local HTTP/JWT apply tests; synthetic users are removed in finally.
 
-SQL seeds canonical state because task creation is a later server increment.
+SQL seeds legacy canonical state for focused edit regressions. The separate
+test_backend_task_create.py harness creates tasks only through HTTP.
 No remote endpoint, credentials, or task content is printed.
 """
 import argparse
@@ -65,7 +66,7 @@ class Fixture:
     def state(self):
         # Full synthetic state lets rollback/retry assertions detect stray rows.
         tables = ["account_state", "device_state", "task_shadow", "operation_receipts",
-                  "recovery_candidates", "change_log"]
+                  "recovery_candidates", "change_log", "task_status_history"]
         return [sql(f"select coalesce(jsonb_agg(to_jsonb(t) order by to_jsonb(t)::text),'[]') "
                     f"from sync_private.{table} t where owner_id='{self.owner}';") for table in tables]
 

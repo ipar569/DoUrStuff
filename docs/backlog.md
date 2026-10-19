@@ -99,6 +99,19 @@ and PR timeline for backend reruns, independent review and CI/merge status.
 The [prompt index](prompts/README.md) includes copy-and-paste launch messages for
 new sessions; each phase prompt requires a durable verification handoff to resume.
 
+18 October continues 3.1 with forward migration 004: all-or-nothing core task
+creation, immutable retries/collisions and atomic status/completion. Durable
+status history retains completion snapshots across reopening and receipt expiry.
+Real HTTP fixtures cover both completion/edit orders, partial content merges,
+invalid command boundaries, rollback and same-UUID account isolation. The
+supported create shape has four required groups; full Phase 2 draft fields,
+history download/snapshot/retention integration, remaining commands, resolution
+and transport representability still gate account activation. Milestones 3.2–3.6
+and the installed two-device/latency gates remain open; Phase 4 stays gated.
+Independent review adds migration 005 to avoid no-op status history and retain
+authoritative operation payloads/identity protection after receipt expiry. The
+wire checker also accepts correctly rejected commands with several invalid groups.
+
 Real Supabase migrations/RPC/RLS tests; secure tokens and GitHub PKCE; explicit
 adoption; resumable bootstrap; field conflicts and recovery UI; cursor/receipts/
 tombstones/high-water; catch-up/realtime/retries; sign-out/switch/deletion.

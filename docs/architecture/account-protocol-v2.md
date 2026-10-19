@@ -92,6 +92,31 @@ means present); minimal deletion operation identity is stored separately.
 
 ## Contiguous processing with held dependent work
 
+18 October server slice: `task.create` requires exactly `existence: true`,
+`title`, `priority` and `status_group`, each with an absent base. This deliberately
+limited core shape is not full Phase 2 draft creation. Other groups/dependencies
+fail whole-batch capability preflight. A missing/invalid core group receives a
+consumed rejection without an entity; an existing identity conflicts as a whole,
+even for equivalent field values. Deleted identities require recovery. Neither
+case can populate missing fields of an existing shadow.
+
+`task.status` requires only `status_group`; `task.edit` may combine that group
+with title/priority. The group contains exactly `status` and `completed_at`.
+Status is todo/in_progress/completed/cancelled; only completed has a non-null
+UTC epoch-millisecond integer, within native Dart DateTime's inclusive
+±8,640,000,000,000,000 range. Negative times are valid provenance. The server and
+`validAccountStatusGroup` share real HTTP boundary fixtures. Status transitions
+retain previous/current groups, canonical fields and provenance in private
+`task_status_history`, atomically with the receipt/log/watermark. Equivalent
+outcomes and retries add no history; reopening retains earlier events. History
+download/snapshot and retention/deletion integration remain unfinished.
+Review migration 005 also excludes current-base unchanged values from history
+even when they receive a fresh accepted field revision. History retains the
+immutable original operation so its ID cannot be reused after receipt expiry.
+Older history is backfilled only from available receipts; unknown originals stay
+unknown, preventing new-sequence reuse while allowing consumed-sequence
+reconciliation without replay.
+
 **Chosen representation to carry into server fixtures:** durable server-held
 processing. Receipt/sequence acknowledgement means the command and any recovery
 candidates are durably stored; it does not mean every field applied canonically.

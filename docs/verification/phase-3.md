@@ -1,7 +1,7 @@
 # Phase 3 verification
 
 Status: milestone **3.0 local readiness passed; 3.1 in progress**, reviewed
-17 October 2026. The user accepted
+19 October 2026. The user accepted
 the Android emulator offline/restart evidence on 12 October for local Phase 3
 entry. Immutable v2 operations, six strict RPC codecs and causal/policy fixtures exist;
 accounts and sync are not enabled. See the latest handoff below.
@@ -17,16 +17,17 @@ emulator. Supabase CLI 2.120.0 is now installed and checksum/version/help verifi
 through approved escalation after the permission change. Local configuration is
 initialized. The user subsequently updated Docker to Desktop 4.95.0 / Engine
 29.8.2. Local services, image pins and explicit loopback bindings passed checks.
-Three migrations and real synthetic-account registration/pull/apply/ownership
-tests ran on PostgreSQL 17.11. Apply currently covers title/priority edits on
-existing tasks. Native OAuth and client sync are still unimplemented.
+Five migrations and real synthetic-account registration/pull/apply/ownership
+tests ran on PostgreSQL 17.11. Apply now covers core task creation and
+title/priority/status edits, with private durable status history. Full draft
+fields, history download, native OAuth and client sync remain unfinished.
 
 | Gate | Evidence/status |
 | --- | --- |
 | Phase 2 entry acceptance | Accepted by user using emulator evidence; physical-device gate retained |
 | Protocol and SQLite upgrade | Six RPC codecs/goldens and field/relationship/recovery policy fixtures implemented; real server enforcement and local v2 upgrade pending |
 | Local backend readiness | Existing local stack verified; guarded restart and image pins recorded; fresh Windows recreation needs the documented binding repair |
-| Real PostgreSQL command/RLS integration | Registration/pull and atomic existing-task title/priority edits tested, including receipts/recovery/RLS; remaining commands, snapshots and resolution unfinished |
+| Real PostgreSQL command/RLS integration | Registration/pull, core creation and title/priority/status edits tested, including receipts/recovery/history/RLS; remaining groups/commands, snapshots and resolution unfinished |
 | Android/Windows PKCE and secure session storage | Not implemented or verified |
 | Full command replication/conflict recovery | Not implemented or executed |
 | Adoption, bootstrap, account lifecycle/deletion | Not implemented or executed |
@@ -731,3 +732,147 @@ SHAs, CI links and merge state belong to the PR timeline, not an assumed result.
   recovery, consent/lifecycle, installed two-device fault/latency tests, full
   backend CI and restore/deployment rehearsal. Phase 4 remains gated. Use the
   new completion workflow subject to each task's explicit publication constraints.
+
+## Core task creation/status increment — 18 October 2026
+
+Started from clean `main` at merged PR #2 commit
+`6b27a183fba64b04d1e4521b275e6487ed4d0720`; fetch confirmed no newer baseline.
+Work is isolated on `codex/phase-3-task-create-status`. The current user request
+authorizes branch push, PR review and merge, superseding the prompt's historical
+no-push restriction. Production actions and release distribution remain unauthorized.
+
+Forward migration `20261018000100_task_create_status.sql` adds core `task.create`,
+`task.status` and status-group patches in `task.edit`. Creation requires exactly
+title, priority, status_group and existence=true with absent bases. A collision
+conflicts every group without modifying the existing task; invalid creation
+receives a consumed rejection without partial rows. Unsupported draft fields
+remain whole-batch capability failures. Completion/edit tests use separate device
+epochs and both commit orders; edits preserve completion. Status/time validation
+matches the new provider-free Dart validator, including negative/zero and native
+DateTime endpoints. No clock selects conflict winners.
+
+Private forced-RLS `task_status_history` records accepted transitions with
+previous/current status, accepted field snapshot and device provenance. Reopening
+retains earlier completion evidence. History, canonical state, receipts, recovery,
+account cursor and device watermark share the existing account-lock transaction.
+The app remains guest-only; history download/snapshots/retention and complete
+Phase 2 draft creation are not implemented by this increment.
+
+The first restart attempt failed because Docker was stopped. Docker Desktop was
+started hidden and `python tool/local_backend.py --start` successfully resumed
+the existing repaired containers. All nine pinned services and eight healthchecks
+passed, with published ports only on loopback. No container or volume was reset;
+stopped `*-before-loopback` backups remain preserved. A local schema/data dump
+was saved before applying migration 004; it is not verified disaster recovery.
+
+Checks below apply to this branch's working tree before its first commit; the PR
+timeline records the exact reviewed SHA, subsequent fixes, CI and merge result.
+
+| Exact command/action | Result |
+| --- | --- |
+| `docker exec supabase_db_dourstuff-local pg_dump -U postgres -d postgres --schema=sync_private --schema=public --no-owner --no-privileges` | Saved to ignored `.tools/backend-before-create-status.sql` |
+| `.tools/supabase/supabase.exe migration up --local --network-id dourstuff-local` | Migration 004 applied; all four IDs verified in local migration history |
+| `python tool/test_backend_foundation.py --supabase .tools/supabase/supabase.exe --wire-output .tools/backend-foundation-wire.json` | 8 integration groups passed, including rollback-only empty-schema/forward-upgrade rehearsal |
+| `python tool/test_backend_apply.py --supabase .tools/supabase/supabase.exe --wire-output .tools/backend-apply-wire.json` | 11 existing apply regression groups passed |
+| `python tool/test_backend_task_create.py --supabase .tools/supabase/supabase.exe --wire-output .tools/backend-create-wire.json` | 9 integration groups passed; tasks created through HTTP rather than SQL seeds |
+| `python tool/test_backend_http.py` | 2 proxy/redirect isolation tests passed |
+| `.tools/flutter/bin/dart.bat run tool/check_backend_wire.dart PATH` for the three wire outputs above | 10 foundation, 32 apply and 126 create/status real replies passed production codec/correlation and title/status checks |
+| `.tools/flutter/bin/flutter.bat test test/account_task_validation_test.dart test/domain_test.dart test/local_database_test.dart` | 14 tests passed |
+| `.tools/flutter/bin/flutter.bat pub get --enforce-lockfile`; `.tools/flutter/bin/dart.bat run build_runner build` | Passed; lockfile/generated database unchanged |
+| `.tools/flutter/bin/dart.bat format --output=none --set-exit-if-changed lib test tool` | 37 files checked, zero changes |
+| `.tools/flutter/bin/flutter.bat analyze` | No issues, 38.7 seconds |
+| `.tools/flutter/bin/flutter.bat test --reporter expanded` | All 104 tests passed |
+| `.tools/flutter/bin/flutter.bat build windows --release` | Passed, 13.5 seconds; compilation only |
+| `$env:JAVA_HOME='D:\Projects\DoUrStuff\.tools\jdk\jdk-21.0.12.1+1'; android/gradlew.bat -p android assembleDebug -Ptarget-platform=android-arm64 --no-daemon` | Passed, 54 seconds; existing Kotlin/Gradle deprecation warnings, compilation only |
+| `git diff --check`; unchanged SQLite/generated/lockfile diff | Passed |
+
+Additional HTTP coverage includes competing creates, held successors, immutable
+completion retry, rejected malformed groups, partial content merge with a status
+conflict, batch preflight, receipt expiry, tombstone denial, same-UUID X/Y ownership
+and history read/insert RLS. Injected log-write failure rolls back creation and
+history as well as receipts/cursors. SQL cleanup checks found zero application
+accounts, zero harness-prefix Auth users and zero fault triggers after the runs.
+These are local HTTP/server fault tests, not native process-kill/two-device tests.
+
+Official pricing/pausing/database-limit pages were rechecked on 18 October;
+the free-tier assumptions remain unchanged in `docs/runbooks/costs.md`. No hosted
+resource or paid dependency was introduced.
+
+### Independent review corrections
+
+[PR #3](https://github.com/ipar569/DoUrStuff/pull/3) initially published commit
+`a6f7b67b75d9d0dbe35d33261e502a4afe258c8f`. Independent read-only review identified
+three P2 issues: unchanged current-base status values appended false history
+events; retained history IDs were absent from payload preflight after receipt
+expiry; and the wire checker incorrectly required a particular rejection code
+when several proposed groups were invalid. The new no-op HTTP regression failed
+against migration 004 with `Same current-base value is not another completion
+event`, before the fix. That failure is retained here.
+
+Forward migration `20261018000200_status_history_identity.sql` preserves applied
+migration 004. It compares status values for history creation and retains exact
+original envelopes with history, checking them in whole-batch payload preflight.
+Backfill copies only available receipts. Older events with missing receipts stay
+intact with unknown originals; their IDs cannot be assigned to new operations,
+while consumed original sequences still reconcile without replay. A pre-fix local
+dump is retained at `.tools/backend-before-history-fix.sql`. The wire checker
+now requires rejection of invalid groups and validates the reported semantic
+reason without choosing an artificial priority among multiple errors.
+
+The expanded foundation fixture verifies retained high-water and both kinds of
+history across all five migrations inside a rollback-only transaction. New HTTP
+checks cover unchanged todo/completed, changed old-sequence payloads, title-only
+and status ID reuse across epochs, expired originals and combined invalid groups.
+Analyzer/format checks passed after the checker fix (8.2 seconds, 37 files).
+The initial PR head's Quality/Android/Windows CI all passed; updated-head CI and
+independent re-review must also pass before merge. See the PR timeline for exact
+reviewed head and merge evidence, rather than treating the earlier checks as final.
+
+### Resume verification — 19 October 2026
+
+Resumed the same PR/branch with the review fixes intact and no newer remote work.
+The previous final-suite process handle was no longer available, so its completion
+was not assumed. Docker was stopped again; it was started hidden and the guarded
+helper resumed the preserved stack, confirming pinned images and loopback ports.
+All five local migration IDs remain recorded; no migration was rewritten or reset.
+
+The same three sequential backend commands above passed 8 foundation, 11 apply
+and 11 create/status groups. The foundation run includes the retained-history
+upgrade fixture, and create/status includes the three review regressions and
+unknown-original recovery. Formatting checked 37 files with zero changes;
+the Dart wire checker validated 10 foundation, 32 apply and 136 create/status
+replies (178 total). Post-run account, harness-user and fault-trigger counts were zero.
+analysis passed in 50.0 seconds; both HTTP isolation tests passed. No production
+configuration or data was touched. The 18 October full 104-test Flutter suite and
+native compilation remain valid for unchanged application code; only SQL,
+integration tools and documentation changed in the review fixes.
+
+`.tools/supabase/supabase.exe db advisors --local --type all --level warn --fail-on error`
+reported no issues. Newly available Supabase skills, the official changelog and
+function/RLS documentation were reviewed. The pinned backend and explicit grants
+remain unchanged; these checks do not close hosted/native acceptance gates.
+
+## Next-session handoff — 19 October 2026, core create/status delivery
+
+- **State:** 3.0 passed; 3.1 still partial. Accepted Phase 2 emulator entry stays
+  accepted; physical/native gates remain visible. App account writes stay disabled.
+- **Delivered:** five local migrations, registration/pull, core create and
+  title/priority/status writes, immutable receipts, contiguous watermarks,
+  original recovery envelopes and durable private status history. Relevant new
+  files are migrations 004/005, `tool/test_backend_task_create.py` and
+  `lib/domain/account_task_validation.dart`. Inspect branch/PR/main before resuming.
+- **Next executable work:** complete Phase 3.1 task fields and command validation,
+  then remaining entity/relationship/delete/restore commands, snapshots,
+  resolution, history transport and retention. Preserve the original bases,
+  applied migrations and account-lock ordering. Resolve JSONB NUL/raw-number and
+  remaining normalization parity gaps before enabling account writes.
+- **Later milestones:** retained SQLite upgrade/profiles, secure native GitHub
+  PKCE, real two-client workers and crash recovery, consent/adoption/lifecycle,
+  installed device/latency tests, backend CI and recovery rehearsal remain open.
+  This increment does not close 3.1 or justify starting Phase 4.
+- **External prerequisites:** GitHub OAuth application/provider configuration
+  with exact native redirects; secure session and PKCE-verifier persistence;
+  a restricted development endpoint reachable from Android and Windows; installed
+  two-device access. No hosted project is linked and no device evidence was added.
+- **Runtime:** use `python tool/local_backend.py --start`, preserving volumes
+  and stopped backup containers. Fresh-host binding setup is still unresolved.

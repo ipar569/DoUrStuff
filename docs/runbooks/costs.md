@@ -63,3 +63,13 @@ disk/memory use is separate from cloud quotas. No pricing assumptions changed.
 accounts. No cloud resources or paid services were added. Receipt/candidate
 storage now exists locally; production retention and storage growth still need
 measurement before hosting or enabling accounts.
+
+18 October recheck of [pricing](https://supabase.com/pricing),
+[pausing](https://supabase.com/docs/guides/platform/free-project-pausing) and
+[database limits](https://supabase.com/docs/guides/platform/database-size): Free
+still lists 500 MB database, 50,000 MAU, 5 GB egress plus 5 GB cached egress, two
+active projects and no automatic backups; Pro starts at US$25/month. Low activity
+over seven days can pause Free projects, with a one-year platform restore window.
+The 500 MB read-only threshold and organization-level HTTP 402 restriction remain
+documented. This increment provisions nothing; retained status snapshots now add
+to local storage and need measurement with the full history/retention design.

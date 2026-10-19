@@ -16,6 +16,10 @@ HTTP/PostgreSQL evidence for receipts, held/conflict candidates and contiguous
 progress. Other commands, snapshots, resolution and all client integration remain
 unfinished. The diagrams describe the complete target, not current app behavior.
 
+18 October: the server also supports core task creation and atomic status/time
+changes, with private durable history. Full draft creation, other commands,
+history transport and all client paths in these diagrams remain unfinished.
+
 ## Component overview
 
 The expanded client represents either Android or Windows. Each device has its
