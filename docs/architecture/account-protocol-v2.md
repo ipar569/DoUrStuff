@@ -131,6 +131,26 @@ limit through HTTP; this is an explicit representation gap to resolve before
 account activation/adoption, alongside NUL/raw-number/other normalization gaps.
 Do not truncate content or advertise full draft replication while it remains open.
 
+20 October adds the already-reserved v2 `due` group to optional creation and
+`task.edit`. No envelope/version change is needed. Shapes are exactly
+`{kind: "none"}`, `{kind: "date", date: "YYYY-MM-DD"}`, or
+`{kind: "timed", instant: <UTC epoch milliseconds>, zone: <IANA name>,
+wall_time: "YYYY-MM-DDTHH:mm"}`. Civil years are 1–9999. Mixed, missing or extra
+members and impossible dates/times receive terminal `invalid_due` rejection;
+no other field in that command applies. An absent due field stays absent until
+explicitly supplied; clearing writes `{kind: "none"}` with its original base.
+
+The timed tuple is indivisible and retains its fixed instant and original
+wall/zone. The server accepts either fold instant and advances gaps by their
+size, including half-hour/full-day gaps. Its zone vocabulary is pinned to the
+342 names exposed by the current `TimePolicy.zones` (timezone 0.11.1/default
+data). `tool/export_due_fixtures.dart` generates real HTTP parity cases from
+that resolver; the production wire checker validates replies against it.
+PostgreSQL and Dart still use separate timezone datasets. The tested current
+dates and selected historical/boundary cases are not exhaustive historical or
+future parity: resolve/pin that compatibility policy before account activation
+and never reinterpret or truncate an existing guest deadline to upload it.
+
 **Chosen representation to carry into server fixtures:** durable server-held
 processing. Receipt/sequence acknowledgement means the command and any recovery
 candidates are durably stored; it does not mean every field applied canonically.

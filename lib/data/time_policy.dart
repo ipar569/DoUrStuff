@@ -106,4 +106,48 @@ final class TimePolicy {
       );
     }
   }
+
+  /// Strict account wire shape, followed by the same offline temporal rules
+  /// used when saving a guest draft. No value is normalized or repaired here.
+  static bool validAccountDue(Object? value) {
+    if (value is! Map) return false;
+    bool keys(Set<String> expected) =>
+        value.length == expected.length && value.keys.every(expected.contains);
+    try {
+      switch (value['kind']) {
+        case 'none':
+          return keys({'kind'});
+        case 'date':
+          if (!keys({'kind', 'date'}) || value['date'] is! String) {
+            return false;
+          }
+          CivilDate.parse(value['date'] as String);
+          return true;
+        case 'timed':
+          if (!keys({'kind', 'instant', 'zone', 'wall_time'}) ||
+              value['instant'] is! int ||
+              value['zone'] is! String ||
+              value['wall_time'] is! String) {
+            return false;
+          }
+          validate(
+            Due.timed(
+              instant: DateTime.fromMillisecondsSinceEpoch(
+                value['instant'] as int,
+                isUtc: true,
+              ),
+              zone: value['zone'] as String,
+              wallTime: value['wall_time'] as String,
+            ),
+          );
+          return true;
+        default:
+          return false;
+      }
+    } on FormatException {
+      return false;
+    } on ArgumentError {
+      return false;
+    }
+  }
 }

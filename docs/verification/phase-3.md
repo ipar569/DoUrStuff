@@ -1,7 +1,7 @@
 # Phase 3 verification
 
 Status: milestone **3.0 local readiness passed; 3.1 in progress**, reviewed
-19 October 2026. The user accepted
+20 October 2026. The user accepted
 the Android emulator offline/restart evidence on 12 October for local Phase 3
 entry. Immutable v2 operations, six strict RPC codecs and causal/policy fixtures exist;
 accounts and sync are not enabled. See the latest handoff below.
@@ -17,9 +17,9 @@ emulator. Supabase CLI 2.120.0 is now installed and checksum/version/help verifi
 through approved escalation after the permission change. Local configuration is
 initialized. The user subsequently updated Docker to Desktop 4.95.0 / Engine
 29.8.2. Local services, image pins and explicit loopback bindings passed checks.
-Six migrations and real synthetic-account registration/pull/apply/ownership
+Seven migrations and real synthetic-account registration/pull/apply/ownership
 tests ran on PostgreSQL 17.11. Apply now covers core task creation and
-title/priority/status/description/estimate edits, with private durable status history. Full draft
+title/priority/status/description/estimate/due edits, with private durable status history. Full draft
 fields, history download, native OAuth and client sync remain unfinished.
 
 | Gate | Evidence/status |
@@ -27,7 +27,7 @@ fields, history download, native OAuth and client sync remain unfinished.
 | Phase 2 entry acceptance | Accepted by user using emulator evidence; physical-device gate retained |
 | Protocol and SQLite upgrade | Six RPC codecs/goldens and field/relationship/recovery policy fixtures implemented; real server enforcement and local v2 upgrade pending |
 | Local backend readiness | Existing local stack verified; guarded restart and image pins recorded; fresh Windows recreation needs the documented binding repair |
-| Real PostgreSQL command/RLS integration | Registration/pull, core creation and title/priority/status/description/estimate edits tested, including receipts/recovery/history/RLS; remaining groups/commands, snapshots and resolution unfinished |
+| Real PostgreSQL command/RLS integration | Registration/pull, core creation and title/priority/status/description/estimate/due edits tested, including receipts/recovery/history/RLS; remaining groups/commands, snapshots and resolution unfinished |
 | Android/Windows PKCE and secure session storage | Not implemented or verified |
 | Full command replication/conflict recovery | Not implemented or executed |
 | Adoption, bootstrap, account lifecycle/deletion | Not implemented or executed |
@@ -976,3 +976,129 @@ evidence is not installed native authentication, replication or recovery evidenc
   Preserve all volumes and stopped backup containers. Run the four backend suites
   sequentially; the foundation suite temporarily rebuilds the application schema
   in a rollback-only transaction. Use one wire-file argument per Dart check.
+
+## Atomic due increment — 20 October 2026
+
+Initial Git/GitHub inspection confirmed the clean description/estimate branch
+at `8dc5a5b1d77e7207e527bd2efb38895ff95725e2`, PR #4 open, and remote main at
+`47e9e7aebaa52969260359e1539950d3772f6bf0`. Independent review subagent
+`/root/review_pr4` reviewed the actual diff and reported no actionable findings.
+The [review record](https://github.com/ipar569/DoUrStuff/pull/4#issuecomment-6285306029)
+records the exact SHA, scope and checks. GitHub had no unresolved threads or
+blocking reviews; Quality/Android/Windows CI all passed for that head. PR #4
+was squash-merged with the expected-head guard at
+`5e5478f1f9bf72297d365f00e4316122556a54f1`, verified MERGED and present on
+remote main. Local main was fast-forwarded before creating
+`codex/phase-3-task-due`; no newer or unrelated work was displaced.
+
+Forward migration `20261020070017_task_due.sql` adds optional due creation and
+independent atomic due edits. Strict none/date/timed shapes reject hybrids,
+missing/extra members, impossible civil dates, unknown zone names and mismatched
+instants. Civil years are 1–9999. Timed values preserve original wall time,
+zone and fixed instant, accept either fold occurrence and advance gaps by their
+size. The 342-zone vocabulary is pinned to timezone 0.11.1/default data.
+Four-group creation remains compatible: omitted due stays absent until an
+explicit edit. Clearing uses `{kind: "none"}`. Invalid due rejects the whole
+command; same-group conflicts never combine parts of two deadlines. Original
+bases/immutable payloads, account locks, receipts, status history and contiguous
+watermarks are preserved. SQLite schema v1 and the guest application path remain
+unchanged; no account write or upload path is enabled.
+
+The CLI generated migration 007. All 763 exported client/SQL cases agreed in a
+rollback-only candidate transaction before local application. A pre-apply
+application-schema/data dump is retained in ignored
+`.tools/backend-before-task-due.sql`; no restore rehearsal is implied. All seven
+migration IDs were verified locally. The foundation suite also verifies retained
+due values, history/original payloads and device watermarks through the upgrade.
+Prior applied migrations were not edited.
+
+Failures and diagnostic limits retained:
+
+- Initial sandbox GitHub CLI access failed to connect; authorized network
+  escalation succeeded and preserved the verified branch/PR state.
+- Reviewer's `python -B tool/test_backend_http.py` passed the UTF-8 regression
+  but two loopback tests failed with `WinError 10013` in the sandbox. Parent
+  rerun of the same command with loopback permission passed all three.
+- Initial `python tool/local_backend.py --start` failed because Docker's daemon
+  pipe was absent. After checking help, `docker desktop start --detach` and the
+  guarded restart passed. Nine pinned services and actual loopback-only bindings
+  were verified; volumes and stopped backup containers were preserved.
+- The web reader could not decode the official Markdown documentation content
+  type; direct `Invoke-WebRequest` retrieved the changelog and SQL function
+  security guidance. No provider upgrade or hosted resource was created.
+- `/usr/share/zoneinfo/tzdata.zi` was absent in the PostgreSQL image. `pg_config`
+  identifies PostgreSQL's bundled data directory; no exact IANA server version
+  was established. The pinned Dart package documents 2025c. Passing current
+  zone/gap/fold fixtures does not prove all historical/future offset parity.
+- `.tools/flutter/bin/flutter.bat build apk --debug --target-platform android-arm64`
+  failed because Flutter selected Java 11.0.15 despite process `JAVA_HOME`
+  pointing to the existing JDK 21. Gradle 9.3.1 requires at least Java 17.
+  The documented direct Gradle route below avoids changing global Flutter/JDK
+  configuration; the failed Flutter invocation remains failed evidence.
+
+| Exact command/action | Result |
+| --- | --- |
+| `python tool/local_backend.py --start` after Docker startup | Nine pinned services running; eight healthchecks healthy; loopback-only publishing |
+| `.tools/supabase/supabase.exe migration new task_due` | Generated migration 007 filename |
+| `docker exec supabase_db_dourstuff-local pg_dump -U postgres -d postgres --schema=sync_private --schema=public --no-owner --no-privileges` | Saved local pre-apply dump; not a tested restore |
+| `.tools/supabase/supabase.exe migration up --local --network-id dourstuff-local`; `.tools/supabase/supabase.exe migration list --local` | Applied only 007; all seven IDs matched |
+| `.tools/flutter/bin/dart.bat run tool/export_due_fixtures.dart .tools/due-fixtures.json` | 763 cases across 342 zone names, using the pinned client resolver |
+| `python tool/test_backend_task_due.py --supabase .tools/supabase/supabase.exe --fixtures .tools/due-fixtures.json --wire-output .tools/backend-due-wire.json` | 7 real integration groups passed |
+| `python tool/test_backend_foundation.py --supabase .tools/supabase/supabase.exe --wire-output .tools/backend-foundation-wire.json` | 8 integration groups passed, including rollback-only empty/retained application-schema upgrade |
+| `python tool/test_backend_apply.py --supabase .tools/supabase/supabase.exe --wire-output .tools/backend-apply-wire.json` | 11 integration groups passed |
+| `python tool/test_backend_task_create.py --supabase .tools/supabase/supabase.exe --wire-output .tools/backend-task_create-wire.json` | 11 integration groups passed |
+| `python tool/test_backend_task_fields.py --supabase .tools/supabase/supabase.exe --wire-output .tools/backend-task_fields-wire.json` | 5 integration groups passed |
+| `.tools/flutter/bin/dart.bat run tool/check_backend_wire.dart PATH`, one invocation per output above | 10 + 32 + 136 + 42 + 74 = 294 real replies passed production codec/correlation/semantic validation |
+| `python -B tool/test_backend_http.py` with loopback access | 3 helper tests passed |
+| `.tools/flutter/bin/flutter.bat test test/account_due_validation_test.dart test/account_task_validation_test.dart test/domain_test.dart test/local_database_test.dart` | 18 tests passed |
+| `.tools/flutter/bin/flutter.bat pub get --enforce-lockfile`; `.tools/flutter/bin/dart.bat run build_runner build` | Passed; generated database, lockfile and retained schema snapshots unchanged |
+| `.tools/flutter/bin/dart.bat format --output=none --set-exit-if-changed lib test tool` | 39 files, no changes |
+| `.tools/flutter/bin/flutter.bat analyze` | No issues, 32.3 seconds |
+| `.tools/flutter/bin/flutter.bat test --reporter expanded` | All 108 tests passed |
+| `.tools/flutter/bin/flutter.bat build windows --release` | Passed, 37.3 seconds; compilation only |
+| `$env:JAVA_HOME='D:\Projects\DoUrStuff\.tools\jdk\jdk-21.0.12.1+1'; android/gradlew.bat -p android assembleDebug -Ptarget-platform=android-arm64 --no-daemon` | Passed, 50 seconds; existing Kotlin/Gradle deprecation and SDK XML warnings retained; compilation only |
+| `.tools/supabase/supabase.exe db advisors --local --type all --level warn --fail-on error` | No issues before and after application |
+| Post-suite account, harness Auth-user and fault-trigger SQL counts | All zero |
+
+The due suite exercises optional creation/collisions/retries; invalid creation
+without partial state; completion/edit in both orders and canonical history;
+competing due edits in both orders and simultaneous HTTP requests; equivalence,
+partial conflicts, held successors, original bases, clearing, invalid-command
+atomicity, receipt expiry, X/Y isolation and injected transaction failure.
+This is real local backend evidence, not installed native sync/auth acceptance.
+The PR timeline records reviewed SHA, findings/fixes, CI and actual merge state.
+
+## Next-session handoff — 20 October 2026, atomic due delivery
+
+- **Milestone:** 3.0 complete; 3.1 partial. Emulator entry acceptance remains
+  accepted; physical/native gates remain open. The app stays guest-only and
+  Phase 4 stays gated.
+- **Delivered:** seven forward local migrations, registration/pull, core create
+  plus title/priority/status/description/estimate/due, immutable receipts,
+  original recovery envelopes, watermarks and private status history. Relevant
+  new files are migration 007, `tool/test_backend_task_due.py`,
+  `tool/export_due_fixtures.dart` and `test/account_due_validation_test.dart`.
+  Inspect Git/GitHub before resuming and reuse an open task PR if present.
+- **Next executable work:** relationship/parent dependency and delete/restore
+  semantics, then other Phase 2 entities/commands; history transport, snapshots,
+  explicit resolution and retention remain unfinished. Preserve applied
+  migrations; use forward fixes. Complete representation/normalization parity
+  before enabling any account commands or adoption.
+- **Representation gates:** valid 100,000-UTF-16-unit descriptions can exceed
+  the 64-KiB operation cap; JSONB NUL/raw numbers and normalization remain open.
+  Pin/reconcile complete client/server historical/future timezone rules beyond
+  the tested due cases. Do not truncate or alter guest content/deadlines.
+- **External prerequisites:** GitHub OAuth application/provider configuration
+  and exact Android/Windows redirects; verified secure session and PKCE-verifier
+  storage; a restricted development endpoint reachable from both installed
+  clients; Android and Windows installed-device access. No hosted project is
+  linked. Secrets remain outside the repo/chat/app.
+- **Later milestones:** retained SQLite upgrade/profiles, native secure GitHub
+  PKCE, complete two-client slice and crash/retry behavior, snapshots/conflict UI,
+  consent/adoption/lifecycle/recovery export/deletion, measured two-device
+  latency, backend CI and recovery rehearsal remain open.
+- **Runtime:** start Docker Desktop if its daemon is unavailable, then use
+  `python tool/local_backend.py --start`. Preserve volumes and stopped backup
+  containers. Run all five backend suites sequentially and one wire file per
+  Dart checker invocation. No production execution, release or publication was
+  authorized or performed.

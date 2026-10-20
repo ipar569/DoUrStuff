@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:dourstuff/data/time_policy.dart';
 import 'package:dourstuff/domain/account_sync_codec.dart';
 import 'package:dourstuff/domain/account_sync_rpc.dart';
 import 'package:dourstuff/domain/account_task_validation.dart';
@@ -28,6 +29,11 @@ void main(List<String> args) {
           final patches = request.operations[i].patches;
           if (receipt is! OperationReceipt) continue;
           final validity = <String, bool>{};
+          if (patches.containsKey('due')) {
+            validity['invalid_due'] = TimePolicy.validAccountDue(
+              patches['due']!.value,
+            );
+          }
           if (patches.containsKey('description')) {
             validity['invalid_description'] = validAccountDescription(
               patches['description']!.value,
@@ -70,6 +76,7 @@ void main(List<String> args) {
                     'invalid_priority',
                     'invalid_description',
                     'invalid_estimate_minutes',
+                    'invalid_due',
                   }.contains(receipt.rejectionCode) &&
                   validity[receipt.rejectionCode] != false)) {
             throw const FormatException('Server and Dart task rules differ.');

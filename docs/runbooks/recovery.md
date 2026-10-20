@@ -89,3 +89,12 @@ The local pre-migration dump is `.tools/backend-before-task-fields.sql`; it has
 not been restore-tested. Long valid descriptions can exceed the 64-KiB operation
 envelope; preflight consumes no sequence. Future adoption/account commands must
 retain that content and provide a supported representation before activation.
+
+20 October: migration 007 adds complete due tuples while preserving old
+absent groups and all original envelopes. The local pre-apply dump is
+`.tools/backend-before-task-due.sql`, not a tested restore. Due conflicts and
+held successors retain their original dates/instants/zones/wall times; receipt
+expiry never authorizes replay. Real fault injection checks due creation,
+history, receipt, cursor and watermark rollback together. The app still has no
+account recovery path. Do not modify guest deadlines to work around future or
+historical timezone-data disagreements between the client and server.

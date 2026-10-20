@@ -25,6 +25,11 @@ have real server tests. The domain description limit exceeds the current wire
 byte cap; representation parity remains an account-activation gate. No native
 account storage, authentication or replication component is enabled.
 
+20 October adds atomic due creation/edits, preserving none/date/timed tuples,
+original bases, completion history and same-group conflicts. Cross-runtime
+timezone compatibility outside the recorded fixtures remains an activation
+gate. Relationships, delete/restore and the remaining diagram paths are pending.
+
 ## Component overview
 
 The expanded client represents either Android or Windows. Each device has its

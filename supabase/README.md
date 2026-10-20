@@ -2,13 +2,13 @@
 
 Initialized with CLI **2.120.0**, pinned in `../.supabase-version`. Configuration
 is for the synthetic `dourstuff-local` project only. No remote project is linked.
-Six migrations now provide private account/device/log storage, RLS, restricted
+Seven migrations now provide private account/device/log storage, RLS, restricted
 device-registration/pull RPCs, atomic core task creation and title/priority/status/
-description/estimate edits.
+description/estimate/due edits.
 Apply stores canonical fields, immutable receipts, recovery candidates and device
 watermarks together, with durable status history. Creation requires the four
 core groups documented in the [v2 contract](../docs/architecture/account-protocol-v2.md),
-with optional description and nullable estimate;
+with optional description, nullable estimate and a complete due tuple;
 other task groups, history downloads, commands, snapshots and resolution remain unfinished.
 The Flutter app remains guest-only. Test users are created
 temporarily by the integration harness and removed afterwards.
@@ -45,6 +45,9 @@ python tool/test_backend_task_create.py --supabase .tools/supabase/supabase.exe 
 .tools/flutter/bin/dart.bat run tool/check_backend_wire.dart .tools/backend-create-wire.json
 python tool/test_backend_task_fields.py --supabase .tools/supabase/supabase.exe --wire-output .tools/backend-fields-wire.json
 .tools/flutter/bin/dart.bat run tool/check_backend_wire.dart .tools/backend-fields-wire.json
+.tools/flutter/bin/dart.bat run tool/export_due_fixtures.dart .tools/due-fixtures.json
+python tool/test_backend_task_due.py --supabase .tools/supabase/supabase.exe --fixtures .tools/due-fixtures.json --wire-output .tools/backend-due-wire.json
+.tools/flutter/bin/dart.bat run tool/check_backend_wire.dart .tools/backend-due-wire.json
 ```
 
 `local_backend.py` without `--start` checks the existing stack. It verifies the
@@ -100,6 +103,14 @@ edits versus completion, same-field conflicts/held successors, null clearing,
 ownership and the exact 64-KiB operation boundary. Direct SQL and Dart domain
 tests cover the larger 100,000-UTF-16-unit description limit. Valid descriptions
 larger than the wire envelope remain an explicit pre-activation gap.
+The due harness adds 763 generated parity cases across all 342 client zone names,
+strict civil/none/timed shapes, gaps/folds and invalid tuples. It exercises due
+races, clearing, completion history, held successors, receipt expiry, rollback
+and X/Y isolation. Migration 007 pins the zone vocabulary to timezone 0.11.1;
+future/historical offset compatibility between separate Dart/PostgreSQL tzdata
+remains an activation gate beyond these fixtures. Existing values are never
+normalized. `TimePolicy.validAccountDue` shares the guest resolver with the
+wire checker. Old creates retain an absent due group; no defaults are backfilled.
 The apply harness includes maximum-depth provenance through conflict and pull,
 with real responses decoded by Dart using a separate reply-envelope depth budget.
 Migration 005 retains original operation payloads with status history, protects
