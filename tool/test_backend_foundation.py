@@ -20,7 +20,9 @@ PROJECT = "dourstuff-local"
 
 
 def command(args, source=None):
-    result = subprocess.run(args, input=source, text=True, capture_output=True, timeout=60)
+    # Docker/psql and the Supabase CLI emit UTF-8, even when Windows' Python
+    # defaults to CP1252. Input SQL must use the same explicit encoding.
+    result = subprocess.run(args, input=source, encoding="utf-8", capture_output=True, timeout=60)
     if result.returncode:
         # Never include subprocess output: CLI status and SQL may contain secrets.
         raise RuntimeError(f"Local command failed (exit {result.returncode})")

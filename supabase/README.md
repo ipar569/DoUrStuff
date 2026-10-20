@@ -2,11 +2,13 @@
 
 Initialized with CLI **2.120.0**, pinned in `../.supabase-version`. Configuration
 is for the synthetic `dourstuff-local` project only. No remote project is linked.
-Five migrations now provide private account/device/log storage, RLS, restricted
-device-registration/pull RPCs, atomic core task creation and title/priority/status edits.
+Six migrations now provide private account/device/log storage, RLS, restricted
+device-registration/pull RPCs, atomic core task creation and title/priority/status/
+description/estimate edits.
 Apply stores canonical fields, immutable receipts, recovery candidates and device
 watermarks together, with durable status history. Creation requires the four
-core groups documented in the [v2 contract](../docs/architecture/account-protocol-v2.md);
+core groups documented in the [v2 contract](../docs/architecture/account-protocol-v2.md),
+with optional description and nullable estimate;
 other task groups, history downloads, commands, snapshots and resolution remain unfinished.
 The Flutter app remains guest-only. Test users are created
 temporarily by the integration harness and removed afterwards.
@@ -41,6 +43,8 @@ python tool/test_backend_apply.py --supabase .tools/supabase/supabase.exe --wire
 .tools/flutter/bin/dart.bat run tool/check_backend_wire.dart .tools/backend-apply-wire.json
 python tool/test_backend_task_create.py --supabase .tools/supabase/supabase.exe --wire-output .tools/backend-create-wire.json
 .tools/flutter/bin/dart.bat run tool/check_backend_wire.dart .tools/backend-create-wire.json
+python tool/test_backend_task_fields.py --supabase .tools/supabase/supabase.exe --wire-output .tools/backend-fields-wire.json
+.tools/flutter/bin/dart.bat run tool/check_backend_wire.dart .tools/backend-fields-wire.json
 ```
 
 `local_backend.py` without `--start` checks the existing stack. It verifies the
@@ -84,11 +88,18 @@ and late commits. It retains SQL-seeded legacy shadows for focused regression
 coverage. The new create/status harness creates every task through HTTP, testing
 collisions, completion/edit in both orders, immutable retries, atomic rejection,
 rollback including history, and owner isolation. The Dart checker compares status
-group validity as well as title validity
+group, description and estimate validity as well as title validity
 with the app's validator, including Unicode whitespace and UTF-16 length cases.
 The HTTP helper explicitly disables environment proxies and rejects redirects;
 the loopback-only dummy-server tests verify that credentials are never forwarded.
 Those two transport tests also run in the Quality workflow without Docker.
+An additional helper regression verifies UTF-8 SQL input/output independently
+of Windows' default encoding; the shared command runner specifies UTF-8.
+The task-fields harness covers optional description/estimate creation, independent
+edits versus completion, same-field conflicts/held successors, null clearing,
+ownership and the exact 64-KiB operation boundary. Direct SQL and Dart domain
+tests cover the larger 100,000-UTF-16-unit description limit. Valid descriptions
+larger than the wire envelope remain an explicit pre-activation gap.
 The apply harness includes maximum-depth provenance through conflict and pull,
 with real responses decoded by Dart using a separate reply-envelope depth budget.
 Migration 005 retains original operation payloads with status history, protects

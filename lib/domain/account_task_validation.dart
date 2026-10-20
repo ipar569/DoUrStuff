@@ -17,3 +17,11 @@ bool validAccountStatusGroup(Object? value) {
     _ => false,
   };
 }
+
+/// Match TaskDraft's UTF-16 description limit without trimming user content.
+/// The independent transport byte limit still applies to the whole operation.
+bool validAccountDescription(Object? value) =>
+    value is String && value.length <= 100000;
+
+bool validAccountEstimate(Object? value) =>
+    value == null || (value is int && value >= 1 && value <= 5256000);

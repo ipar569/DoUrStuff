@@ -1,11 +1,11 @@
 # Optional backend and controlled deployment
 
-Local configuration prepared; reviewed 18 October 2026. The local
+Local configuration prepared; reviewed 19 October 2026. The local
 `supabase/config.toml` was initialized with pinned CLI 2.120.0 and reviewed.
 There is no remote project, client authentication adapter or deployment workflow.
-A real local stack now runs with five migrations and tested registration/pull
+A real local stack now runs with six migrations and tested registration/pull
 RPCs plus ownership isolation. Atomic apply handles core task creation and
-title/priority/status edits, with receipts, recovery candidates, status history
+title/priority/status/description/estimate edits, with receipts, recovery candidates, status history
 and durable sequence progress.
 Other commands and the remaining replication protocol are unfinished.
 The guest app ignores sync configuration.
@@ -54,6 +54,18 @@ envelopes beyond receipt expiry. Backfill uses available receipts only; older
 events with expired receipts remain intact with unknown payloads. Their operation
 IDs still cannot be assigned to new work. The pre-fix local dump is
 `.tools/backend-before-history-fix.sql`. Neither dump is a restore rehearsal.
+
+## Description and estimate — 19 October 2026
+
+19 October continues with `20261019074608_task_description_estimate.sql`, generated
+with the pinned CLI's `migration new`. The candidate was compiled/smoke-tested in
+a rollback-only transaction before applying it forward; the pre-migration local
+dump is `.tools/backend-before-task-fields.sql`. Four core create groups remain
+required, while description and nullable estimate are optional. All supplied
+create groups use absent bases. `tool/test_backend_task_fields.py` exercises real
+HTTP behavior and the existing three suites remain regression gates. The full
+Phase 2 description limit exceeds the immutable operation byte cap; account
+activation must resolve that gap rather than silently truncate data.
 
 ## Local configuration / runtime gate — 13 October 2026
 

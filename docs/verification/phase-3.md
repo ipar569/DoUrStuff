@@ -17,9 +17,9 @@ emulator. Supabase CLI 2.120.0 is now installed and checksum/version/help verifi
 through approved escalation after the permission change. Local configuration is
 initialized. The user subsequently updated Docker to Desktop 4.95.0 / Engine
 29.8.2. Local services, image pins and explicit loopback bindings passed checks.
-Five migrations and real synthetic-account registration/pull/apply/ownership
+Six migrations and real synthetic-account registration/pull/apply/ownership
 tests ran on PostgreSQL 17.11. Apply now covers core task creation and
-title/priority/status edits, with private durable status history. Full draft
+title/priority/status/description/estimate edits, with private durable status history. Full draft
 fields, history download, native OAuth and client sync remain unfinished.
 
 | Gate | Evidence/status |
@@ -27,7 +27,7 @@ fields, history download, native OAuth and client sync remain unfinished.
 | Phase 2 entry acceptance | Accepted by user using emulator evidence; physical-device gate retained |
 | Protocol and SQLite upgrade | Six RPC codecs/goldens and field/relationship/recovery policy fixtures implemented; real server enforcement and local v2 upgrade pending |
 | Local backend readiness | Existing local stack verified; guarded restart and image pins recorded; fresh Windows recreation needs the documented binding repair |
-| Real PostgreSQL command/RLS integration | Registration/pull, core creation and title/priority/status edits tested, including receipts/recovery/history/RLS; remaining groups/commands, snapshots and resolution unfinished |
+| Real PostgreSQL command/RLS integration | Registration/pull, core creation and title/priority/status/description/estimate edits tested, including receipts/recovery/history/RLS; remaining groups/commands, snapshots and resolution unfinished |
 | Android/Windows PKCE and secure session storage | Not implemented or verified |
 | Full command replication/conflict recovery | Not implemented or executed |
 | Adoption, bootstrap, account lifecycle/deletion | Not implemented or executed |
@@ -876,3 +876,103 @@ remain unchanged; these checks do not close hosted/native acceptance gates.
   two-device access. No hosted project is linked and no device evidence was added.
 - **Runtime:** use `python tool/local_backend.py --start`, preserving volumes
   and stopped backup containers. Fresh-host binding setup is still unresolved.
+
+## Description/estimate increment — 19 October 2026
+
+PR #3 merged at `47e9e7aebaa52969260359e1539950d3772f6bf0` after independent
+re-review of `f1d45bec7d31286f19499c32c57fc0bea94711f0`, with no remaining
+actionable findings and successful Quality/Android/Windows CI. GitHub reported
+MERGED and local main was fast-forwarded to the verified remote merge. This
+increment starts from that commit on `codex/phase-3-task-description-estimate`.
+Remote main was rechecked before continuing; no newer work was displaced.
+
+Forward migration `20261019074608_task_description_estimate.sql` adds optional
+description and nullable whole-minute estimate groups to core creation and
+independent task edits. Four-group creation remains valid, with missing optional
+groups left absent until an explicit edit; no defaults or base revisions are
+invented. Supplied create groups remain all-or-nothing. Collisions never merge
+optional fields. Status-only commands still reject unrelated groups. Existing
+account locks, receipts, retained recovery envelopes, history and watermarks
+keep their transactional boundaries. No SQLite schema or client account path
+changed.
+
+The CLI's `migration new task_description_estimate` generated the filename.
+The candidate compiled and passed validator smoke checks in a rollback-only
+transaction before being applied forward. An application-schema dump was saved
+to ignored `.tools/backend-before-task-fields.sql`; this is not a restore test.
+All six migration IDs were verified after application. Existing containers,
+volumes and stopped backups remain intact.
+
+The first task-fields run failed its Unicode preservation assertion. PostgreSQL
+held the correct value, but the shared Python command runner decoded its UTF-8
+output with Windows CP1252. The runner now explicitly uses UTF-8 for SQL stdin
+and subprocess stdout. A regression forces the legacy locale while round-tripping
+accented and supplementary characters. After the fix, all five field integration
+groups passed. A later wire-check invocation incorrectly supplied three paths
+to the single-path CLI and failed with `Expected a synthetic wire fixture path`;
+each output was then checked individually and passed. These failures are retained
+without treating either failed invocation as successful evidence.
+
+| Exact command/action | Result |
+| --- | --- |
+| `docker exec supabase_db_dourstuff-local pg_dump -U postgres -d postgres --schema=sync_private --schema=public --no-owner --no-privileges` | Pre-migration dump saved locally, not committed |
+| `.tools/supabase/supabase.exe migration up --local --network-id dourstuff-local` | Migration 006 applied; six IDs verified |
+| `python tool/test_backend_foundation.py --supabase .tools/supabase/supabase.exe --wire-output .tools/backend-foundation-wire.json` | 8 integration groups passed, including empty/retained-data upgrade through all six migrations |
+| `python tool/test_backend_apply.py --supabase .tools/supabase/supabase.exe --wire-output .tools/backend-apply-wire.json` | 11 integration groups passed |
+| `python tool/test_backend_task_create.py --supabase .tools/supabase/supabase.exe --wire-output .tools/backend-create-wire.json` | 11 integration groups passed |
+| `python tool/test_backend_task_fields.py --supabase .tools/supabase/supabase.exe --wire-output .tools/backend-fields-wire.json` | 5 integration groups passed |
+| `.tools/flutter/bin/dart.bat run tool/check_backend_wire.dart PATH`, once per output above | 10 + 32 + 136 + 42 = 220 real replies passed production codec/correlation and semantic checks |
+| `python tool/test_backend_http.py` | 3 tests passed: proxy isolation, redirect denial and UTF-8 subprocess regression |
+| `.tools/flutter/bin/flutter.bat test test/account_task_validation_test.dart test/domain_test.dart test/local_database_test.dart` | 16 tests passed |
+| `.tools/flutter/bin/flutter.bat pub get --enforce-lockfile`; `.tools/flutter/bin/dart.bat run build_runner build` | Passed; lockfile/generated database unchanged |
+| `.tools/flutter/bin/dart.bat format --output=none --set-exit-if-changed lib test tool` | 37 files checked, zero changes |
+| `.tools/flutter/bin/flutter.bat analyze` | No issues, 6.8 seconds |
+| `.tools/flutter/bin/flutter.bat test --reporter expanded` | All 106 tests passed |
+| `.tools/flutter/bin/flutter.bat build windows --release` | Passed, 11.8 seconds; compilation only |
+| `$env:JAVA_HOME='D:\Projects\DoUrStuff\.tools\jdk\jdk-21.0.12.1+1'; android/gradlew.bat -p android assembleDebug -Ptarget-platform=android-arm64 --no-daemon` | Passed, 43 seconds; existing Kotlin/Gradle and SDK XML warnings, compilation only |
+| `.tools/supabase/supabase.exe db advisors --local --type all --level warn --fail-on error` | No issues found |
+| Post-run SQL account, harness Auth-user and fault-trigger counts | All zero |
+
+The new HTTP fixtures cover whitespace/supplementary-character preservation,
+create collisions and immutable retries, terminal semantic rejection without
+partial creation, nullable clearing, completion/edit in both commit orders,
+accepted history snapshots, partial conflicts with held successors and original
+bases, and X/Y isolation. SQL and Dart tests verify the 100,000-UTF-16-unit domain
+limit; HTTP tests separately verify exact 64-KiB operation acceptance and one-byte
+overflow with no progress. These are distinct limits: large valid guest
+descriptions cannot yet be represented in one account operation. Resolve the
+transport/representation contract before enabling writes or adoption; never
+truncate the guest content. JSONB NUL/raw-number parity also remains open.
+
+Checks describe this increment's working tree. The PR timeline records exact
+reviewed commits, review corrections, CI and eventual merge state. Local backend
+evidence is not installed native authentication, replication or recovery evidence.
+
+## Next-session handoff — 19 October 2026, description/estimate delivery
+
+- **State:** 3.0 complete, 3.1 partial; accepted emulator entry is unchanged.
+  The application remains guest-only and Phase 4 remains gated.
+- **Delivered:** six local migrations support registration/pull, core creation,
+  title/priority/status/description/estimate edits, original recovery envelopes,
+  immutable receipts, durable watermarks and private status history. Inspect the
+  branch/PR/main state before resuming and preserve any subsequent changes.
+- **Next executable work:** remaining task due/relationship/delete/restore and
+  other entity semantics; complete validation/representation parity. Continue
+  account storage/secure native PKCE and the first real two-client slice in the
+  delivery plan, then full snapshots/resolution/history transport/retention.
+  Applied migrations stay immutable; fixes must be forward migrations.
+- **Account activation blockers:** oversized valid descriptions, JSONB NUL/raw
+  numeric representation, remaining normalization/command gaps, unimplemented
+  client replication and recovery. No account writes or guest upload may be enabled.
+- **External prerequisites:** configured GitHub OAuth provider with exact native
+  redirects; tested secure session and PKCE-verifier persistence; a restricted
+  development endpoint reachable from Android and Windows; installed two-device
+  access. No hosted project or device evidence was added by this increment.
+- **Later acceptance:** retained SQLite upgrade, crash/retry recovery,
+  consent/adoption/lifecycle/deletion, installed two-device and latency results,
+  real backend CI and recovery rehearsal remain open. Production execution is
+  still unauthorized.
+- **Runtime:** `python tool/local_backend.py --start` resumes the repaired stack.
+  Preserve all volumes and stopped backup containers. Run the four backend suites
+  sequentially; the foundation suite temporarily rebuilds the application schema
+  in a rollback-only transaction. Use one wire-file argument per Dart check.
