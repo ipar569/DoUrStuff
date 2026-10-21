@@ -123,6 +123,28 @@ Local verification passes 106 Flutter tests, 35 backend integration groups,
 220 real Dart-validated replies and three HTTP/encoding helper tests. See the
 latest verification handoff and PR timeline for review and CI/merge evidence.
 
+20 October: PR #4 independently reviewed at `8dc5a5b` with no actionable
+findings, then merged at `5e5478f` after passing Quality/Android/Windows CI.
+The next increment adds forward migration 007 for atomic none/date/timed due
+creation and edits, strict tuple validation, gap/fold handling, conflict/held
+recovery, clearing and account isolation. Local verification passes 108 Flutter
+tests, 42 backend integration groups and 294 real Dart-validated replies,
+including 763 due cases across all 342 client zone names. Full historical/future
+timezone-data parity remains an activation gate alongside the existing text/
+JSONB representation gaps. Next: relationships/parent dependencies,
+delete/restore and remaining entities/commands, followed by account storage/auth
+and the real two-client slice. Phase 3.1 remains partial; the app is guest-only.
+
+21 October PR #5 review found a gap-validation bug for ordinary times after a
+DST transition. Forward migration 008 fixes it while preserving 007; the
+regression matrix now has 785 due cases and the Flutter suite passes 109 tests.
+Windows reserved the backend's host ports on 21 October; guarded restart on
+22 October restored normal loopback access without changing containers or
+reservations. All 7 affected due and 8 foundation groups passed on that path,
+including the eight-migration retained-data upgrade; 85 real replies passed
+client validation. Installed-device reachability remains unverified.
+See the latest verification entry and PR review/check timeline before resuming.
+
 Real Supabase migrations/RPC/RLS tests; secure tokens and GitHub PKCE; explicit
 adoption; resumable bootstrap; field conflicts and recovery UI; cursor/receipts/
 tombstones/high-water; catch-up/realtime/retries; sign-out/switch/deletion.

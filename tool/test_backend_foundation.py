@@ -162,6 +162,10 @@ def main():
             f"('{fixture_owner}','{fixture_task}','{expired_op}',6,null,'{{}}','{{}}','{{}}');\n")
         upgrade = "\n".join(path.read_text(encoding="utf-8") +
                             (history_fixture if path.name == "20261018000100_task_create_status.sql" else "")
+                            + (f"update sync_private.task_shadow set fields="
+                               f"'{{\"due\":{{\"revision\":7,\"value\":{{\"kind\":\"date\",\"date\":\"2026-10-20\"}}}}}}'::jsonb "
+                               f"where owner_id='{fixture_owner}';"
+                               if path.name == "20261019074608_task_description_estimate.sql" else "")
                             for path in sorted(migration_dir.glob("*.sql"))
                             if path.name != "20261016000100_account_foundation.sql")
         migration_result = sql("begin; drop function if exists public.sync_apply(jsonb); "
@@ -174,8 +178,10 @@ def main():
             f"select operation={literal(json.dumps(original))}::jsonb from sync_private.task_status_history "
             f"where owner_id='{fixture_owner}' and operation_id='{fixture_op}'; "
             f"select operation is null from sync_private.task_status_history "
-            f"where owner_id='{fixture_owner}' and operation_id='{expired_op}'; rollback;")
-        require(migration_result.splitlines() == ["7", "t", "t"],
+            f"where owner_id='{fixture_owner}' and operation_id='{expired_op}'; "
+            f"select fields->'due'='{{\"revision\":7,\"value\":{{\"kind\":\"date\",\"date\":\"2026-10-20\"}}}}'::jsonb "
+            f"from sync_private.task_shadow where owner_id='{fixture_owner}'; rollback;")
+        require(migration_result.splitlines() == ["7", "t", "t", "t"],
                 "Empty app-schema and forward upgrade preserve watermark, history and exact available original bases")
         require(sql("select server_epoch from sync_private.backend_state;") == before_epoch,
                 "Migration rehearsal rolls back without replacing existing state")

@@ -89,3 +89,25 @@ The local pre-migration dump is `.tools/backend-before-task-fields.sql`; it has
 not been restore-tested. Long valid descriptions can exceed the 64-KiB operation
 envelope; preflight consumes no sequence. Future adoption/account commands must
 retain that content and provide a supported representation before activation.
+
+20 October: migration 007 adds complete due tuples while preserving old
+absent groups and all original envelopes. The local pre-apply dump is
+`.tools/backend-before-task-due.sql`, not a tested restore. Due conflicts and
+held successors retain their original dates/instants/zones/wall times; receipt
+expiry never authorizes replay. Real fault injection checks due creation,
+history, receipt, cursor and watermark rollback together. The app still has no
+account recovery path. Do not modify guest deadlines to work around future or
+historical timezone-data disagreements between the client and server.
+
+21 October review found overly permissive gap shifting just after a transition.
+Forward migration 008 requires the absence of any exact wall occurrence before
+allowing the gap path; 007 remains unchanged. The preserved pre-fix dump is
+`.tools/backend-before-due-gap-fix.sql`. No account client is enabled and the
+test suites use synthetic data. Windows host port exclusions prevented loopback
+access on 21 October; guarded restart restored it on 22 October. The normal
+foundation harness then verified retained-data upgrade through all eight
+migrations inside a rollback-only transaction. Five synthetic harness accounts
+left by the interrupted run were identified by their exact fixture naming
+pattern and removed through the local Auth cleanup path; account/auth-fixture
+and injected-trigger counts returned to zero. Do not discard volumes or restart
+the stopped pre-loopback backups to repair host networking.

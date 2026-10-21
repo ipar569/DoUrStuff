@@ -199,7 +199,7 @@ def main():
         changed = deepcopy(complete)
         changed["patches"]["status_group"]["value"]["completed_at"] = 6
         require(g.apply(changed)["code"] == "payloadMismatch" and g.state() == before, "Completion retry is immutable")
-        supported, unsupported = g.create(6, task=uid()), g.op(7, {"kind": "none"}, group="due")
+        supported, unsupported = g.create(6, task=uid()), g.op(7, [], group="milestone_order")
         require(g.apply(supported, unsupported)["code"] == "unsupportedProtocol" and g.state() == before,
                 "Unsupported batch suffix cannot create an earlier task")
         passed_check("status command boundaries, partial content merge and whole-batch capability preflight")
