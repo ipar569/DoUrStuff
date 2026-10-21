@@ -601,8 +601,7 @@ All commands ran against the preserved uncommitted working tree at HEAD
 | `.tools/flutter/bin/dart.bat format --output=none --set-exit-if-changed lib test tool` | 35 files checked, zero changes |
 | `.tools/flutter/bin/flutter.bat analyze` | No issues, 23.1 seconds on the final run |
 | `.tools/flutter/bin/flutter.bat test --reporter expanded` | All 100 tests passed, including domain/SQLite/schema/widget regressions |
-| `git diff --check` before staging | Passed for tracked files; did not include the new migration |
-| `git diff --cached --check` after staging | Flags one extra blank line at EOF in already-applied migration 008; retained verbatim to preserve the applied source. No other whitespace errors |
+| `git diff --check` | Passed |
 
 Post-test SQL checks found zero application accounts, zero harness-prefix Auth
 users and zero fault-injection triggers. The fixture export contains only synthetic
@@ -1178,7 +1177,8 @@ loopback (no internal transport substitution):
 | `dart run tool/check_backend_wire.dart .tools/backend-foundation-review-wire.json` | 10 real responses passed |
 | `.tools/supabase/supabase.exe migration list --local` | All 8 local/applied IDs matched |
 | `.tools/supabase/supabase.exe db advisors --local --type all --level warn --fail-on error` | No issues found |
-| `git diff --check` | Passed |
+| `git diff --check` before staging | Passed for tracked files; did not include the new migration |
+| `git diff --cached --check` after staging | Flags one extra blank line at EOF in already-applied migration 008; retained verbatim to preserve the applied source. No other whitespace errors |
 
 These runs cleaned their synthetic accounts. Five older harness accounts from
 the interrupted run remained; their exact `foundation-<32 hex>@example.invalid`
