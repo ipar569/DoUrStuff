@@ -1,7 +1,7 @@
 # Phase 3 verification
 
 Status: milestone **3.0 local readiness passed; 3.1 in progress**, reviewed
-20 October 2026. The user accepted
+22 October 2026. The user accepted
 the Android emulator offline/restart evidence on 12 October for local Phase 3
 entry. Immutable v2 operations, six strict RPC codecs and causal/policy fixtures exist;
 accounts and sync are not enabled. See the latest handoff below.
@@ -17,7 +17,7 @@ emulator. Supabase CLI 2.120.0 is now installed and checksum/version/help verifi
 through approved escalation after the permission change. Local configuration is
 initialized. The user subsequently updated Docker to Desktop 4.95.0 / Engine
 29.8.2. Local services, image pins and explicit loopback bindings passed checks.
-Seven migrations and real synthetic-account registration/pull/apply/ownership
+Eight migrations and real synthetic-account registration/pull/apply/ownership
 tests ran on PostgreSQL 17.11. Apply now covers core task creation and
 title/priority/status/description/estimate/due edits, with private durable status history. Full draft
 fields, history download, native OAuth and client sync remain unfinished.
@@ -601,7 +601,8 @@ All commands ran against the preserved uncommitted working tree at HEAD
 | `.tools/flutter/bin/dart.bat format --output=none --set-exit-if-changed lib test tool` | 35 files checked, zero changes |
 | `.tools/flutter/bin/flutter.bat analyze` | No issues, 23.1 seconds on the final run |
 | `.tools/flutter/bin/flutter.bat test --reporter expanded` | All 100 tests passed, including domain/SQLite/schema/widget regressions |
-| `git diff --check` | Passed |
+| `git diff --check` before staging | Passed for tracked files; did not include the new migration |
+| `git diff --cached --check` after staging | Flags one extra blank line at EOF in already-applied migration 008; retained verbatim to preserve the applied source. No other whitespace errors |
 
 Post-test SQL checks found zero application accounts, zero harness-prefix Auth
 users and zero fault-injection triggers. The fixture export contains only synthetic
@@ -1102,3 +1103,111 @@ The PR timeline records reviewed SHA, findings/fixes, CI and actual merge state.
   containers. Run all five backend suites sequentially and one wire file per
   Dart checker invocation. No production execution, release or publication was
   authorized or performed.
+
+## Independent review correction — 21 October 2026
+
+Resumed clean branch `codex/phase-3-task-due` at
+`5937ce6764486fbc077c7427ba20f15134eb6c91`; remote main remained `5e5478f`.
+Opened [PR #5](https://github.com/ipar569/DoUrStuff/pull/5). Independent reviewer
+`/root/review_pr4` found one P2 issue in migration 007: the gap fallback also
+accepted ordinary wall times after the gap. For example Auckland
+`2026-09-27T03:30` incorrectly accepted `2026-09-26T15:30Z`, whose actual wall
+time is 04:30. The correct exact instant is 14:30Z. No additional actionable
+findings were reported for that head. Its Quality/Android/Windows CI passed,
+but it was not merged with the finding unresolved.
+
+Read-only SQL reproduced all four initial regression cases (Auckland, New York,
+Lord Howe and Apia). Forward migration
+`20261021055441_task_due_gap_validation.sql` requires that no exact wall
+occurrence exists before accepting a gap-shift candidate. Applied migration
+007 remains unchanged. The initial 771-case candidate passed a rollback-only
+SQL check; expanding the boundary/ordinary-time matrix produced 785 agreeing
+SQL/client cases after application. The pre-fix dump is retained in
+`.tools/backend-before-due-gap-fix.sql`, without a restore claim.
+
+Host runtime failure: the daemon was initially stopped. Docker Desktop startup
+restored the internal services, but `python tool/local_backend.py --start` and
+direct `docker start` failed to bind 54321–54324 with a socket access error.
+`netsh interface ipv4 show excludedportrange protocol=tcp` showed those ports
+inside exclusions 54224–54323 and 54324–54423. All nine containers run on their
+existing isolated network; the four actual published binding lists are empty.
+The guard's health/exposure result alone does not establish host HTTP access.
+No containers were replaced, volumes removed, stopped backups restarted or
+system port reservations changed.
+
+The internal Auth health route returned HTTP 200 from the existing database
+container through Kong. Ignored `.tools/run_backend_inside.py` substitutes only
+the harness HTTP transport with `docker exec` curl to that fixed internal route;
+it keeps real Auth/JWT/Kong/PostgREST/PostgreSQL behavior, passes credentials and
+bodies through stdin, and disables proxies/redirects. This is internal-network
+evidence; the normal host-loopback path remains blocked. The final migration
+was applied via `.tools/apply_due_review_fix.py`: dump, then function replacement
+and exact migration source record in one local psql transaction with the
+migration table locked. All eight IDs and exact source retention were checked.
+Normal host CLI/advisor verification must wait for the reserved ports to become
+available; no production migration was executed.
+
+Quality after the correction: 19 targeted tests passed; formatting checked 39
+files unchanged; analysis found no issues (37.2 seconds); the full Flutter suite
+passed 109 tests. After expanding transition-boundary cases, all three tests in
+`test/account_due_validation_test.dart` passed again. Native application code
+is unchanged by the review fix; the PR checks must still pass for the final head.
+The initial 108-test/42-group/294-reply results above are retained as historical
+evidence, not substituted for the affected review checks below.
+
+## Review-fix verification and next-session handoff — 22 October 2026
+
+Resumed at `5937ce6764486fbc077c7427ba20f15134eb6c91` with the migration 008
+review correction and its tests/docs still uncommitted. PR #5 remained open;
+its passing checks applied only to that original head. The interrupted internal
+HTTP run had no retained completion result or output file, so it is not counted
+as a passing suite. The first resumed attempt failed because Docker was stopped.
+After `docker desktop start --detach`, `python tool/local_backend.py --start`
+succeeded. Kong's actual binding was `127.0.0.1:54321` and a proxy-free request
+to `/auth/v1/health` returned 200. Containers, volumes, migration history and
+stopped backups were preserved; no host reservations were changed.
+
+Affected checks on the final review-fix working tree, through normal host
+loopback (no internal transport substitution):
+
+| Command | Result |
+| --- | --- |
+| `python tool/test_backend_task_due.py --supabase .tools/supabase/supabase.exe --fixtures .tools/due-fixtures.json --wire-output .tools/backend-due-review-wire.json` | 7 groups passed, including 785 cases/342 zones, same-group concurrency, rollback, retained originals and X/Y isolation |
+| `python tool/test_backend_foundation.py --supabase .tools/supabase/supabase.exe --wire-output .tools/backend-foundation-review-wire.json` | 8 groups passed; empty/retained-data upgrade through all 8 migrations rolled back safely; real RLS and account lifecycle denial passed |
+| `dart run tool/check_backend_wire.dart .tools/backend-due-review-wire.json` | 75 real responses passed |
+| `dart run tool/check_backend_wire.dart .tools/backend-foundation-review-wire.json` | 10 real responses passed |
+| `.tools/supabase/supabase.exe migration list --local` | All 8 local/applied IDs matched |
+| `.tools/supabase/supabase.exe db advisors --local --type all --level warn --fail-on error` | No issues found |
+| `git diff --check` | Passed |
+
+These runs cleaned their synthetic accounts. Five older harness accounts from
+the interrupted run remained; their exact `foundation-<32 hex>@example.invalid`
+pattern and lack of other owners were verified before using the normal local
+Auth cleanup path. Final counts: account rows 0, harness Auth users 0, injected
+test triggers 0. No real account data was used. The CLI advertised 2.121.0;
+the tested 2.120.0 pin was retained. The previous 109-test Flutter run and final
+three-test boundary run remain the local quality evidence for this correction.
+
+- **Delivery:** PR #4 merged at `5e5478f1f9bf72297d365f00e4316122556a54f1`.
+  PR #5 delivers atomic none/date/timed due creation/edits and forward migrations
+  007/008. The latest independent review must cover the correction's committed
+  SHA; its exact SHA, disposition, final CI and merge result are recorded in the
+  PR timeline. Never infer completion from the old head's passing checks.
+- **Next executable action:** finish PR #5's updated independent review and
+  Quality/Android/Windows checks, then merge only that reviewed head. Once merged,
+  fetch main and start a fresh task branch for relationship/parent dependencies
+  and delete/restore semantics, following the earliest unfinished delivery-plan
+  item. Do not modify any of the eight applied migrations.
+- **Activation gates:** 100,000-UTF-16-unit descriptions versus the 64-KiB
+  operation cap; JSONB NUL/raw-number and normalization parity; full historical/
+  future timezone-data parity. Preserve guest content and original immutable
+  payloads. Account storage, secure native GitHub PKCE, complete two-client sync,
+  snapshots/conflict recovery, consent/adoption/lifecycle and measured acceptance
+  remain unfinished. Phase 3.1 is partial; app guest-only; Phase 4 gated.
+- **External prerequisites:** GitHub OAuth/provider configuration with exact
+  Android/Windows redirect allowlists; verified secure session/PKCE-verifier
+  storage; a restricted development endpoint reachable from both installed
+  clients; installed Android and Windows devices. No hosted project is linked.
+  Restored PC loopback access does not establish device access. Physical/native,
+  two-device latency and recovery gates remain open; accepted Phase 2 emulator
+  entry is unchanged. No production migration, deployment or release authorized.

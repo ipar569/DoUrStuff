@@ -1,9 +1,9 @@
 # Optional backend and controlled deployment
 
-Local configuration prepared; reviewed 20 October 2026. The local
+Local configuration prepared; reviewed 22 October 2026. The local
 `supabase/config.toml` was initialized with pinned CLI 2.120.0 and reviewed.
 There is no remote project, client authentication adapter or deployment workflow.
-A real local stack now runs with seven migrations and tested registration/pull
+A real local stack now runs with eight migrations and tested registration/pull
 RPCs plus ownership isolation. Atomic apply handles core task creation and
 title/priority/status/description/estimate/due edits, with receipts, recovery candidates, status history
 and durable sequence progress.
@@ -93,6 +93,43 @@ uses none of the ltree/btree_gist/legacy-encryption features in its
 No provider/CLI upgrade or cloud configuration was performed. Private invoker
 validators have fixed search paths and restricted execute grants; the existing
 ownership-checked RPC retains its restricted role and account transaction lock.
+
+## Review correction and host ports — 21 October 2026
+
+Migration `20261021055441_task_due_gap_validation.sql` fixes the independent
+review finding: a normal wall time immediately after a DST gap cannot use the
+old offset. The validator first rules out an exact wall occurrence before
+allowing any gap shift. Migration 007 remains unchanged. Regression fixtures
+now include transition boundaries and later ordinary times in Auckland,
+New York, Lord Howe and Apia. The pre-fix dump is
+`.tools/backend-before-due-gap-fix.sql`; it is not a restore rehearsal.
+
+On 21 October, Windows excluded TCP ranges 54224–54323 and
+54324–54423 (`netsh interface ipv4 show excludedportrange protocol=tcp`). All
+four configured ports 54321–54324 were affected. Guarded restart and direct
+`docker start` failed to bind them with a socket access error. Existing containers
+were healthy internally but their actual published binding lists were empty;
+the guard's health/exposure success alone does not prove host reachability.
+Do not replace containers, start stopped backups, remove volumes or clear
+system port reservations to conceal this condition.
+
+Local review verification used ignored `.tools/run_backend_inside.py`: the
+unchanged harnesses call real Auth/Kong/PostgREST via curl from the existing
+database container on `dourstuff-local`. Credentials/bodies pass only through
+stdin, proxies and redirects are disabled, and no additional port is exposed.
+This is internal-network HTTP evidence, not host-loopback or device access.
+`.tools/apply_due_review_fix.py` preserves a dump and uses local `docker exec`
+psql to commit the final function replacement and exact source migration record
+together; it verifies all eight IDs and leaves prior migrations untouched.
+This narrowly scoped local fallback is not a production deployment procedure.
+On 22 October, after Docker Desktop startup, `python tool/local_backend.py --start`
+succeeded without replacing containers or changing reservations. Kong again
+published only on `127.0.0.1:54321`; its Auth health endpoint returned HTTP 200.
+The standard due and foundation harnesses then passed through host loopback
+(7 and 8 groups), CLI migration history matched all eight IDs, and local advisors
+found no issues. The earlier internal-network attempt was interrupted and has
+no complete-suite result. Preserve that failure history; do not infer installed
+device reachability from today's restored host endpoint.
 
 ## Local configuration / runtime gate — 13 October 2026
 

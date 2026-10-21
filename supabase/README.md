@@ -2,7 +2,7 @@
 
 Initialized with CLI **2.120.0**, pinned in `../.supabase-version`. Configuration
 is for the synthetic `dourstuff-local` project only. No remote project is linked.
-Seven migrations now provide private account/device/log storage, RLS, restricted
+Eight migrations now provide private account/device/log storage, RLS, restricted
 device-registration/pull RPCs, atomic core task creation and title/priority/status/
 description/estimate/due edits.
 Apply stores canonical fields, immutable receipts, recovery candidates and device
@@ -103,7 +103,7 @@ edits versus completion, same-field conflicts/held successors, null clearing,
 ownership and the exact 64-KiB operation boundary. Direct SQL and Dart domain
 tests cover the larger 100,000-UTF-16-unit description limit. Valid descriptions
 larger than the wire envelope remain an explicit pre-activation gap.
-The due harness adds 763 generated parity cases across all 342 client zone names,
+The due harness adds 785 generated parity cases across all 342 client zone names,
 strict civil/none/timed shapes, gaps/folds and invalid tuples. It exercises due
 races, clearing, completion history, held successors, receipt expiry, rollback
 and X/Y isolation. Migration 007 pins the zone vocabulary to timezone 0.11.1;

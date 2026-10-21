@@ -151,6 +151,12 @@ dates and selected historical/boundary cases are not exhaustive historical or
 future parity: resolve/pin that compatibility policy before account activation
 and never reinterpret or truncate an existing guest deadline to upload it.
 
+21 October independent review correction: migration 008 only permits a gap
+shift when the requested wall time has no exact occurrence. Ordinary times
+immediately after a transition must use their exact instant. Added fixtures
+cover both transition boundaries and later ordinary times for one-hour,
+half-hour and full-day gaps; the original migration remains immutable.
+
 **Chosen representation to carry into server fixtures:** durable server-held
 processing. Receipt/sequence acknowledgement means the command and any recovery
 candidates are durably stored; it does not mean every field applied canonically.

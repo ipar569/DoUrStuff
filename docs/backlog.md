@@ -135,6 +135,16 @@ JSONB representation gaps. Next: relationships/parent dependencies,
 delete/restore and remaining entities/commands, followed by account storage/auth
 and the real two-client slice. Phase 3.1 remains partial; the app is guest-only.
 
+21 October PR #5 review found a gap-validation bug for ordinary times after a
+DST transition. Forward migration 008 fixes it while preserving 007; the
+regression matrix now has 785 due cases and the Flutter suite passes 109 tests.
+Windows reserved the backend's host ports on 21 October; guarded restart on
+22 October restored normal loopback access without changing containers or
+reservations. All 7 affected due and 8 foundation groups passed on that path,
+including the eight-migration retained-data upgrade; 85 real replies passed
+client validation. Installed-device reachability remains unverified.
+See the latest verification entry and PR review/check timeline before resuming.
+
 Real Supabase migrations/RPC/RLS tests; secure tokens and GitHub PKCE; explicit
 adoption; resumable bootstrap; field conflicts and recovery UI; cursor/receipts/
 tombstones/high-water; catch-up/realtime/retries; sign-out/switch/deletion.

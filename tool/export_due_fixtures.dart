@@ -47,6 +47,28 @@ void main(List<String> args) {
     }
   }
   final timed = TimePolicy.resolve('2026-10-20', '12:34', 'UTC').toJson();
+  // A valid wall time after a gap must use its exact occurrence, never the
+  // pre-transition offset. Check hour, half-hour and full-day transitions.
+  for (final (day, time, zone, shift) in [
+    ('2026-09-27', '03:00', 'Pacific/Auckland', 3600000),
+    ('2026-09-27', '06:00', 'Pacific/Auckland', 3600000),
+    ('2026-09-27', '03:30', 'Pacific/Auckland', 3600000),
+    ('2026-03-08', '03:00', 'America/New_York', 3600000),
+    ('2026-03-08', '06:00', 'America/New_York', 3600000),
+    ('2026-03-08', '03:30', 'America/New_York', 3600000),
+    ('2026-10-04', '02:30', 'Australia/Lord_Howe', 1800000),
+    ('2026-10-04', '04:00', 'Australia/Lord_Howe', 1800000),
+    ('2026-10-04', '02:45', 'Australia/Lord_Howe', 1800000),
+    ('2011-12-31', '00:00', 'Pacific/Apia', 86400000),
+    ('2011-12-31', '12:00', 'Pacific/Apia', 86400000),
+  ]) {
+    final due = TimePolicy.resolve(day, time, zone).toJson();
+    add('exact after gap $zone', due, true);
+    add('wrong old offset after gap $zone', {
+      ...due,
+      'instant': (due['instant'] as int) + shift,
+    }, false);
+  }
   for (final value in <Object?>[
     null,
     true,
