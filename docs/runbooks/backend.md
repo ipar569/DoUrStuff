@@ -3,7 +3,7 @@
 Local configuration prepared; reviewed 22 October 2026. The local
 `supabase/config.toml` was initialized with pinned CLI 2.120.0 and reviewed.
 There is no remote project, client authentication adapter or deployment workflow.
-A real local stack now runs with nine migrations and tested registration/pull
+A real local stack now runs with ten migrations and tested registration/pull
 RPCs plus ownership isolation. Atomic apply handles core task creation and
 title/priority/status/description/estimate/due edits, with receipts, recovery candidates, status history
 and durable sequence progress.
@@ -19,6 +19,17 @@ implement restore, content expiry or child visibility. The pre-apply dump is
 first passed rollback-only retained-data upgrade and real-owner RPC checks.
 Prior applied migrations remain unchanged. Supabase function-security guidance
 and its changelog were rechecked; no provider or CLI upgrade was made.
+
+The subsequent `20261022043755_task_restore.sql` adds exact-deletion restore
+within 720 elapsed hours while core content is retained. Run all seven suites
+in `supabase/README.md` sequentially. The immutable restoration ledger and fixed
+search-path window helper are private with restricted grants and forced ledger
+RLS. The cutoff uses `clock_timestamp()` after the account lock, so time spent
+waiting cannot extend the recovery window. `.tools/backend-before-task-restore.sql`
+is the pre-apply dump, not restore evidence. Empty/retained-data upgrade and a
+real-owner restore/ledger smoke check passed in rollback-only transactions
+before local application. Prior migrations remain unchanged. No content purge,
+child visibility, account UI or native acceptance is implied.
 
 ## Running local foundation — 16 October 2026
 

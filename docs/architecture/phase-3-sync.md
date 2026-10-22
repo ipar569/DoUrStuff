@@ -29,8 +29,10 @@ account storage, authentication or replication component is enabled.
 original bases, completion history and same-group conflicts. Cross-runtime
 timezone compatibility outside the recorded fixtures remains an activation
 gate. 22 October adds task deletion with retained content and original deletion
-identity; late edits remain recoverable. Relationships, restore, content expiry
-and the remaining diagram paths are pending.
+identity; late edits remain recoverable. The next 22 October slice adds exact
+deletion restore with a 720-hour cutoff checked after the account lock. Parent/
+child relationships, physical content purging and the remaining diagram paths
+are pending.
 
 ## Component overview
 

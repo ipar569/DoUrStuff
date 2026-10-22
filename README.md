@@ -29,8 +29,9 @@ ownership isolation, atomic core task creation and title/priority/status/descrip
 including conflict retention, retry receipts and durable status history. Creation
 currently requires title, priority, status/completion and existence, with optional
 description, estimate and an atomic none/date/timed due value. Task deletion
-retains content, original deletion identity and late edits for recovery. Restore
-and child visibility remain gated. Other task
+retains content, original deletion identity and late edits for recovery. Exact
+deletion restore is supported within 30 days while content remains retained;
+child visibility and content purging remain gated. Other task
 groups, commands, history download and app integration remain pending.
 
 | Platform | Status |

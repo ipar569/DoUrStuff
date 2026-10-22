@@ -120,3 +120,13 @@ operation-ID reassignment. The RPC role has no update/delete permission on the
 deletion ledger. Do not purge this ledger or task content to simulate retention.
 Restore and the 30-day expiry policy are still unsupported, as are child
 visibility rules; no in-app account deletion/undo capability is enabled.
+
+The subsequent 22 October migration 010 enables server `task.restore` only for
+the exact current deletion ID/revision, an observed false base, retained core
+content and a server age below 720 hours. The boundary is exclusive and uses
+fresh time after the account lock. Missing history/content or future timestamps
+fail closed; expiry never reconstructs a task. Original deletion IDs remain on
+visible shadows and immutable restore envelopes remain in `task_restorations`.
+Retrying an old successful undo cannot revive a newer deletion. Late-edit
+recovery candidates stay unresolved; restoration does not silently apply them.
+Physical purging, copy/recovery UI and child visibility are still pending.
