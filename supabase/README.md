@@ -2,9 +2,10 @@
 
 Initialized with CLI **2.120.0**, pinned in `../.supabase-version`. Configuration
 is for the synthetic `dourstuff-local` project only. No remote project is linked.
-Ten migrations now provide private account/device/log storage, RLS, restricted
+Eleven migrations now provide private account/device/log storage, RLS, restricted
 device-registration/pull RPCs, atomic core task creation and title/priority/status/
-description/estimate/due edits, plus task deletion and exact-deletion restore.
+description/estimate/due edits, plus task deletion, exact-deletion restore and
+atomic milestone creation with immutable same-account parents/dependencies.
 Apply stores canonical fields, immutable receipts, recovery candidates and device
 watermarks together, with durable status history. Creation requires the four
 core groups documented in the [v2 contract](../docs/architecture/account-protocol-v2.md),
@@ -52,6 +53,8 @@ python tool/test_backend_task_delete.py --supabase .tools/supabase/supabase.exe 
 .tools/flutter/bin/dart.bat run tool/check_backend_wire.dart .tools/backend-delete-wire.json
 python tool/test_backend_task_restore.py --supabase .tools/supabase/supabase.exe --wire-output .tools/backend-restore-wire.json
 .tools/flutter/bin/dart.bat run tool/check_backend_wire.dart .tools/backend-restore-wire.json
+python tool/test_backend_milestone_create.py --supabase .tools/supabase/supabase.exe --wire-output .tools/backend-milestone-wire.json
+.tools/flutter/bin/dart.bat run tool/check_backend_wire.dart .tools/backend-milestone-wire.json
 ```
 
 `local_backend.py` without `--start` checks the existing stack. It verifies the
@@ -130,3 +133,13 @@ number spellings before validation; complete wire/semantic parity remains a gate
 before client activation. Native GitHub PKCE, snapshots, full command
 validation, explicit resolution and two-device integration remain open. See the
 [verification report](../docs/verification/phase-3.md) for failures and exact results.
+
+The milestone harness exercises atomic parent/child batches and a shared Dart
+wire fixture, creation collisions, exact parent receipt binding, parent conflict/
+held/unrelated progress, missing/expired evidence, cross-owner denial, inherited
+visibility in both parent-delete orders, restores, retries and transaction faults.
+It explicitly SQL-seeds an independent child tombstone to test preservation;
+milestone deletion itself is still gated, along with edits and ordering. Completion
+is a nullable signed native-range epoch-millisecond value, validated by both SQL
+and the Dart wire checker. Canonical child records are retained in pull; account
+projection and full two-device behavior remain future work.

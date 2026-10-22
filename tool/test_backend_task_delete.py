@@ -110,9 +110,9 @@ def main():
         require(f.apply(missing)["result"]["results"][0]["rejection_code"] == "entity_missing", "Missing task rejected")
         before = f.state(), ledger(f)
         child = deletion(f, 9)
-        child["command"] = "milestone.create"
+        child["command"] = "milestone.delete"
         child["entity"]["kind"] = "milestone"
-        require(f.apply(child)["code"] == "unsupportedProtocol" and (f.state(), ledger(f)) == before, "Child commands remain capability gated")
+        require(f.apply(child)["code"] == "unsupportedProtocol" and (f.state(), ledger(f)) == before, "Child deletion remains capability gated")
         passed_check("invalid/stale/held/missing deletion and child-command gating")
 
         f.apply(deletion(f, 9))

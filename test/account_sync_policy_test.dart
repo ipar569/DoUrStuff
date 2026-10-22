@@ -99,6 +99,41 @@ void main() {
     );
   });
 
+  test('milestone fixture binds a parent across kind-qualified identities', () {
+    final fixture = jsonDecode(
+      File('test/fixtures/account-protocol-v2-milestone.json')
+          .readAsStringSync(),
+    );
+    final request = applyCodec.decodeRequest(fixture);
+    expect(applyCodec.encodeRequest(request), fixture);
+    final parent = request.operations.first;
+    final child = request.operations.last;
+    expect(child.entity.key, parent.entity.key);
+    expect(child.entity.identity, isNot(parent.entity.identity));
+    expect(child.patches['completion']!.value, -1);
+    final original = child.payloadIdentity;
+    for (final disposition in [
+      FieldDisposition.applied,
+      FieldDisposition.conflict,
+    ]) {
+      expect(
+        checkParentDependency(
+          authenticatedOwner: 'X',
+          parentOwner: 'X',
+          child: child,
+          dependency: child.dependencies.single,
+          predecessor: parent,
+          receipt: receipt(disposition),
+          parentVisible: true,
+        ),
+        disposition == FieldDisposition.applied
+            ? ParentDisposition.ready
+            : ParentDisposition.held,
+      );
+      expect(child.payloadIdentity, original);
+    }
+  });
+
   test('delete/edit in either arrival order keeps deleted visibility and recoverable content', () {
     for (final deleteFirst in [true, false]) {
       var deleted = false;

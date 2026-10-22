@@ -31,8 +31,10 @@ currently requires title, priority, status/completion and existence, with option
 description, estimate and an atomic none/date/timed due value. Task deletion
 retains content, original deletion identity and late edits for recovery. Exact
 deletion restore is supported within 30 days while content remains retained;
-child visibility and content purging remain gated. Other task
-groups, commands, history download and app integration remain pending.
+milestone creation now validates an immutable same-account parent, with exact
+parent dependencies and held recovery. A private server visibility check combines
+parent and child existence without rewriting child state. Milestone edits/deletion/
+ordering, content purging, history download and app integration remain pending.
 
 | Platform | Status |
 | --- | --- |

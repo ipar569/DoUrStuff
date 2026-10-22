@@ -34,6 +34,12 @@ deletion restore with a 720-hour cutoff checked after the account lock. Parent/
 child relationships, physical content purging and the remaining diagram paths
 are pending.
 
+23 October adds server milestone creation with immutable task parents, exact
+causal dependencies and atomic held/recovery behavior. A private visibility
+helper combines task and milestone existence; client projection in the diagrams
+is still planned. Milestone editing/deletion/order and the other entities remain
+open. No native account path is enabled.
+
 ## Component overview
 
 The expanded client represents either Android or Windows. Each device has its

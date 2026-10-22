@@ -1,0 +1,44 @@
+{
+  "protocol_version": 2,
+  "server_epoch": "00000000-0000-0000-0000-000000000099",
+  "after_revision": 0,
+  "operations": [
+    {
+      "protocol_version": 2,
+      "operation_id": "00000000-0000-0000-0000-000000000001",
+      "device_epoch": "00000000-0000-0000-0000-000000000010",
+      "sequence": 1,
+      "entity": {"kind": "task", "key": ["00000000-0000-0000-0000-000000000020"]},
+      "command": "task.create",
+      "patches": {
+        "existence": {"base": {"kind": "absent"}, "value": true},
+        "title": {"base": {"kind": "absent"}, "value": "X"},
+        "priority": {"base": {"kind": "absent"}, "value": "none"},
+        "status_group": {"base": {"kind": "absent"}, "value": {"status": "todo", "completed_at": null}}
+      },
+      "dependencies": [],
+      "provenance": {"occurred_at": 100}
+    },
+    {
+      "protocol_version": 2,
+      "operation_id": "00000000-0000-0000-0000-000000000002",
+      "device_epoch": "00000000-0000-0000-0000-000000000010",
+      "sequence": 2,
+      "entity": {"kind": "milestone", "key": ["00000000-0000-0000-0000-000000000020"]},
+      "command": "milestone.create",
+      "patches": {
+        "existence": {"base": {"kind": "absent"}, "value": true},
+        "parent": {"base": {"kind": "absent"}, "value": "00000000-0000-0000-0000-000000000020"},
+        "title": {"base": {"kind": "absent"}, "value": "Step"},
+        "completion": {"base": {"kind": "absent"}, "value": -1}
+      },
+      "dependencies": [{
+        "entity": {"kind": "task", "key": ["00000000-0000-0000-0000-000000000020"]},
+        "operation_id": "00000000-0000-0000-0000-000000000001",
+        "sequence": 1,
+        "group": "existence"
+      }],
+      "provenance": {"occurred_at": 50}
+    }
+  ]
+}

@@ -29,6 +29,13 @@ void main(List<String> args) {
           final patches = request.operations[i].patches;
           if (receipt is! OperationReceipt) continue;
           final validity = <String, bool>{};
+          if (patches.containsKey('completion')) {
+            final completion = patches['completion']!.value;
+            validity['invalid_completion'] = validAccountStatusGroup({
+              'status': completion == null ? 'todo' : 'completed',
+              'completed_at': completion,
+            });
+          }
           if (patches.containsKey('due')) {
             validity['invalid_due'] = TimePolicy.validAccountDue(
               patches['due']!.value,
@@ -77,6 +84,7 @@ void main(List<String> args) {
                     'invalid_description',
                     'invalid_estimate_minutes',
                     'invalid_due',
+                    'invalid_completion',
                   }.contains(receipt.rejectionCode) &&
                   validity[receipt.rejectionCode] != false)) {
             throw const FormatException('Server and Dart task rules differ.');
