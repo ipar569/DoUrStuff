@@ -28,7 +28,9 @@ Local Phase 3.1 server work now includes tested device registration, cursor read
 ownership isolation, atomic core task creation and title/priority/status/description/estimate/due edits,
 including conflict retention, retry receipts and durable status history. Creation
 currently requires title, priority, status/completion and existence, with optional
-description, estimate and an atomic none/date/timed due value. Other task
+description, estimate and an atomic none/date/timed due value. Task deletion
+retains content, original deletion identity and late edits for recovery. Restore
+and child visibility remain gated. Other task
 groups, commands, history download and app integration remain pending.
 
 | Platform | Status |

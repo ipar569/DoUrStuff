@@ -28,7 +28,9 @@ account storage, authentication or replication component is enabled.
 20 October adds atomic due creation/edits, preserving none/date/timed tuples,
 original bases, completion history and same-group conflicts. Cross-runtime
 timezone compatibility outside the recorded fixtures remains an activation
-gate. Relationships, delete/restore and the remaining diagram paths are pending.
+gate. 22 October adds task deletion with retained content and original deletion
+identity; late edits remain recoverable. Relationships, restore, content expiry
+and the remaining diagram paths are pending.
 
 ## Component overview
 

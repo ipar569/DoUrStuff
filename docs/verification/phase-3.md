@@ -17,9 +17,9 @@ emulator. Supabase CLI 2.120.0 is now installed and checksum/version/help verifi
 through approved escalation after the permission change. Local configuration is
 initialized. The user subsequently updated Docker to Desktop 4.95.0 / Engine
 29.8.2. Local services, image pins and explicit loopback bindings passed checks.
-Eight migrations and real synthetic-account registration/pull/apply/ownership
+Nine migrations and real synthetic-account registration/pull/apply/ownership
 tests ran on PostgreSQL 17.11. Apply now covers core task creation and
-title/priority/status/description/estimate/due edits, with private durable status history. Full draft
+title/priority/status/description/estimate/due edits and task deletion, with private durable status history. Full draft
 fields, history download, native OAuth and client sync remain unfinished.
 
 | Gate | Evidence/status |
@@ -1211,3 +1211,94 @@ three-test boundary run remain the local quality evidence for this correction.
   Restored PC loopback access does not establish device access. Physical/native,
   two-device latency and recovery gates remain open; accepted Phase 2 emulator
   entry is unchanged. No production migration, deployment or release authorized.
+
+## Task deletion increment — 22 October 2026
+
+PR #5 merged at `d6888063c973f6e011701da947fc6bfc868256ad` after independent
+re-review of `9c31ea88a59559df39512fdd2d288c5070cf2459` and passing
+Quality/Android/Windows CI. Remote and clean local main matched. This increment
+started from that commit on fresh branch `codex/phase-3-task-delete`; no newer
+remote work or open PR was present. The small scope is task deletion, a
+visibility prerequisite for later parent/child commands.
+
+Forward migration `20261021223308_task_delete.sql` (009) adds `task.delete`
+with only an existence true-to-false patch using observed/predecessor bases.
+Deletion retains canonical task content and does not fabricate status history.
+Edits arriving after deletion go to recovery with original immutable envelopes;
+edits arriving before deletion remain in retained canonical content. Competing
+deletes keep the first accepted deletion identity. The private, forced-RLS
+`task_deletions` ledger retains exact deletion operations, revisions and trusted
+server timestamps; the RPC role can select/insert but cannot update/delete it.
+Receipt/log expiry cannot authorize replay or reuse of a deletion operation ID.
+Visibility, ledger, receipt, recovery, cursor and watermark commit atomically.
+All eight earlier applied migrations remain unchanged. No SQLite/app code changed.
+
+Local setup used `python tool/local_backend.py --start` on the preserved stack.
+The pinned CLI's `migration new task_delete` generated the new filename. Before
+application, the existing empty/retained-data fixture compiled all nine
+migrations in a rollback-only transaction, and a real synthetic-owner deletion
+RPC smoke test applied then rolled back safely. The first ignored upgrade-helper
+attempt failed with a missing Python `json` import; correcting that local helper
+made the check pass. This was a helper failure, not a migration reset.
+`.tools/backend-before-task-delete.sql` preserves the pre-apply dump; no restore
+rehearsal is claimed. `migration up --local --network-id dourstuff-local` applied
+only 009, and `migration list --local` matched all nine IDs. Database advisors
+reported no issues. Supabase changelog/function-security guidance was checked;
+no provider/CLI upgrade occurred. The web reader rejected the Markdown changelog
+content type; a direct read succeeded. Existing PostgreSQL 17.11 pins remain.
+
+Local verification before PR review:
+
+- `flutter test test/domain_test.dart test/local_database_test.dart test/account_sync_policy_test.dart`:
+  18 tests passed; no guest behavior/schema change.
+- `python tool/test_backend_task_delete.py --supabase .tools/supabase/supabase.exe --wire-output .tools/backend-delete-wire.json`:
+  six groups passed on the initial run, including both delete/edit orders,
+  concurrent deletes, duplicate/lost-response retries, receipt/log expiry,
+  original identity reuse, invalid/stale/held/missing commands, restore gating,
+  X/Y isolation and injected transaction rollback. A second run with direct
+  cross-owner ledger insertion denial and no-update/delete privilege assertions
+  also passed all six groups.
+- `dart run tool/check_backend_wire.dart .tools/backend-delete-wire.json`:
+  35 real replies passed on the initial run.
+- `.tools/supabase/supabase.exe db advisors --local --type all --level warn --fail-on error`:
+  no issues found after local application.
+
+All five previous backend suites ran sequentially against migration 009:
+`test_backend_foundation.py` 8 groups, `test_backend_apply.py` 11,
+`test_backend_task_create.py` 11, `test_backend_task_fields.py` 5 and
+`test_backend_task_due.py` 7 (785 due cases/342 zones). Each used
+`--supabase .tools/supabase/supabase.exe --wire-output .tools/backend-<suite>-delete-regression-wire.json`;
+the due suite also used `--fixtures .tools/due-fixtures.json`. Each output was
+checked separately with `dart run tool/check_backend_wire.dart`: respectively
+10, 32, 136, 42 and 75 real replies passed. With the final deletion suite,
+this is **48 integration groups and 330 real response validations**.
+`python tool/test_backend_http.py` passed all three tests. Final synthetic
+account/Auth-user, injected-trigger and deletion-ledger row counts were zero.
+Final staged diff and relative Markdown links are checked before commit.
+App/native source is unchanged; applicable Quality/Android/Windows PR CI must
+still pass on the independently reviewed head.
+
+### Next-session handoff
+
+This remains Phase 3.1 partial, with a guest-only app. The task branch must finish
+independent review and Quality/Android/Windows checks before guarded merge;
+record the exact reviewed SHA, findings/disposition and actual merge commit in
+the PR timeline. Do not infer a merge from this pre-merge document.
+
+Next implementation: exact-deletion restore preconditions and 30-day retained
+content rules, plus parent/child relationship semantics; then remaining commands,
+account storage/secure native GitHub PKCE, complete two-client sync, snapshots/
+conflict recovery, consent/adoption/lifecycle and installed acceptance. Restore,
+content expiry, child visibility and their device/UI paths are not implemented
+by this increment. All nine applied migrations must remain unchanged.
+
+Activation gaps remain: 100,000-UTF-16-unit descriptions versus the 64-KiB cap;
+JSONB NUL/raw-number and normalization parity; historical/future timezone-data
+parity. Never truncate or silently upload guest data. External prerequisites
+remain GitHub OAuth/provider configuration with exact Android/Windows redirects,
+verified secure session/PKCE-verifier storage, a restricted development endpoint
+reachable from both installed clients, and installed Android/Windows devices.
+No hosted project is linked. PC loopback is not device-access evidence. Phase 2
+emulator entry remains accepted; physical/native, two-device latency and recovery
+gates remain open. Phase 4 stays gated. No production deployment/migration or
+release was authorized or performed.

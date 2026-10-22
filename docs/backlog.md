@@ -145,6 +145,13 @@ including the eight-migration retained-data upgrade; 85 real replies passed
 client validation. Installed-device reachability remains unverified.
 See the latest verification entry and PR review/check timeline before resuming.
 
+22 October continues with task deletion as the visibility prerequisite for
+relationship work. Migration 009 preserves content, original late edits and a
+private deletion ledger with immutable operation identity and trusted server
+time. Restore, 30-day expiry and child visibility remain unsupported. Next:
+exact-deletion restore preconditions and parent/child semantics, then remaining
+commands. Representation gaps still block account activation; app guest-only.
+
 Real Supabase migrations/RPC/RLS tests; secure tokens and GitHub PKCE; explicit
 adoption; resumable bootstrap; field conflicts and recovery UI; cursor/receipts/
 tombstones/high-water; catch-up/realtime/retries; sign-out/switch/deletion.

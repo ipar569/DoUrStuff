@@ -229,6 +229,18 @@ The field-chain model additionally proves an invalid-title terminal rejection
 consumes its sequence once, preserves repair candidates and permits unrelated
 later work. This is not complete command validation or transactional evidence.
 
+22 October server slice: `task.delete` permits only an `existence` patch from
+observed/predecessor `true` to `false`. Existing field-base checks still apply;
+invalid shapes are consumed rejections. Deleted tasks stay hidden, retain their
+latest content and recover later edits without replacing their original bases.
+A second deletion of an already-deleted task goes to recovery and cannot
+replace the winning deletion identity. A private, RLS-protected append-only
+`task_deletions` ledger stores the exact operation, revision and trusted server
+timestamp in the same account transaction as visibility, receipt, log and
+watermark. Its identity survives detailed receipt/log expiry; operation IDs
+cannot be reassigned. No content is purged in this slice. Restore, the 30-day
+expiry policy, child visibility and relationship commands remain unsupported.
+
 Tag policy retains the existing pinned Dart `trim`/`toLowerCase`/whitespace
 collapse behavior. Fixtures cover ASCII whitespace/case, accented uppercase,
 Turkish dotted I and composed versus decomposed accents (which remain distinct).

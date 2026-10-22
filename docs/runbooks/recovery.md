@@ -111,3 +111,12 @@ left by the interrupted run were identified by their exact fixture naming
 pattern and removed through the local Auth cleanup path; account/auth-fixture
 and injected-trigger counts returned to zero. Do not discard volumes or restart
 the stopped pre-loopback backups to repair host networking.
+
+22 October task deletion: migration 009 retains canonical task content and
+records the original deletion envelope, deletion revision and server timestamp
+in private `task_deletions`. Late edits retain their original bases in recovery;
+they do not restore visibility. Receipt/log expiry cannot authorize replay or
+operation-ID reassignment. The RPC role has no update/delete permission on the
+deletion ledger. Do not purge this ledger or task content to simulate retention.
+Restore and the 30-day expiry policy are still unsupported, as are child
+visibility rules; no in-app account deletion/undo capability is enabled.
