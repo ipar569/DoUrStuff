@@ -241,6 +241,25 @@ watermark. Its identity survives detailed receipt/log expiry; operation IDs
 cannot be reassigned. No content is purged in this slice. Restore, the 30-day
 expiry policy, child visibility and relationship commands remain unsupported.
 
+The subsequent 22 October restore slice (migration 010) supports `task.restore`
+with the exact deletion operation ID/revision and an observed false-to-true
+existence patch only. The current shadow and same-owner deletion ledger must
+agree. Invalid commands receive `invalid_restore_command`; stale identity or
+visible state receives `stale_deletion`; missing retained core content or a
+closed time window receives `restore_content_expired`. Malformed preconditions
+fail preflight without consuming a sequence. The recovery window is strictly
+less than 720 elapsed hours, independent of session timezone/DST, using current
+server time after acquiring the account lock; future deletion timestamps fail
+closed. No client clock affects the decision.
+
+Restoration changes only visibility, retaining the last deletion ID and all
+unresolved late-edit candidates. It does not replay those candidates or invent
+status history. Private forced-RLS `task_restorations` records exact immutable
+restore operations/revisions in the same transaction. Both lifecycle ledgers
+outlive detailed receipts/logs; old successful retries cannot revive a newer
+deletion and operation IDs cannot be reassigned. Physical content purging and
+child visibility remain unimplemented; this is not account UI/undo support.
+
 Tag policy retains the existing pinned Dart `trim`/`toLowerCase`/whitespace
 collapse behavior. Fixtures cover ASCII whitespace/case, accented uppercase,
 Turkish dotted I and composed versus decomposed accents (which remain distinct).

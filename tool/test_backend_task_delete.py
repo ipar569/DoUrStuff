@@ -109,10 +109,11 @@ def main():
         missing["entity"]["key"] = [uid()]
         require(f.apply(missing)["result"]["results"][0]["rejection_code"] == "entity_missing", "Missing task rejected")
         before = f.state(), ledger(f)
-        restore = deletion(f, 9)
-        restore["command"] = "task.restore"
-        require(f.apply(restore)["code"] == "unsupportedProtocol" and (f.state(), ledger(f)) == before, "Restore remains capability gated")
-        passed_check("invalid/stale/held/missing deletion and restore gating")
+        child = deletion(f, 9)
+        child["command"] = "milestone.create"
+        child["entity"]["kind"] = "milestone"
+        require(f.apply(child)["code"] == "unsupportedProtocol" and (f.state(), ledger(f)) == before, "Child commands remain capability gated")
+        passed_check("invalid/stale/held/missing deletion and child-command gating")
 
         f.apply(deletion(f, 9))
         require(len(ledger(f)) == 1, "Owned ledger fixture is nonempty before isolation checks")

@@ -152,6 +152,14 @@ time. Restore, 30-day expiry and child visibility remain unsupported. Next:
 exact-deletion restore preconditions and parent/child semantics, then remaining
 commands. Representation gaps still block account activation; app guest-only.
 
+The next 22 October increment adds exact-deletion restore with an observed
+false-to-true base and trusted-server 720-hour cutoff after the account lock.
+Stale undo cannot revive later deletions; late-edit recovery remains explicit.
+Migration 010 adds immutable restoration identity and keeps old deletion IDs.
+Physical content purging and child visibility remain open. Next: parent/child
+relationship commands and remaining entities, with retention/snapshot/recovery
+integration before account activation. The app is still guest-only.
+
 Real Supabase migrations/RPC/RLS tests; secure tokens and GitHub PKCE; explicit
 adoption; resumable bootstrap; field conflicts and recovery UI; cursor/receipts/
 tombstones/high-water; catch-up/realtime/retries; sign-out/switch/deletion.
