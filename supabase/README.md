@@ -2,9 +2,9 @@
 
 Initialized with CLI **2.120.0**, pinned in `../.supabase-version`. Configuration
 is for the synthetic `dourstuff-local` project only. No remote project is linked.
-Eight migrations now provide private account/device/log storage, RLS, restricted
+Nine migrations now provide private account/device/log storage, RLS, restricted
 device-registration/pull RPCs, atomic core task creation and title/priority/status/
-description/estimate/due edits.
+description/estimate/due edits, plus task deletion with retained content and identity.
 Apply stores canonical fields, immutable receipts, recovery candidates and device
 watermarks together, with durable status history. Creation requires the four
 core groups documented in the [v2 contract](../docs/architecture/account-protocol-v2.md),
@@ -48,6 +48,8 @@ python tool/test_backend_task_fields.py --supabase .tools/supabase/supabase.exe 
 .tools/flutter/bin/dart.bat run tool/export_due_fixtures.dart .tools/due-fixtures.json
 python tool/test_backend_task_due.py --supabase .tools/supabase/supabase.exe --fixtures .tools/due-fixtures.json --wire-output .tools/backend-due-wire.json
 .tools/flutter/bin/dart.bat run tool/check_backend_wire.dart .tools/backend-due-wire.json
+python tool/test_backend_task_delete.py --supabase .tools/supabase/supabase.exe --wire-output .tools/backend-delete-wire.json
+.tools/flutter/bin/dart.bat run tool/check_backend_wire.dart .tools/backend-delete-wire.json
 ```
 
 `local_backend.py` without `--start` checks the existing stack. It verifies the

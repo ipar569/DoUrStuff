@@ -3,12 +3,22 @@
 Local configuration prepared; reviewed 22 October 2026. The local
 `supabase/config.toml` was initialized with pinned CLI 2.120.0 and reviewed.
 There is no remote project, client authentication adapter or deployment workflow.
-A real local stack now runs with eight migrations and tested registration/pull
+A real local stack now runs with nine migrations and tested registration/pull
 RPCs plus ownership isolation. Atomic apply handles core task creation and
 title/priority/status/description/estimate/due edits, with receipts, recovery candidates, status history
 and durable sequence progress.
 Other commands and the remaining replication protocol are unfinished.
 The guest app ignores sync configuration.
+
+22 October adds `20261021223308_task_delete.sql`. Run the new deletion harness
+in `supabase/README.md` and all five preceding suites sequentially. Deletion
+sets visibility false while retaining canonical content, late-edit candidates,
+the winning deletion identity and a private append-only ledger. It does not
+implement restore, content expiry or child visibility. The pre-apply dump is
+`.tools/backend-before-task-delete.sql` (not a restore rehearsal); the candidate
+first passed rollback-only retained-data upgrade and real-owner RPC checks.
+Prior applied migrations remain unchanged. Supabase function-security guidance
+and its changelog were rechecked; no provider or CLI upgrade was made.
 
 ## Running local foundation — 16 October 2026
 
