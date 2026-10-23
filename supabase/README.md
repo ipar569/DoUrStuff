@@ -2,10 +2,11 @@
 
 Initialized with CLI **2.120.0**, pinned in `../.supabase-version`. Configuration
 is for the synthetic `dourstuff-local` project only. No remote project is linked.
-Eleven migrations now provide private account/device/log storage, RLS, restricted
+Twelve migrations now provide private account/device/log storage, RLS, restricted
 device-registration/pull RPCs, atomic core task creation and title/priority/status/
 description/estimate/due edits, plus task deletion, exact-deletion restore and
-atomic milestone creation with immutable same-account parents/dependencies.
+atomic milestone creation with immutable same-account parents/dependencies,
+independent milestone title/completion edits and durable child deletion.
 Apply stores canonical fields, immutable receipts, recovery candidates and device
 watermarks together, with durable status history. Creation requires the four
 core groups documented in the [v2 contract](../docs/architecture/account-protocol-v2.md),
@@ -55,6 +56,8 @@ python tool/test_backend_task_restore.py --supabase .tools/supabase/supabase.exe
 .tools/flutter/bin/dart.bat run tool/check_backend_wire.dart .tools/backend-restore-wire.json
 python tool/test_backend_milestone_create.py --supabase .tools/supabase/supabase.exe --wire-output .tools/backend-milestone-wire.json
 .tools/flutter/bin/dart.bat run tool/check_backend_wire.dart .tools/backend-milestone-wire.json
+python tool/test_backend_milestone_commands.py --supabase .tools/supabase/supabase.exe --wire-output .tools/backend-milestone-commands-wire.json
+.tools/flutter/bin/dart.bat run tool/check_backend_wire.dart .tools/backend-milestone-commands-wire.json
 ```
 
 `local_backend.py` without `--start` checks the existing stack. It verifies the
@@ -143,3 +146,11 @@ milestone deletion itself is still gated, along with edits and ordering. Complet
 is a nullable signed native-range epoch-millisecond value, validated by both SQL
 and the Dart wire checker. Canonical child records are retained in pull; account
 projection and full two-device behavior remain future work.
+
+The milestone-commands harness adds real text/completion merges and reopening,
+same-field conflict/partial/held cases, successors of a held child with no row,
+exact predecessor binding, durable delete identity, both parent/child deletion
+orders, restore preservation, concurrent edit/delete, column-grant/RLS ownership
+and injected batch rollback. Its shared golden create/edit/delete fixture also
+runs through Dart. Previous capability checks now gate milestone ordering;
+the older SQL-only child tombstone fixture is retained as regression coverage.

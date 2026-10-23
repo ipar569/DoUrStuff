@@ -17,10 +17,10 @@ emulator. Supabase CLI 2.120.0 is now installed and checksum/version/help verifi
 through approved escalation after the permission change. Local configuration is
 initialized. The user subsequently updated Docker to Desktop 4.95.0 / Engine
 29.8.2. Local services, image pins and explicit loopback bindings passed checks.
-Eleven migrations and real synthetic-account registration/pull/apply/ownership
+Twelve migrations and real synthetic-account registration/pull/apply/ownership
 tests ran on PostgreSQL 17.11. Apply now covers core task creation and
 title/priority/status/description/estimate/due edits, task deletion, exact-deletion restore
-and milestone creation with parent dependencies, with private durable status history. Full draft
+and milestone creation/edit/deletion with parent dependencies, with private durable status history. Full draft
 fields, history download, native OAuth and client sync remain unfinished.
 
 | Gate | Evidence/status |
@@ -1506,3 +1506,113 @@ devices. No hosted project is linked; PC loopback does not establish device
 reachability. Physical/native, latency and recovery gates remain open without
 reopening accepted Phase 2 emulator entry. No production deployment/migration
 or release occurred.
+
+## Milestone edits and deletion — 23 October 2026
+
+PR #8 merged as `09256420428e2e53045b5ff19f2ec9358cb49b91`, verified on remote
+main and the clean local checkout. Its first independent review attempt hit a
+usage limit and was not counted as complete. The resumed independent review
+of `d99fa5ae2408ea205fc1d544e6cae20dc3c7a179` found no actionable findings;
+Quality/Android/Windows CI passed, including 110 Flutter tests. The PR timeline
+records exact review and merge evidence, completing the prior handoff step.
+
+This next increment starts from that main commit on
+`codex/phase-3-milestone-edit-delete`. Forward migration 012,
+`20261023083413_milestone_edit_delete.sql`, adds independent milestone title/
+completion edits and explicit deletion. All eleven earlier applied migrations
+remain unchanged. Original creation envelopes, parent links and owner columns
+remain immutable; only fields/deletion-ID columns gain update permission.
+
+Edit comparisons retain observed revisions/values and exact same-child
+predecessors. Different fields merge, same-field conflicts remain recoverable,
+and invalid command mixtures reject atomically. Hidden child/parent edits go to
+recovery before equivalence. A held child create may have no row; its causal
+edit/delete successors remain held, while missing evidence goes to recovery
+without fabricating a row. Later unrelated sequences continue.
+
+Child deletion compares its own existence even if the parent is hidden, ensuring
+that restoring the parent cannot undo an independent child delete. The new
+private forced-RLS `milestone_deletions` ledger retains the original operation,
+revision and server timestamp beyond receipt/log expiry. Ledger, canonical state,
+receipt, recovery, log and watermark commit atomically under the account lock.
+Repeated deletes cannot replace the winning identity. No milestone restore,
+ordering, content purge or native account projection is enabled.
+
+`python tool/local_backend.py --start` verified the existing nine pinned services,
+eight Docker healthchecks and loopback-only bindings. The pinned CLI remains
+2.120.0; `migration new --help` and version were checked before generating 012.
+Supabase changelog/function-security guidance was rechecked; no provider or
+package upgrade was made. No stopped backup container or volume was replaced.
+Before applying, the rollback-only all-migration rehearsal passed, as did a
+real-owner candidate edit/delete/ledger RPC over a retained milestone; rollback
+preserved the exact preexisting child, creation envelope and surrounding state.
+
+Separate pre-apply dumps are `.tools/backend-before-milestone-commands-schema.sql`
+and `.tools/backend-before-milestone-commands-data.sql`, not recovery rehearsal
+proof. `migration up --local --network-id dourstuff-local` applied only 012.
+`migration list --local` matched all twelve IDs; `db advisors --local --type all
+--level warn --fail-on error` reported no issues.
+
+New checks:
+
+- `python tool/test_backend_milestone_commands.py --supabase .tools/supabase/supabase.exe --wire-output .tools/backend-milestone-commands-wire.json`:
+  all 9 integration groups passed. They cover a shared create/edit/delete batch,
+  original identities, retries/expiry, independent fields/children, reopening,
+  partial/conflicting/held edits, exact predecessor binding, held children with no
+  row, immutable parent, semantic/preflight rejection, both delete/edit and
+  parent/child deletion orders, parent restore, simultaneous races, X/Y isolation,
+  forced RLS/column grants and injected batch rollback.
+- `dart run tool/check_backend_wire.dart .tools/backend-milestone-commands-wire.json`:
+  all 91 real responses passed. The shared
+  `test/fixtures/account-protocol-v2-milestone-commands.json` also passes Dart
+  request round-trip/original-base assertions without changing protocol version.
+- `flutter test test/domain_test.dart test/local_database_test.dart test/account_sync_policy_test.dart`:
+  all 20 targeted domain/SQLite/policy tests passed.
+
+The existing creation and task-deletion harnesses now capability-check milestone
+ordering, because edit/delete are supported. The original SQL tombstone fixture
+and prior historical failures remain retained. There were no failed new integration
+runs before the successful results above.
+
+Final local regression ran the eight prior suites sequentially on migration 012:
+`python tool/test_backend_<suite>.py --supabase .tools/supabase/supabase.exe
+--wire-output .tools/backend-<suite>-milestone-commands-regression-wire.json`
+for foundation (8 groups), apply (11), task_create (11), task_fields (5),
+task_due (7), task_delete (6), task_restore (8), milestone_create (9). The due
+invocation also used `--fixtures .tools/due-fixtures.json`, passing all 785 cases
+across 342 zones. With the new 9 command groups, **74 integration groups passed**.
+Each output passed `dart run tool/check_backend_wire.dart`: respectively 10,
+32, 136, 42, 75, 35, 57 and 113 replies; with the new 91, **591 real responses
+passed**. `python tool/test_backend_http.py` passed all three HTTP/encoding tests.
+
+Full local quality passed using pinned `.tools/flutter/bin`: `flutter pub get
+--enforce-lockfile`, `dart run build_runner build`, generated-Dart diff check,
+`dart format --output=none --set-exit-if-changed lib test tool`, `flutter analyze`
+(no issues, 41.3 seconds), and `flutter test` (**111 tests**). No generated Dart,
+SQLite schema or lockfile changed. Changed Markdown relative links and
+`git diff --check` passed. Synthetic account/Auth-fixture, child deletion-ledger
+and injected-trigger counts returned to zero. Final-head native CI and independent
+review are required before merge; record the reviewed SHA and actual merge in
+the PR timeline. These results precede this documentation-only handoff update.
+
+### Next-session handoff — milestone commands, 23 October 2026
+
+Finish this branch's independent review and final-head Quality/Android/Windows
+CI, resolve findings, then perform the guarded merge and verify remote/local
+main. Preserve all twelve applied migrations and repaired local stack volumes/
+stopped backups. Next implementation: task milestone ordering with concurrent
+reorder/add/delete behavior, then tags/memberships and remaining commands.
+Native account projection/storage, secure GitHub PKCE, complete two-client
+replication, snapshot/retention/resolution, consent/adoption/lifecycle and installed
+latency/recovery acceptance remain unfinished.
+
+The app stays guest-only; Phase 3.1 remains partial and Phase 4 gated. Activation
+still requires resolving 100,000-UTF-16-unit descriptions versus the 64-KiB cap,
+JSONB NUL/raw-number and normalization parity, plus historical/future timezone
+parity. Never truncate or silently upload guest content. External prerequisites
+remain GitHub OAuth/provider configuration with exact Android/Windows redirects,
+verified secure session and PKCE-verifier storage, a restricted development
+endpoint reachable from both installed clients, and installed Android/Windows
+devices. No hosted project is linked and PC loopback is not device reachability
+evidence. Keep accepted Phase 2 emulator entry closed and retained physical/native
+gates open. No production deployment/migration or release occurred.

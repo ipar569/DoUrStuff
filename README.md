@@ -33,8 +33,9 @@ retains content, original deletion identity and late edits for recovery. Exact
 deletion restore is supported within 30 days while content remains retained;
 milestone creation now validates an immutable same-account parent, with exact
 parent dependencies and held recovery. A private server visibility check combines
-parent and child existence without rewriting child state. Milestone edits/deletion/
-ordering, content purging, history download and app integration remain pending.
+parent and child existence without rewriting child state. Milestone title and
+completion edits now merge independently, with durable deletion and retained late
+edits. Ordering, content purging, history download and app integration remain pending.
 
 | Platform | Status |
 | --- | --- |

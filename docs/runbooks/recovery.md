@@ -145,3 +145,18 @@ Pre-apply application schema/data dumps are
 `.tools/backend-before-milestone-create-data.sql`. Candidate rollback and injected
 parent/child transaction failure tests are migration/atomicity evidence, not a
 disaster recovery rehearsal. Preserve all eleven applied migrations unchanged.
+
+The next 23 October migration (012) supports milestone title/completion edits
+and independent deletion. Late edits to a hidden child/parent retain original
+base/local/canonical candidates. A held child create can have no row yet; causal
+edit/delete successors remain held, while missing evidence requires recovery.
+Neither path fabricates a child. Parent restoration never replays candidates.
+
+Child deletion is allowed while its parent is hidden, using the child's own
+existence base. Parent restoration therefore cannot undo that independent delete.
+Private append-only `milestone_deletions` retains exact winning operations and
+server deletion identity beyond receipt/log expiry; retries cannot replace it.
+No child restore, content purge or recovery UI is provided. Keep all twelve
+applied migrations unchanged. Pre-apply schema/data dumps are
+`.tools/backend-before-milestone-commands-schema.sql` and
+`.tools/backend-before-milestone-commands-data.sql`; restore rehearsal is unverified.

@@ -170,6 +170,14 @@ deletion and task milestone ordering; then tags/memberships and remaining comman
 Client visibility projection, snapshots, recovery and account activation remain
 unfinished. The representation gaps and installed-device gates stay open.
 
+The next 23 October increment (012) adds milestone title/completion edits and
+durable child deletion. Different fields merge; conflicts, held create successors
+and hidden edits retain original candidates. A child's independent deletion
+survives parent restore in either arrival order. Narrow column grants protect
+owner/parent/creation identity and the deletion ledger remains append-only.
+Next: task milestone ordering, then tags/memberships and remaining commands.
+Native account activation, representation parity and installed acceptance stay gated.
+
 Real Supabase migrations/RPC/RLS tests; secure tokens and GitHub PKCE; explicit
 adoption; resumable bootstrap; field conflicts and recovery UI; cursor/receipts/
 tombstones/high-water; catch-up/realtime/retries; sign-out/switch/deletion.
