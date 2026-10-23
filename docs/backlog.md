@@ -160,6 +160,16 @@ Physical content purging and child visibility remain open. Next: parent/child
 relationship commands and remaining entities, with retention/snapshot/recovery
 integration before account activation. The app is still guest-only.
 
+23 October adds milestone creation and parent dependencies (migration 011).
+All four mandatory groups commit together; missing/expired parent evidence goes
+to recovery, parent conflicts hold children while unrelated work advances.
+Kind-qualified identities, immutable parent/creation payload and private inherited
+visibility have real server coverage. Parent restore does not change independent
+child tombstones or replay held children. Next: milestone title/completion edits,
+deletion and task milestone ordering; then tags/memberships and remaining commands.
+Client visibility projection, snapshots, recovery and account activation remain
+unfinished. The representation gaps and installed-device gates stay open.
+
 Real Supabase migrations/RPC/RLS tests; secure tokens and GitHub PKCE; explicit
 adoption; resumable bootstrap; field conflicts and recovery UI; cursor/receipts/
 tombstones/high-water; catch-up/realtime/retries; sign-out/switch/deletion.

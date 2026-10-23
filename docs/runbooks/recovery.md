@@ -130,3 +130,18 @@ visible shadows and immutable restore envelopes remain in `task_restorations`.
 Retrying an old successful undo cannot revive a newer deletion. Late-edit
 recovery candidates stay unresolved; restoration does not silently apply them.
 Physical purging, copy/recovery UI and child visibility are still pending.
+
+23 October milestone creation (011) retains exact original creation payloads
+in private `milestone_shadow`, including absent bases and parent dependencies.
+Expired parent receipts require recovery rather than a guessed dependency;
+held child candidates remain unchanged and do not block unrelated sequences.
+Parent delete/restore changes inherited visibility without altering child content
+or an independent child tombstone. Pull carries canonical records, so a future
+account projection must combine parent and child existence. No account recovery
+UI or milestone delete command is enabled by this increment.
+
+Pre-apply application schema/data dumps are
+`.tools/backend-before-milestone-create-schema.sql` and
+`.tools/backend-before-milestone-create-data.sql`. Candidate rollback and injected
+parent/child transaction failure tests are migration/atomicity evidence, not a
+disaster recovery rehearsal. Preserve all eleven applied migrations unchanged.

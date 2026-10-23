@@ -1,7 +1,7 @@
 # Phase 3 verification
 
 Status: milestone **3.0 local readiness passed; 3.1 in progress**, reviewed
-22 October 2026. The user accepted
+23 October 2026. The user accepted
 the Android emulator offline/restart evidence on 12 October for local Phase 3
 entry. Immutable v2 operations, six strict RPC codecs and causal/policy fixtures exist;
 accounts and sync are not enabled. See the latest handoff below.
@@ -17,9 +17,10 @@ emulator. Supabase CLI 2.120.0 is now installed and checksum/version/help verifi
 through approved escalation after the permission change. Local configuration is
 initialized. The user subsequently updated Docker to Desktop 4.95.0 / Engine
 29.8.2. Local services, image pins and explicit loopback bindings passed checks.
-Ten migrations and real synthetic-account registration/pull/apply/ownership
+Eleven migrations and real synthetic-account registration/pull/apply/ownership
 tests ran on PostgreSQL 17.11. Apply now covers core task creation and
-title/priority/status/description/estimate/due edits, task deletion and exact-deletion restore, with private durable status history. Full draft
+title/priority/status/description/estimate/due edits, task deletion, exact-deletion restore
+and milestone creation with parent dependencies, with private durable status history. Full draft
 fields, history download, native OAuth and client sync remain unfinished.
 
 | Gate | Evidence/status |
@@ -1398,3 +1399,110 @@ reachable from both installed clients, and installed Android/Windows devices.
 No hosted project is linked. PC loopback does not prove device reachability.
 Accepted Phase 2 emulator entry stays accepted; physical/native, latency and
 recovery gates remain open. No production migration/deployment or release occurred.
+
+## Milestone creation and parent dependencies — 23 October 2026
+
+PR #7 was independently reviewed at `336391f37e02b503b80fe6b2ba96047859afe838`
+with no actionable findings. Quality/Android/Windows CI passed, including 109
+Flutter tests. Its guarded squash merge is `587d689adf0d87efc14eeb54718645f49badaf12`,
+verified on remote main and the clean local checkout. The prior handoff's
+review/merge step is complete; details are retained in the PR timeline.
+
+The next increment starts from that main commit on
+`codex/phase-3-milestone-create`. Forward migration 011,
+`20261022204009_milestone_create.sql`, adds only `milestone.create` and parent
+relationship enforcement. All ten previously applied migrations remain unchanged.
+The command requires absent bases for title, nullable completion timestamp,
+existence true and immutable parent task UUID. Parent dependency receipts bind
+exact owner/device/operation/sequence/entity/existence under the account lock.
+Parent conflict holds every child group; missing/expired/rejected/deleted evidence
+preserves every original group for recovery. Later unrelated commands advance.
+
+Private forced-RLS `milestone_shadow` has an owner-qualified indexed parent
+foreign key and retains exact creation envelopes beyond receipt/log expiry.
+Whole-entity collisions cannot reparent or merge fields. The private visibility
+helper requires both parent and child existence; parent delete/restore does not
+rewrite child state. Pull keeps canonical records, so future account projection
+must combine parent/child visibility. A SQL-only independent child tombstone
+fixture proves parent restore preserves it; milestone deletion is not delivered.
+No local schema, retained snapshots, production dependencies or app behavior changed.
+
+The first `python tool/local_backend.py --start` failed because Docker Desktop's
+Linux-engine named pipe did not exist. Starting the installed Docker Desktop
+runtime, then rerunning the guarded command, verified nine existing pinned
+services, eight Docker healthchecks and loopback-only bindings. Volumes and
+stopped pre-loopback backup containers were preserved. The pinned CLI remains
+2.120.0. Its `migration new --help`, `db dump --help` and `migration up --help`
+were checked before use. The Supabase changelog and function-security guidance
+were rechecked; no dependency/provider upgrade was made.
+
+Before application, rollback-only checks compiled all eleven migrations,
+preserved the existing watermark/history/due fixture, and exercised a real-owner
+parent/child creation RPC followed by rollback. Separate pre-apply dumps are
+`.tools/backend-before-milestone-create-schema.sql` and
+`.tools/backend-before-milestone-create-data.sql`. These are not restore-rehearsal
+evidence. `migration up --local --network-id dourstuff-local` applied only 011.
+`migration list --local` matched all eleven IDs; `db advisors --local --type all
+--level warn --fail-on error` reported no issues.
+
+Retained integration failure: the first milestone run passed four groups, then
+its unsupported-command check got HTTP 400 instead of `unsupportedProtocol`.
+The fixture builder shared the parent's entity dictionary; an earlier malformed
+child case had changed that parent too. Deep-copying the dependency entity fixed
+the harness without changing applied SQL. The complete nine-group suite then
+passed with 112 Dart-validated real replies. A subsequent shared golden fixture
+adds one registration; the final regression totals below supersede that count.
+
+Targeted local verification: `flutter test test/domain_test.dart
+test/local_database_test.dart test/account_sync_policy_test.dart` passed 18 tests
+before the new golden test. Afterwards `flutter test
+test/account_sync_policy_test.dart` passed all 7 policy tests. The shared
+`test/fixtures/account-protocol-v2-milestone.json` checks kind-qualified identical
+UUIDs, signed completion time, exact dependency binding and immutable child
+payloads in Dart and real HTTP. The wire checker also compares completion
+validity against Dart's native-range timestamp rules.
+
+Final local regression on migration 011 ran all eight suites sequentially:
+
+- `python tool/test_backend_<suite>.py --supabase .tools/supabase/supabase.exe --wire-output .tools/backend-<suite>-milestone-regression-wire.json`
+  for foundation (8 groups), apply (11), task_create (11), task_fields (5),
+  task_due (7), task_delete (6), task_restore (8), milestone_create (9).
+  The due invocation additionally used `--fixtures .tools/due-fixtures.json`
+  and passed all 785 cases across 342 zones. **65 groups passed**.
+- `dart run tool/check_backend_wire.dart` for each output validated respectively
+  10, 32, 136, 42, 75, 35, 57 and 113 replies: **500 real responses passed**.
+- `python tool/test_backend_http.py`: all 3 HTTP/encoding tests passed.
+- `flutter pub get --enforce-lockfile`, `dart run build_runner build`, generated
+  Dart diff check, `dart format --output=none --set-exit-if-changed lib test tool`,
+  `flutter analyze` (no issues, 33.9 seconds), and `flutter test` all passed:
+  **110 Flutter tests**. Commands used the pinned ignored `.tools/flutter/bin`
+  SDK on this host. No generated schema/Dart or lockfile changes resulted.
+- Changed Markdown relative links and `git diff --check` passed. Synthetic account,
+  Auth-fixture, milestone and injected-trigger counts returned to zero.
+
+Final-head Quality/Android/Windows CI and independent review remain required
+before merge; record the exact reviewed SHA, findings/disposition and actual
+merge in the PR timeline. Local results above precede the documentation-only
+handoff update and do not claim installed-platform acceptance.
+
+### Next-session handoff — 23 October 2026
+
+Finish this branch's independent review, final-head CI and guarded merge first.
+Preserve all eleven applied migrations and the repaired stack/backup containers.
+Then start a fresh task branch from current main for milestone title/completion
+edits, deletion and task milestone ordering, followed by tags/memberships and
+remaining commands. Parent/child canonical data is available to pull, but native
+account projection, history transport, snapshot/retention/resolution, account
+storage/PKCE and the complete two-client slice remain unfinished.
+
+The app stays guest-only, Phase 3.1 partial and Phase 4 gated. Before activation,
+resolve 100,000-UTF-16-unit descriptions versus the 64-KiB operation cap, JSONB
+NUL/raw-number and normalization parity, and historical/future timezone parity.
+Never truncate or silently upload guest content. External prerequisites remain
+GitHub OAuth/provider configuration with exact Android/Windows redirects,
+verified secure session and PKCE-verifier storage, a restricted development
+endpoint reachable by both installed clients, and installed Android/Windows
+devices. No hosted project is linked; PC loopback does not establish device
+reachability. Physical/native, latency and recovery gates remain open without
+reopening accepted Phase 2 emulator entry. No production deployment/migration
+or release occurred.

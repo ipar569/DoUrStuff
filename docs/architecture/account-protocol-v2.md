@@ -266,6 +266,46 @@ Turkish dotted I and composed versus decomposed accents (which remain distinct).
 Do not infer PostgreSQL/Unicode parity from these client fixtures; that is an
 explicit 3.1 integration requirement before account writes can be enabled.
 
+### Milestone creation and parent dependencies — 23 October
+
+Migration 011 supports `milestone.create` with exactly four mandatory groups:
+`existence: true`, `title`, `parent` (task UUID) and `completion` (null or signed
+UTC epoch milliseconds within Dart's inclusive ±8,640,000,000,000,000 range).
+Every base is absent. Title uses the same trimmed 1–500 UTF-16-unit validation
+as local milestones; accepted strings and timestamps are retained unchanged.
+The shared `account-protocol-v2-milestone.json` fixture runs through both Dart
+and real HTTP/PostgreSQL. No wire version changes: these commands/groups were
+already reserved by v2. Milestone edit/delete and task ordering stay gated.
+
+An already accepted parent needs no dependency. A child of locally pending work
+must carry its exact parent-existence dependency. At most one is allowed for
+this single-parent command; multiple entries receive a consumed
+`invalid_parent_dependencies` rejection. Malformed identities, unsupported
+dependency groups or forward edges fail batch preflight without writes.
+The server verifies the actual parent UUID/kind, same device epoch, operation
+UUID, earlier sequence and retained receipt's accepted existence. Conflicted/
+held parent evidence holds every child group before equivalence; missing,
+expired, rejected or deleted evidence sends all groups to recovery. The
+account-qualified lookup treats foreign parents as unavailable without exposing
+their existence. Neither recovery nor held work creates part of a child.
+
+Creation locks the same account row as task mutations. It writes the child,
+receipt, log and watermark atomically; a collision cannot merge content or
+change the parent. Private forced-RLS `milestone_shadow` has an owner-qualified
+parent foreign key and index. It retains the original creation envelope beyond
+receipt/log expiry, protecting that operation ID from reassignment. The RPC
+role has only select/insert permission for this creation-only increment.
+
+Canonical child `existence` is independent of inherited visibility. The private
+`milestone_visible` helper requires both child and parent existence, scoped to
+the authenticated owner. Parent delete/restore therefore needs no child fan-out
+or fabricated child revisions. Pull retains original canonical records, including
+hidden content; future client projection must join parent and child visibility
+atomically when applying a page. This is not an implemented account UI/projection.
+Parent restoration never removes an independent child tombstone or replays a
+rejected/held child creation. Child deletion is tested only with an explicit
+SQL tombstone fixture here; its command remains unimplemented.
+
 ## RPC and minimal local-upgrade plan
 
 All RPCs are versioned and authenticated. Apply takes the immutable operations
