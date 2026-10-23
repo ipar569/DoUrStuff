@@ -40,6 +40,11 @@ helper combines task and milestone existence; client projection in the diagrams
 is still planned. Milestone editing/deletion/order and the other entities remain
 open. No native account path is enabled.
 
+The next 23 October server increment adds independent milestone title/completion
+edits and durable deletion. Held create successors retain their causal bases even
+without a canonical child row; parent restore preserves independent child deletes.
+Ordering and the complete client replication/projection paths below remain planned.
+
 ## Component overview
 
 The expanded client represents either Android or Windows. Each device has its

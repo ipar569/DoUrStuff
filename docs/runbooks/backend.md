@@ -3,7 +3,7 @@
 Local configuration prepared; reviewed 23 October 2026. The local
 `supabase/config.toml` was initialized with pinned CLI 2.120.0 and reviewed.
 There is no remote project, client authentication adapter or deployment workflow.
-A real local stack now runs with eleven migrations and tested registration/pull
+A real local stack now runs with twelve migrations and tested registration/pull
 RPCs plus ownership isolation. Atomic apply handles core task creation and
 title/priority/status/description/estimate/due edits, with receipts, recovery candidates, status history
 and durable sequence progress.
@@ -49,6 +49,19 @@ real-owner parent/child RPC smoke check. Separate ignored pre-apply dumps are
 `.tools/backend-before-milestone-create-schema.sql` and
 `.tools/backend-before-milestone-create-data.sql`; neither is a restore rehearsal.
 All eleven local migration IDs matched and advisors reported no issues.
+
+The next 23 October migration, `20261023083413_milestone_edit_delete.sql`, adds
+milestone title/completion edits and deletion. Run all nine backend suites in
+`supabase/README.md` sequentially. Only milestone fields/deletion-ID columns gain
+update permission; owner, parent and creation payload stay immutable. The new
+forced-RLS deletion ledger has only select/insert permission. Existing function
+owners, search paths and public API grants are retained.
+
+The candidate passed rollback-only empty/retained-data migration checks and a
+real-owner edit/delete RPC on a preexisting milestone. Local schema/data dumps
+are `.tools/backend-before-milestone-commands-schema.sql` and
+`.tools/backend-before-milestone-commands-data.sql`, not restore evidence.
+Use the guarded existing-stack startup; preserve volumes and stopped backups.
 
 ## Running local foundation — 16 October 2026
 

@@ -134,6 +134,34 @@ void main() {
     }
   });
 
+  test(
+    'milestone edit/delete fixture retains each original field predecessor',
+    () {
+      final fixture = jsonDecode(
+        File('test/fixtures/account-protocol-v2-milestone-commands.json')
+            .readAsStringSync(),
+      );
+      final request = applyCodec.decodeRequest(fixture);
+      expect(applyCodec.encodeRequest(request), fixture);
+      final child = request.operations[1];
+      final edit = request.operations[2];
+      final deletion = request.operations[3];
+      expect(edit.command, 'milestone.edit');
+      expect(deletion.command, 'milestone.delete');
+      expect(edit.patches.keys.toSet(), {'title', 'completion'});
+      expect(deletion.patches.keys.toSet(), {'existence'});
+      for (final operation in [edit, deletion]) {
+        for (final entry in operation.patches.entries) {
+          final base = entry.value.base as PredecessorBase;
+          expect(base.operationId, child.operationId);
+          expect(base.sequence, child.sequence);
+          expect(base.value, child.patches[entry.key]!.value);
+        }
+      }
+      expect(deletion.patches['existence']!.value, false);
+    },
+  );
+
   test('delete/edit in either arrival order keeps deleted visibility and recoverable content', () {
     for (final deleteFirst in [true, false]) {
       var deleted = false;

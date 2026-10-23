@@ -174,8 +174,11 @@ def main():
             code, _ = backend.request("POST", "/rest/v1/rpc/sync_apply", f.token, {"request": f.request(parent, op)})
             require(code == 400 and state(f) == before, "Malformed dependency rolls back whole batch: " + mutation)
         unsupported = milestone(f, dependency=parent)
-        unsupported["command"] = "milestone.edit"
-        require(f.apply(parent, unsupported)["code"] == "unsupportedProtocol" and state(f) == before, "Remaining milestone commands stay capability-gated")
+        unsupported["command"] = "task.milestone_order"
+        unsupported["entity"] = deepcopy(parent["entity"])
+        unsupported["patches"] = {"milestone_order": {"base": {"kind": "absent"}, "value": []}}
+        unsupported["dependencies"] = []
+        require(f.apply(parent, unsupported)["code"] == "unsupportedProtocol" and state(f) == before, "Milestone ordering stays capability-gated")
         passed_check("whole-batch strict dependency preflight and unchanged unsupported-command gates")
 
         f = TaskFixture(backend, epoch)
@@ -246,7 +249,7 @@ def main():
         require(sql("select has_table_privilege('dourstuff_rpc','sync_private.milestone_shadow','update') "
                     "or has_table_privilege('dourstuff_rpc','sync_private.milestone_shadow','delete') "
                     "or has_function_privilege('authenticated','sync_private.milestone_visible(uuid)','execute') "
-                    "or has_function_privilege('anon','sync_private.milestone_parent_decision(jsonb)','execute');") == "f", "Creation-only grants and private helpers")
+                    "or has_function_privilege('anon','sync_private.milestone_parent_decision(jsonb)','execute');") == "f", "No broad update/delete grants and private helpers")
         passed_check("X/Y/anonymous isolation, forced RLS and restricted helper/table grants")
 
         f = TaskFixture(backend, epoch)

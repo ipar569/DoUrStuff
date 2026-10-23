@@ -306,6 +306,39 @@ Parent restoration never removes an independent child tombstone or replays a
 rejected/held child creation. Child deletion is tested only with an explicit
 SQL tombstone fixture here; its command remains unimplemented.
 
+### Milestone edits and deletion — 23 October
+
+Migration 012 enables `milestone.edit` for title and completion only. Both use
+the existing validators and original observed/predecessor bases. Distinct groups
+can merge independently; same-group collisions retain original candidates.
+Parent/existence patches in an edit receive consumed `invalid_milestone_edit`
+rejections with no partial mutation. Parent links and original creation payloads
+are immutable. Edit/delete parent-dependency arrays remain capability-gated;
+same-child field predecessors carry dependencies on pending child creation.
+
+An edit hidden by either the child's own deletion or its parent's deletion goes
+to recovery before equivalence. If a held child create has no canonical row,
+its edit/delete successors can still bind exact held predecessor evidence.
+Missing/expired/mismatched evidence goes to recovery, never a fabricated row.
+The original bases/payloads remain unchanged and unrelated sequences advance.
+
+`milestone.delete` allows only an existence patch from observed/predecessor true
+to false; malformed semantic shapes receive `invalid_delete_command`. It checks
+the child's own existence even when its parent is hidden. This preserves an
+independent offline child deletion if the parent is later restored. Both
+parent/child deletion orders leave the child's own tombstone intact. Repeated
+deletion cannot replace the winner; late edits and colliding creates cannot
+revive it. Child restore is not part of the current command vocabulary.
+
+Private forced-RLS `milestone_deletions` retains the original operation,
+revision and server timestamp atomically with canonical fields, receipt, recovery,
+log and watermark. Its identities survive receipt/log expiry. The RPC role has
+select/insert access to this ledger, and column-scoped update access only to
+milestone fields/deletion ID; parent, owner and creation payload are not writable.
+The shared `account-protocol-v2-milestone-commands.json` fixture exercises a
+parent/child create, edit and delete batch in Dart and real HTTP/PostgreSQL.
+Ordering, physical purging, snapshots and native account projection remain open.
+
 ## RPC and minimal local-upgrade plan
 
 All RPCs are versioned and authenticated. Apply takes the immutable operations
