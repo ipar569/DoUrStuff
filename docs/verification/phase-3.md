@@ -1809,13 +1809,30 @@ Staged `git diff --check` reports one trailing blank line at EOF in the newly
 generated, already locally applied migration 014. Its bytes are retained; this
 is a whitespace warning, not a passing check or SQL/runtime failure.
 
-Full backend regression and final-head CI/review evidence will be completed
-before merge and recorded here/in the PR timeline. Native compilation does not
-establish installed-device acceptance.
+Full regression on migration 014 passed **84 integration groups** using
+`python tool/test_backend_<suite>.py --supabase .tools/supabase/supabase.exe
+--wire-output .tools/backend-<suite>-normalization-wire.json` for foundation (8),
+apply (11), task_create (11), task_fields (5), task_due (7), task_delete (6),
+task_restore (8), milestone_create (9), milestone_commands (9), milestone_order (10).
+The due suite additionally used `--fixtures .tools/due-fixtures.json` and passed
+785 cases across 342 zones. Per-suite logs are retained beside those captures.
+`dart run tool/check_backend_wire.dart` for each capture passed respectively
+10/32/136/42/75/35/57/113/91/156 replies: **747 real response validations**.
+`python tool/test_backend_http.py` passed all **3** helper tests. Synthetic
+account/Auth-user and noninternal sync-trigger counts returned to zero.
+All 49 changed-document relative links passed.
+
+PR #11's initial independent review covered
+`f259a928ce10a39717f405dabd894a6efbd5070f` against `eb128f0`, with no actionable
+findings. It independently compared all 1,023 SQL/Dart mappings and confirmed
+unchanged earlier migrations. This documentation-only evidence update still
+requires refreshed exact-head review and final-head Quality/Android/Windows CI
+before guarded merge; record final SHA/results/merge in the PR timeline.
+Native compilation does not establish installed-device acceptance.
 
 ### Next-session handoff — tag normalization, 24 October 2026
 
-Finish the normalization branch's remaining regression, independent review and
+Finish the normalization branch's refreshed independent review and
 Quality/Android/Windows CI, then guarded merge and remote-main verification.
 Record the reviewed SHA and actual merge in the PR timeline; inspect that timeline
 before resuming this dated handoff. Preserve all fourteen applied migrations.
