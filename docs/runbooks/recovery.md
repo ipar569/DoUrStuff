@@ -172,3 +172,15 @@ Pre-apply dumps are `.tools/backend-before-milestone-order-schema.sql` and
 `.tools/backend-before-milestone-order-data.sql`. Candidate rollback and injected
 order transaction failure checks are not disaster-recovery rehearsal evidence.
 Preserve all thirteen applied migration files unchanged; use forward fixes.
+
+24 October normalization (014) adds private pure helpers and changes no stored
+row or immutable payload. Native guest tag creation uses the frozen version of
+its existing policy. A retained v1 tag fixture verifies duplicate lookup preserves
+the original UUID/membership and colliding rename rolls back every table. No
+SQLite migration or backfill is required. Future account tag collisions must
+retain distinct UUID candidates without redirecting membership references.
+
+Pre-apply dumps are `.tools/backend-before-tag-normalization-schema.sql` and
+`.tools/backend-before-tag-normalization-data.sql`; they are not restore evidence.
+Preserve all fourteen applied migrations. NUL/raw-number, description-cap and
+timezone representation gaps still prevent account activation/adoption.
