@@ -178,6 +178,15 @@ owner/parent/creation identity and the deletion ledger remains append-only.
 Next: task milestone ordering, then tags/memberships and remaining commands.
 Native account activation, representation parity and installed acceptance stay gated.
 
+24 October: PR #9 independently reviewed at `1821b3d` with no actionable findings
+and merged at `2596b66` after passing Quality/Android/Windows CI. The next increment
+(013) adds atomic task milestone ordering, original-base reorder conflicts,
+exact child-create dependencies, deterministic additions and deletion filtering.
+Accepted lists remain immutable through membership changes and parent restore.
+Next: tags/memberships and remaining commands, then snapshot/retention/resolution
+and client integration. See the latest verification handoff for exact review,
+test and merge state. Native accounts and Phase 4 remain gated.
+
 Real Supabase migrations/RPC/RLS tests; secure tokens and GitHub PKCE; explicit
 adoption; resumable bootstrap; field conflicts and recovery UI; cursor/receipts/
 tombstones/high-water; catch-up/realtime/retries; sign-out/switch/deletion.

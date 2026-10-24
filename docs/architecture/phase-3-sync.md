@@ -45,6 +45,11 @@ edits and durable deletion. Held create successors retain their causal bases eve
 without a canonical child row; parent restore preserves independent child deletes.
 Ordering and the complete client replication/projection paths below remain planned.
 
+24 October adds atomic task milestone ordering. Concurrent reorders retain whole
+list candidates; independent additions append by ID and deleted children are
+filtered without mutating accepted order. Shared SQL/Dart projection fixtures
+specify this policy, but the complete native paths below remain planned.
+
 ## Component overview
 
 The expanded client represents either Android or Windows. Each device has its

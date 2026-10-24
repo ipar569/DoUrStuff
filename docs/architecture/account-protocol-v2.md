@@ -339,6 +339,41 @@ The shared `account-protocol-v2-milestone-commands.json` fixture exercises a
 parent/child create, edit and delete batch in Dart and real HTTP/PostgreSQL.
 Ordering, physical purging, snapshots and native account projection remain open.
 
+### Atomic milestone ordering — 24 October
+
+Migration 013 enables `task.milestone_order` with exactly one `milestone_order`
+patch whose value is `{ordered_ids: [UUID, ...]}`. IDs must be unique canonical
+lowercase UUIDs. An empty list is valid. Initial ordering uses an absent base;
+later edits retain observed revision/value or exact same-task/group predecessors.
+Ordering cannot be bundled with task create/edit/status or other fields. Invalid
+list shapes receive consumed `invalid_milestone_order`; command mixtures receive
+`invalid_order_command`. No wire version change: the command/group were reserved.
+
+The canonical list is independent of child membership. A same-account,
+same-parent child tombstone remains a valid reference, allowing concurrent delete
+and reorder in either arrival order. Unknown, foreign or other-parent references
+send the whole order to recovery. Subsets are valid: the reference projection
+filters invisible children and appends live children absent from the list by UUID.
+It never rewrites the accepted list, field revision or original operation.
+Parent deletion hides the whole projection; parent restore preserves independent
+child tombstones and never replays late order candidates. Competing reorders use
+the ordinary atomic field conflict/equivalence policy, without partial lists.
+
+Optional existence dependencies identify this task or listed milestone creates.
+They bind exact same-owner/device/operation/sequence/entity receipt evidence.
+For a held child without a canonical row, the immutable create supplies its parent;
+the entire order is held, and later unrelated sequences continue. Missing/expired,
+rejected, mismatched, duplicate or unlisted dependency evidence requires recovery.
+Dependencies are checked before equivalence. A deleted listed child does not
+invalidate a previously accepted creation dependency; projection still hides it.
+
+`visible_milestone_order` is a private ownership-scoped reference helper, not a
+new public endpoint. `projectMilestoneOrder` is a pure Dart policy with shared
+validator/projection fixtures; no native account projection is enabled. Canonical
+order changes are included in ordinary pull records. A future account projection
+must recompute when parent, child or order records change in the same local page
+transaction. Existing operation/request limits still apply without truncation.
+
 ## RPC and minimal local-upgrade plan
 
 All RPCs are versioned and authenticated. Apply takes the immutable operations
