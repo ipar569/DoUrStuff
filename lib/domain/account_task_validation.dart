@@ -25,3 +25,16 @@ bool validAccountDescription(Object? value) =>
 
 bool validAccountEstimate(Object? value) =>
     value == null || (value is int && value >= 1 && value <= 5256000);
+
+/// Canonical order is an atomic object, independent from live child membership.
+bool validAccountMilestoneOrder(Object? value) {
+  if (value is! Map || value.length != 1 || value['ordered_ids'] is! List) {
+    return false;
+  }
+  final ids = value['ordered_ids'] as List;
+  final uuid = RegExp(
+    r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
+  );
+  return ids.every((id) => id is String && uuid.hasMatch(id)) &&
+      ids.toSet().length == ids.length;
+}

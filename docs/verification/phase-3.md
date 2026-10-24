@@ -1,7 +1,7 @@
 # Phase 3 verification
 
 Status: milestone **3.0 local readiness passed; 3.1 in progress**, reviewed
-23 October 2026. The user accepted
+24 October 2026. The user accepted
 the Android emulator offline/restart evidence on 12 October for local Phase 3
 entry. Immutable v2 operations, six strict RPC codecs and causal/policy fixtures exist;
 accounts and sync are not enabled. See the latest handoff below.
@@ -17,10 +17,10 @@ emulator. Supabase CLI 2.120.0 is now installed and checksum/version/help verifi
 through approved escalation after the permission change. Local configuration is
 initialized. The user subsequently updated Docker to Desktop 4.95.0 / Engine
 29.8.2. Local services, image pins and explicit loopback bindings passed checks.
-Twelve migrations and real synthetic-account registration/pull/apply/ownership
+Thirteen migrations and real synthetic-account registration/pull/apply/ownership
 tests ran on PostgreSQL 17.11. Apply now covers core task creation and
 title/priority/status/description/estimate/due edits, task deletion, exact-deletion restore
-and milestone creation/edit/deletion with parent dependencies, with private durable status history. Full draft
+and milestone creation/edit/deletion/order with parent dependencies, with private durable status history. Full draft
 fields, history download, native OAuth and client sync remain unfinished.
 
 | Gate | Evidence/status |
@@ -1616,3 +1616,126 @@ endpoint reachable from both installed clients, and installed Android/Windows
 devices. No hosted project is linked and PC loopback is not device reachability
 evidence. Keep accepted Phase 2 emulator entry closed and retained physical/native
 gates open. No production deployment/migration or release occurred.
+
+## Atomic milestone ordering — 24 October 2026
+
+PR #9 was independently reviewed at `1821b3d7f508ff4319f26915b7394311fac6093b`
+against `09256420428e2e53045b5ff19f2ec9358cb49b91`, with no actionable findings.
+This completes the previous usage-limited attempt; it is an agent review, not
+approval by another GitHub account. Quality run `39927748107` and Native builds
+run `39927748190` passed all three jobs for that exact head. No blocking review
+or unresolved thread was present. The guarded squash merge is
+`2596b662ecc9fde30d22d51b6000118c45d4cee6`, verified on remote and clean local main.
+The PR timeline records review/merge evidence. The connected GitHub integration
+could read PR state but returned 403 for comments; the authenticated CLI completed
+the authorized review comment and guarded merge.
+
+This increment starts from that main commit on `codex/phase-3-milestone-order`.
+Forward migration 013, `20261023191045_milestone_order.sql`, enables the separate
+atomic `task.milestone_order` command. Its unique canonical UUID list preserves
+observed/predecessor bases, whole-list conflict candidates and exact dependencies
+on task/child creation. Held child creates can hold an order without fabricating
+canonical rows. Missing/expired/foreign/other-parent references require recovery.
+Unrelated work continues through contiguous sequences.
+
+Independent additions append deterministically by UUID in reference projection;
+deletions filter visibility while canonical ordered IDs remain unchanged. Both
+arrival orders preserve the same visible result. Parent restore preserves child
+tombstones and never applies late order candidates. Private invoker helpers have
+fixed search paths and restricted grants; the existing account lock includes
+order, recovery, log, receipt and watermark writes. No table/public API grant,
+local SQLite schema, production dependency or app behavior changed. All twelve
+previously applied migrations remain unchanged.
+
+The guarded start initially failed because Docker's Linux-engine pipe was absent.
+`docker desktop start --detach`, then `python tool/local_backend.py --start`,
+verified nine pinned services, eight healthchecks and loopback-only bindings.
+Volumes and stopped backup containers were preserved. CLI 2.120.0 version and
+`migration new`, `migration up`, `db dump` and `db advisors` help were checked.
+No upgrade was made. Supabase changelog/security guidance and relevant PostgreSQL,
+table-exposure and TLS notices were rechecked; no hosted resource was provisioned.
+
+Pre-apply verification: the foundation harness compiled all thirteen migrations
+and preserved watermark/history/due data in a rollback-only rehearsal. A separate
+real-owner ordering/dependency/projection smoke test over retained child data
+initially failed with `operator does not exist: boolean -> unknown`. Explicit
+parentheses around both JSON containment operands fixed the candidate before
+application. The smoke test then passed and verified exact retained-state rollback.
+Local pre-apply schema/data dumps are `.tools/backend-before-milestone-order-schema.sql`
+and `.tools/backend-before-milestone-order-data.sql`; these are not restore evidence.
+`migration up --local --network-id dourstuff-local` applied only 013.
+`migration list --local` matched all thirteen IDs; `db advisors --local --type all
+--level warn --fail-on error` reported no issues.
+
+The first formatting invocation formatted the file, then exited 1 because the
+sandbox denied access to Dart's telemetry log. The authorized SDK/cache invocation
+passed afterwards. Targeted `flutter test test/domain_test.dart
+test/local_database_test.dart test/account_milestone_order_test.dart` passed
+14 tests. Full local quality passed with pinned `.tools/flutter/bin`:
+`flutter pub get --enforce-lockfile`, `dart run build_runner build`, generated-Dart
+diff check, `dart format --output=none --set-exit-if-changed lib test tool`,
+`flutter analyze` (no issues, 32.0 seconds), and `flutter test` (**113 tests**).
+No generated Dart, SQLite snapshot or lockfile changed.
+
+The initial regression session was unavailable after a later interruption; Docker
+was then stopped. Guarded startup was repeated after `docker desktop start --detach`.
+The existing services/ports remained intact, and synthetic Auth-user and injected
+trigger counts were zero. The final milestone-command suite was rerun with a
+retained local log: all 9 groups and 91 Dart-validated real replies passed.
+The earlier eight regression suites had completed successfully; the strengthened
+ordering suite subsequently passed all 10 groups and 156 real reply validations.
+No interrupted process is counted
+as a completed test merely because it wrote a wire-capture file.
+
+Final backend evidence on migration 013:
+
+- `python tool/test_backend_<suite>.py --supabase .tools/supabase/supabase.exe --wire-output .tools/backend-<suite>-order-regression-wire.json`
+  for foundation (8 groups), apply (11), task_create (11), task_fields (5),
+  task_due (7), task_delete (6), task_restore (8), milestone_create (9), and
+  milestone_commands (9). The due command additionally used
+  `--fixtures .tools/due-fixtures.json`, passing 785 cases across 342 zones.
+- `python tool/test_backend_milestone_order.py --supabase .tools/supabase/supabase.exe --wire-output .tools/backend-milestone-order-wire.json`:
+  **10 groups passed**, including shared SQL/Dart validity/projection cases,
+  exact predecessor/dependency binding, held-before-equivalence, both reorder/
+  add/delete arrival orders, a simultaneous three-device race, malformed commands,
+  account/parent isolation and failure at the second log write of a batch.
+  With the nine earlier suites, **84 integration groups passed**.
+- `dart run tool/check_backend_wire.dart` for each output validated respectively
+  10, 32, 136, 42, 75, 35, 57, 113, 91 and 156 replies: **747 real responses**.
+- `python tool/test_backend_http.py`: all **3** HTTP/encoding tests passed.
+  Synthetic account/Auth, milestone/deletion-ledger and injected-trigger counts
+  returned to zero. Changed Markdown relative links and `git diff --check` passed.
+
+The latest cost runbook also corrects historical 500-MB/read-only shorthand using
+current official documentation: billing quota restrictions and disk-pressure
+read-only mode are distinct. No paid service or hosted resource was added.
+Local results precede the final documentation-only handoff update. Native CI
+builds are still required on the final reviewed head and do not establish installed
+Android/Windows acceptance.
+
+### Next-session handoff — milestone ordering, 24 October 2026
+
+PR #9 is merged and verified at `2596b66`. Current branch:
+`codex/phase-3-milestone-order`, based on that commit. Ordering implementation,
+fixtures, test harness and documentation pass the local checks above. Finish the
+task PR's independent review and final-head Quality/Android/Windows CI before
+guarded merge. Record the reviewed SHA, findings/disposition and actual merge in
+the PR timeline; recheck that timeline before resuming this dated handoff.
+
+Preserve all thirteen applied migrations and repaired volumes/stopped backups.
+After this increment merges, use a fresh branch for tags/memberships and remaining
+command semantics, resolving pinned client/server normalization before tag writes.
+Native account projection/storage, secure GitHub PKCE, automatic two-client sync,
+snapshot/retention/resolution, adoption/lifecycle and installed latency/recovery
+acceptance remain unfinished.
+
+The app stays guest-only; Phase 3.0 is complete, 3.1 partial and Phase 4 gated.
+Before activation resolve valid 100,000-UTF-16-unit descriptions versus the 64-KiB
+cap, JSONB NUL/raw-number and normalization parity, and historical/future timezone
+parity. Never truncate or silently upload guest content. External prerequisites
+remain exact GitHub OAuth Android/Windows redirects, verified secure session and
+PKCE-verifier storage, a restricted development endpoint reachable by both
+installed clients, and installed Android/Windows devices. No hosted project is
+linked; loopback tests and native compilation do not establish device acceptance.
+Keep accepted Phase 2 emulator entry closed and retained physical/native gates
+open. No production deployment/migration, release or store publication occurred.

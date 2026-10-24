@@ -19,7 +19,8 @@ and surface these conditions without blocking SQLite editing.
 Supabase Free targets $0 recurring backend cost: 500 MB DB, 5 GB egress, 50,000
 MAU, two active projects, two million realtime messages and 200 peak connections.
 Projects may pause after a week inactive; oversized databases can become
-read-only. No automatic backups. Local task use must survive those conditions.
+read-only when disk capacity is exhausted (see the 24 October correction below).
+No automatic backups. Local task use must survive those conditions.
 Default SMTP is restricted (currently two messages/hour); GitHub OAuth avoids
 production mail as a dependency. Pro starts at US$25/month; resources/add-ons
 can add cost. Retained history, tombstones, conflicts and snapshots count too.
@@ -73,3 +74,15 @@ over seven days can pause Free projects, with a one-year platform restore window
 The 500 MB read-only threshold and organization-level HTTP 402 restriction remain
 documented. This increment provisions nothing; retained status snapshots now add
 to local storage and need measurement with the full history/retention design.
+
+24 October recheck: [pricing](https://supabase.com/pricing) retains Free 500 MB
+database, 50,000 MAU, 5 GB egress plus 5 GB cached egress, two active projects and
+Pro from US$25/month. [Pausing](https://supabase.com/docs/guides/platform/free-project-pausing)
+still uses low database activity over seven days and a one-year restore window.
+The current [database-size guide](https://supabase.com/docs/guides/platform/database-size)
+corrects the earlier shorthand above: **500 MB is the database billing quota,
+not the read-only trigger**. Read-only mode depends on per-project disk usage,
+which also includes WAL; organization fair-use restrictions can separately
+return HTTP 402 based on average database size over the billing period. Retain
+pending work for both failure modes. No hosted project, paid resource or service
+was added by milestone ordering; earlier dated reviews remain historical.

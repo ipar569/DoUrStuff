@@ -1,9 +1,9 @@
 # Optional backend and controlled deployment
 
-Local configuration prepared; reviewed 23 October 2026. The local
+Local configuration prepared; reviewed 24 October 2026. The local
 `supabase/config.toml` was initialized with pinned CLI 2.120.0 and reviewed.
 There is no remote project, client authentication adapter or deployment workflow.
-A real local stack now runs with twelve migrations and tested registration/pull
+A real local stack now runs with thirteen migrations and tested registration/pull
 RPCs plus ownership isolation. Atomic apply handles core task creation and
 title/priority/status/description/estimate/due edits, with receipts, recovery candidates, status history
 and durable sequence progress.
@@ -62,6 +62,35 @@ real-owner edit/delete RPC on a preexisting milestone. Local schema/data dumps
 are `.tools/backend-before-milestone-commands-schema.sql` and
 `.tools/backend-before-milestone-commands-data.sql`, not restore evidence.
 Use the guarded existing-stack startup; preserve volumes and stopped backups.
+
+## Atomic milestone ordering — 24 October 2026
+
+Forward migration `20261023191045_milestone_order.sql` adds a separately validated
+atomic order command and private ownership-scoped dependency/projection helpers.
+Run all ten suites from `supabase/README.md` sequentially. The helpers use fixed
+search paths, invoker permissions and explicit execute grants to `dourstuff_rpc`
+only. Existing account locking, RLS and indexed owner/parent references remain.
+No table grant or public RPC is added; all twelve earlier migrations are unchanged.
+
+Before application, the candidate passed rollback-only all-migration/retained-data
+checks and a real-owner ordering/dependency/projection smoke test on retained
+children. That smoke test first caught a JSON containment operator-precedence
+error; it was fixed before application. Pre-apply schema/data dumps are
+`.tools/backend-before-milestone-order-schema.sql` and
+`.tools/backend-before-milestone-order-data.sql`, not restore-rehearsal evidence.
+
+Docker's Linux-engine pipe was initially absent. `docker desktop start --detach`
+followed by `python tool/local_backend.py --start` verified the nine existing
+pinned services, eight healthchecks and loopback-only bindings. Volumes and stopped
+backup containers were preserved. CLI 2.120.0 remains pinned; no update was made.
+All thirteen migration IDs match; local advisors reported no issues.
+
+The [Supabase changelog](https://supabase.com/changelog.md) and function-security
+guidance were rechecked. The PostgreSQL 17.11 changes affect none of this slice's
+features. Explicit private grants already avoid reliance on automatic table
+exposure. The [HTTP TLS cipher notice](https://supabase.com/changelog/cbc-tls-ciphers-deprecated)
+remains relevant to future hosted/native acceptance; local HTTP tests do not
+verify those clients. No hosted backend or paid resource was provisioned.
 
 ## Running local foundation — 16 October 2026
 

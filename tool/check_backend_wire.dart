@@ -29,6 +29,13 @@ void main(List<String> args) {
           final patches = request.operations[i].patches;
           if (receipt is! OperationReceipt) continue;
           final validity = <String, bool>{};
+          if (patches.containsKey('milestone_order') &&
+              request.operations[i].command == 'task.milestone_order' &&
+              patches.length == 1) {
+            validity['invalid_milestone_order'] = validAccountMilestoneOrder(
+              patches['milestone_order']!.value,
+            );
+          }
           if (patches.containsKey('completion')) {
             final completion = patches['completion']!.value;
             validity['invalid_completion'] = validAccountStatusGroup({
@@ -85,6 +92,7 @@ void main(List<String> args) {
                     'invalid_estimate_minutes',
                     'invalid_due',
                     'invalid_completion',
+                    'invalid_milestone_order',
                   }.contains(receipt.rejectionCode) &&
                   validity[receipt.rejectionCode] != false)) {
             throw const FormatException('Server and Dart task rules differ.');

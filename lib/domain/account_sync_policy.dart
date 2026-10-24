@@ -1,10 +1,30 @@
 import 'account_sync.dart';
 import 'account_sync_rpc.dart';
+import 'account_task_validation.dart';
 import 'query.dart';
 
 /// These pure decisions specify policy, not transactional server enforcement.
 /// Owners, canonical state and server time must come from trusted server reads.
 enum ParentDisposition { ready, held, recovery, rejected }
+
+/// Reference policy for future account projection. The caller supplies only
+/// visible same-parent children. Never rewrite the accepted order or its base.
+List<String> projectMilestoneOrder(
+  Object? acceptedOrder,
+  Set<String> visibleChildIds,
+) {
+  if (acceptedOrder != null && !validAccountMilestoneOrder(acceptedOrder)) {
+    throw const FormatException('Invalid milestone order.');
+  }
+  final ordered = acceptedOrder == null
+      ? <String>[]
+      : ((acceptedOrder as Map)['ordered_ids'] as List).cast<String>();
+  final listed = ordered.toSet();
+  return [
+    ...ordered.where(visibleChildIds.contains),
+    ...(visibleChildIds.difference(listed).toList()..sort()),
+  ];
+}
 
 ParentDisposition checkParentDependency({
   required String authenticatedOwner,

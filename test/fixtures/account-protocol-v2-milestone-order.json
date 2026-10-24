@@ -1,0 +1,398 @@
+{
+  "request": {
+    "protocol_version": 2,
+    "server_epoch": "00000000-0000-0000-0000-000000000200",
+    "after_revision": 0,
+    "operations": [
+      {
+        "protocol_version": 2,
+        "operation_id": "00000000-0000-0000-0000-000000000001",
+        "device_epoch": "00000000-0000-0000-0000-000000000100",
+        "sequence": 1,
+        "entity": {
+          "kind": "task",
+          "key": [
+            "00000000-0000-0000-0000-000000000020"
+          ]
+        },
+        "command": "task.create",
+        "patches": {
+          "title": {
+            "base": {
+              "kind": "absent"
+            },
+            "value": "Parent"
+          },
+          "priority": {
+            "base": {
+              "kind": "absent"
+            },
+            "value": "none"
+          },
+          "existence": {
+            "base": {
+              "kind": "absent"
+            },
+            "value": true
+          },
+          "status_group": {
+            "base": {
+              "kind": "absent"
+            },
+            "value": {
+              "status": "todo",
+              "completed_at": null
+            }
+          }
+        },
+        "dependencies": [],
+        "provenance": {
+          "occurred_at": 99
+        }
+      },
+      {
+        "protocol_version": 2,
+        "operation_id": "00000000-0000-0000-0000-000000000002",
+        "device_epoch": "00000000-0000-0000-0000-000000000100",
+        "sequence": 2,
+        "entity": {
+          "kind": "milestone",
+          "key": [
+            "00000000-0000-0000-0000-000000000030"
+          ]
+        },
+        "command": "milestone.create",
+        "patches": {
+          "title": {
+            "base": {
+              "kind": "absent"
+            },
+            "value": "A"
+          },
+          "parent": {
+            "base": {
+              "kind": "absent"
+            },
+            "value": "00000000-0000-0000-0000-000000000020"
+          },
+          "existence": {
+            "base": {
+              "kind": "absent"
+            },
+            "value": true
+          },
+          "completion": {
+            "base": {
+              "kind": "absent"
+            },
+            "value": null
+          }
+        },
+        "dependencies": [],
+        "provenance": {
+          "occurred_at": 98
+        }
+      },
+      {
+        "protocol_version": 2,
+        "operation_id": "00000000-0000-0000-0000-000000000003",
+        "device_epoch": "00000000-0000-0000-0000-000000000100",
+        "sequence": 3,
+        "entity": {
+          "kind": "milestone",
+          "key": [
+            "00000000-0000-0000-0000-000000000031"
+          ]
+        },
+        "command": "milestone.create",
+        "patches": {
+          "title": {
+            "base": {
+              "kind": "absent"
+            },
+            "value": "B"
+          },
+          "parent": {
+            "base": {
+              "kind": "absent"
+            },
+            "value": "00000000-0000-0000-0000-000000000020"
+          },
+          "existence": {
+            "base": {
+              "kind": "absent"
+            },
+            "value": true
+          },
+          "completion": {
+            "base": {
+              "kind": "absent"
+            },
+            "value": null
+          }
+        },
+        "dependencies": [],
+        "provenance": {
+          "occurred_at": 97
+        }
+      },
+      {
+        "protocol_version": 2,
+        "operation_id": "00000000-0000-0000-0000-000000000004",
+        "device_epoch": "00000000-0000-0000-0000-000000000100",
+        "sequence": 4,
+        "entity": {
+          "kind": "task",
+          "key": [
+            "00000000-0000-0000-0000-000000000020"
+          ]
+        },
+        "command": "task.milestone_order",
+        "patches": {
+          "milestone_order": {
+            "base": {
+              "kind": "absent"
+            },
+            "value": {
+              "ordered_ids": [
+                "00000000-0000-0000-0000-000000000031",
+                "00000000-0000-0000-0000-000000000030"
+              ]
+            }
+          }
+        },
+        "dependencies": [
+          {
+            "entity": {
+              "kind": "task",
+              "key": [
+                "00000000-0000-0000-0000-000000000020"
+              ]
+            },
+            "operation_id": "00000000-0000-0000-0000-000000000001",
+            "sequence": 1,
+            "group": "existence"
+          },
+          {
+            "entity": {
+              "kind": "milestone",
+              "key": [
+                "00000000-0000-0000-0000-000000000030"
+              ]
+            },
+            "operation_id": "00000000-0000-0000-0000-000000000002",
+            "sequence": 2,
+            "group": "existence"
+          },
+          {
+            "entity": {
+              "kind": "milestone",
+              "key": [
+                "00000000-0000-0000-0000-000000000031"
+              ]
+            },
+            "operation_id": "00000000-0000-0000-0000-000000000003",
+            "sequence": 3,
+            "group": "existence"
+          }
+        ],
+        "provenance": {
+          "occurred_at": 96
+        }
+      },
+      {
+        "protocol_version": 2,
+        "operation_id": "00000000-0000-0000-0000-000000000005",
+        "device_epoch": "00000000-0000-0000-0000-000000000100",
+        "sequence": 5,
+        "entity": {
+          "kind": "task",
+          "key": [
+            "00000000-0000-0000-0000-000000000020"
+          ]
+        },
+        "command": "task.milestone_order",
+        "patches": {
+          "milestone_order": {
+            "base": {
+              "kind": "predecessor",
+              "operation_id": "00000000-0000-0000-0000-000000000004",
+              "sequence": 4,
+              "value": {
+                "ordered_ids": [
+                  "00000000-0000-0000-0000-000000000031",
+                  "00000000-0000-0000-0000-000000000030"
+                ]
+              }
+            },
+            "value": {
+              "ordered_ids": [
+                "00000000-0000-0000-0000-000000000030",
+                "00000000-0000-0000-0000-000000000031"
+              ]
+            }
+          }
+        },
+        "dependencies": [],
+        "provenance": {
+          "occurred_at": 95
+        }
+      }
+    ]
+  },
+  "validity": [
+    {
+      "value": null,
+      "valid": false
+    },
+    {
+      "value": [],
+      "valid": false
+    },
+    {
+      "value": {},
+      "valid": false
+    },
+    {
+      "value": {
+        "ordered_ids": null
+      },
+      "valid": false
+    },
+    {
+      "value": {
+        "ordered_ids": []
+      },
+      "valid": true
+    },
+    {
+      "value": {
+        "ordered_ids": [
+          "00000000-0000-0000-0000-000000000030",
+          "00000000-0000-0000-0000-000000000031"
+        ]
+      },
+      "valid": true
+    },
+    {
+      "value": {
+        "ordered_ids": [
+          "00000000-0000-0000-0000-000000000030",
+          "00000000-0000-0000-0000-000000000030"
+        ]
+      },
+      "valid": false
+    },
+    {
+      "value": {
+        "ordered_ids": [
+          true
+        ]
+      },
+      "valid": false
+    },
+    {
+      "value": {
+        "ordered_ids": [
+          "not-a-uuid"
+        ]
+      },
+      "valid": false
+    },
+    {
+      "value": {
+        "ordered_ids": [
+          "AAAAAAAA-0000-0000-0000-000000000030"
+        ]
+      },
+      "valid": false
+    },
+    {
+      "value": {
+        "ordered_ids": [],
+        "extra": 1
+      },
+      "valid": false
+    },
+    {
+      "value": {
+        "ordered_ids": [
+          1
+        ]
+      },
+      "valid": false
+    }
+  ],
+  "projections": [
+    {
+      "order": null,
+      "visible": [
+        "00000000-0000-0000-0000-000000000032",
+        "00000000-0000-0000-0000-000000000030",
+        "00000000-0000-0000-0000-000000000031"
+      ],
+      "expected": [
+        "00000000-0000-0000-0000-000000000030",
+        "00000000-0000-0000-0000-000000000031",
+        "00000000-0000-0000-0000-000000000032"
+      ]
+    },
+    {
+      "order": {
+        "ordered_ids": [
+          "00000000-0000-0000-0000-000000000031",
+          "00000000-0000-0000-0000-000000000030"
+        ]
+      },
+      "visible": [
+        "00000000-0000-0000-0000-000000000032",
+        "00000000-0000-0000-0000-000000000031",
+        "00000000-0000-0000-0000-000000000030"
+      ],
+      "expected": [
+        "00000000-0000-0000-0000-000000000031",
+        "00000000-0000-0000-0000-000000000030",
+        "00000000-0000-0000-0000-000000000032"
+      ]
+    },
+    {
+      "order": {
+        "ordered_ids": [
+          "00000000-0000-0000-0000-000000000031",
+          "00000000-0000-0000-0000-000000000030"
+        ]
+      },
+      "visible": [
+        "00000000-0000-0000-0000-000000000032",
+        "00000000-0000-0000-0000-000000000030"
+      ],
+      "expected": [
+        "00000000-0000-0000-0000-000000000030",
+        "00000000-0000-0000-0000-000000000032"
+      ]
+    },
+    {
+      "order": {
+        "ordered_ids": [
+          "00000000-0000-0000-0000-000000000031",
+          "00000000-0000-0000-0000-000000000030"
+        ]
+      },
+      "visible": [],
+      "expected": []
+    },
+    {
+      "order": {
+        "ordered_ids": []
+      },
+      "visible": [
+        "00000000-0000-0000-0000-000000000032",
+        "00000000-0000-0000-0000-000000000030"
+      ],
+      "expected": [
+        "00000000-0000-0000-0000-000000000030",
+        "00000000-0000-0000-0000-000000000032"
+      ]
+    }
+  ]
+}

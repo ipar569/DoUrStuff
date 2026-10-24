@@ -160,3 +160,15 @@ No child restore, content purge or recovery UI is provided. Keep all twelve
 applied migrations unchanged. Pre-apply schema/data dumps are
 `.tools/backend-before-milestone-commands-schema.sql` and
 `.tools/backend-before-milestone-commands-data.sql`; restore rehearsal is unverified.
+
+24 October ordering (013) retains canonical ordered IDs through child additions,
+deletions and parent restore. Projection filters hidden children and appends
+unlisted live children by UUID; it never rewrites original order candidates.
+Conflicted predecessors hold dependent reorders before equivalence. Missing or
+expired child-create receipt evidence requires recovery without guessing a base.
+There is no native account recovery/projection UI yet.
+
+Pre-apply dumps are `.tools/backend-before-milestone-order-schema.sql` and
+`.tools/backend-before-milestone-order-data.sql`. Candidate rollback and injected
+order transaction failure checks are not disaster-recovery rehearsal evidence.
+Preserve all thirteen applied migration files unchanged; use forward fixes.
