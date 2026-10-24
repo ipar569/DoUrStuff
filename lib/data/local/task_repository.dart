@@ -6,6 +6,7 @@ import 'package:uuid/uuid.dart';
 import '../../domain/ports.dart';
 import '../../domain/sync.dart';
 import '../../domain/query.dart';
+import '../../domain/tag_normalization.dart';
 import '../../domain/task.dart' as domain;
 import '../time_policy.dart';
 import 'database.dart';
@@ -466,11 +467,14 @@ class LocalTaskRepository implements domain.TaskRepository {
     String name, {
     String? id,
   }) => database.transaction(() async {
-    final clean = _name(name);
+    final clean = cleanTagName(name);
+    if (clean.isEmpty || clean.length > 80) {
+      throw ArgumentError('Use a name between 1 and 80 characters.');
+    }
     final duplicate = await database
         .customSelect(
           'SELECT id FROM tags WHERE normalized_name=? AND deleted_at IS NULL',
-          variables: [Variable(normalized(clean))],
+          variables: [Variable(normalizedTagName(clean))],
         )
         .getSingleOrNull();
     if (duplicate != null && duplicate.read<String>('id') != id) {
@@ -481,11 +485,11 @@ class LocalTaskRepository implements domain.TaskRepository {
     final key = id ?? _uuid.v4();
     await database.customStatement(
       'INSERT INTO tags(id,name,normalized_name) VALUES (?,?,?) ON CONFLICT(id) DO UPDATE SET name=excluded.name,normalized_name=excluded.normalized_name',
-      [key, clean, normalized(clean)],
+      [key, clean, normalizedTagName(clean)],
     );
     await _record(key, id == null ? 'tag.create' : 'tag.edit', {
       'name': clean,
-      'normalized_name': normalized(clean),
+      'normalized_name': normalizedTagName(clean),
     }, _now);
     database.markTablesUpdated({database.tags});
     return key;

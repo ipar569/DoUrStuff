@@ -1,7 +1,7 @@
 import 'account_sync.dart';
 import 'account_sync_rpc.dart';
 import 'account_task_validation.dart';
-import 'query.dart';
+import 'tag_normalization.dart';
 
 /// These pure decisions specify policy, not transactional server enforcement.
 /// Owners, canonical state and server time must come from trusted server reads.
@@ -160,16 +160,15 @@ bool canSelectDefaultView({
   required bool viewVisible,
 }) => requestedView == null || (viewOwner == authenticatedOwner && viewVisible);
 
-/// Uses the current pinned Dart normalization. PostgreSQL parity needs fixtures
-/// before enabling writes; do not replace this with locale-dependent SQL lower.
+/// Compare frozen name keys without aliasing distinct tag identities.
 bool hasTagNameCollision({
   required String tagId,
   required String proposedName,
   required Map<String, String> activeAccountTags,
 }) {
-  final key = normalized(proposedName);
+  final key = normalizedTagName(proposedName);
   return activeAccountTags.entries.any(
-    (e) => e.key != tagId && normalized(e.value) == key,
+    (e) => e.key != tagId && normalizedTagName(e.value) == key,
   );
 }
 

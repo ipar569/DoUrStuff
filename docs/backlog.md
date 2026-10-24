@@ -187,6 +187,15 @@ Next: tags/memberships and remaining commands, then snapshot/retention/resolutio
 and client integration. See the latest verification handoff for exact review,
 test and merge state. Native accounts and Phase 4 remain gated.
 
+24 October: PR #10 merged at `eb128f0` after exact-head independent review and
+passing Quality/Android/Windows CI. Migration 014 freezes tag normalization to
+native Dart 3.13.5, with exhaustive scalar parity and exact atomic name validation.
+Existing guest keys and membership identities remain stable. Server tag commands
+remain disabled. Next: tag creation/edit/deletion with retained normalized-name
+collision candidates, then membership dependencies/add/remove without UUID
+aliasing; saved views/preferences and remaining command semantics follow.
+Representation and installed-device gates remain open.
+
 Real Supabase migrations/RPC/RLS tests; secure tokens and GitHub PKCE; explicit
 adoption; resumable bootstrap; field conflicts and recovery UI; cursor/receipts/
 tombstones/high-water; catch-up/realtime/retries; sign-out/switch/deletion.

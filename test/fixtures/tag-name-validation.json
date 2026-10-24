@@ -1,0 +1,21 @@
+[
+  {"value":{"name":"Work","normalized_name":"work"},"valid":true},
+  {"value":{"name":"İ","normalized_name":"i"},"valid":true},
+  {"value":{"name":"ΟΣ","normalized_name":"οσ"},"valid":true},
+  {"value":{"name":"ΟΣ","normalized_name":"ος"},"valid":false},
+  {"value":{"name":"𐐀","normalized_name":"𐐨"},"valid":true},
+  {"value":{"name":"CAFÉ","normalized_name":"café"},"valid":true},
+  {"value":{"name":"Café","normalized_name":"café"},"valid":false},
+  {"value":{"name":"A\u0085B","normalized_name":"a\u0085b"},"valid":true},
+  {"value":{"name":"A\u0085B","normalized_name":"a b"},"valid":false},
+  {"value":{"name":"Work","normalized_name":"WORK"},"valid":false},
+  {"value":{"name":" Work ","normalized_name":"work"},"valid":false},
+  {"value":{"name":"A\tB","normalized_name":"a b"},"valid":false},
+  {"value":{"name":"A  B","normalized_name":"a b"},"valid":false},
+  {"value":{"name":"","normalized_name":""},"valid":false},
+  {"value":{"name":"Work","normalized_name":"work","extra":true},"valid":false},
+  {"value":{"name":"Work"},"valid":false},
+  {"value":{"name":null,"normalized_name":"work"},"valid":false},
+  {"value":null,"valid":false},
+  {"value":[],"valid":false}
+]

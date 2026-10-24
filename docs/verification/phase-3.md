@@ -17,7 +17,7 @@ emulator. Supabase CLI 2.120.0 is now installed and checksum/version/help verifi
 through approved escalation after the permission change. Local configuration is
 initialized. The user subsequently updated Docker to Desktop 4.95.0 / Engine
 29.8.2. Local services, image pins and explicit loopback bindings passed checks.
-Thirteen migrations and real synthetic-account registration/pull/apply/ownership
+Fourteen migrations and real synthetic-account registration/pull/apply/ownership
 tests ran on PostgreSQL 17.11. Apply now covers core task creation and
 title/priority/status/description/estimate/due edits, task deletion, exact-deletion restore
 and milestone creation/edit/deletion/order with parent dependencies, with private durable status history. Full draft
@@ -1739,3 +1739,99 @@ installed clients, and installed Android/Windows devices. No hosted project is
 linked; loopback tests and native compilation do not establish device acceptance.
 Keep accepted Phase 2 emulator entry closed and retained physical/native gates
 open. No production deployment/migration, release or store publication occurred.
+
+## Frozen tag-name normalization — 24 October 2026
+
+PR #10 was refreshed at head `2f2bf924a9730c8968ce6a3e477810c8f615ed53` and base
+`2596b662ecc9fde30d22d51b6000118c45d4cee6`. Its recorded independent review at
+[comment 6377852545](https://github.com/ipar569/DoUrStuff/pull/10#issuecomment-6377852545)
+had no actionable findings. Quality run `40047497996` and Native builds run
+`40047497988` passed all three jobs for that head. No blocking submitted review,
+unresolved thread or branch rule was present. The CLI guarded squash merge is
+`eb128f0d2798db4c26a078737a69ab9941af848f`, confirmed on remote main and clean
+local main. The connector merge call failed argument validation; the authenticated
+CLI used `--match-head-commit` without bypassing protections.
+
+This prerequisite increment starts from that merge on
+`codex/phase-3-tag-normalization`. Migration 014,
+`20261024083944_tag_name_normalization.sql`, freezes native Dart 3.13.5 casing,
+trim and whitespace collapse, with no ambient SQL locale, NFC/NFKC or case folding.
+It contains 1,023 lowercase mappings, 26 trim characters and 25 collapsing
+whitespace characters. U+0085 trims at the ends but remains inside a name.
+The new pure Dart helper is used for guest tag keys and account collision policy;
+it preserves existing native behavior and does not rewrite any stored row.
+Exact atomic `{name, normalized_name}` validation preserves proposed payloads,
+uses the existing 80-UTF-16-unit name limit, and rejects unrepresentable NUL or
+unpaired-surrogate account names without altering guest data. No server tag
+command, UUID alias, membership redirect or client account write is enabled.
+
+The first guarded stack check found Docker stopped. `docker desktop start --detach`
+then `python tool/local_backend.py --start` verified the same nine pinned services,
+eight healthchecks and loopback bindings. No volume or stopped backup was replaced.
+CLI 2.120.0 and its migration/dump/advisor help were checked; no upgrade was made.
+Official Supabase changelog/function security and PostgreSQL string-function
+guidance were rechecked. No cloud resource or production migration was used.
+
+Pre-apply: the real foundation suite rehearsed empty application schema and
+retained watermark/history/due data through fourteen migrations, rolling back
+to the existing state. The normalization candidate also passed in a rollback-only
+transaction as the actual `dourstuff_rpc` role. Pre-apply dumps are
+`.tools/backend-before-tag-normalization-schema.sql` and
+`.tools/backend-before-tag-normalization-data.sql`; restore rehearsal is unverified.
+`migration up --local --network-id dourstuff-local` applied only 014;
+`migration list --local` matched all fourteen IDs and `db advisors --local --type
+all --level warn --fail-on error` reported no issues. All thirteen prior migration
+files remain unchanged.
+
+Checks on the implementation working tree (before this documentation update):
+
+- `dart run tool/export_tag_normalization.dart .tools/tag-normalization` with
+  pinned native Dart exported **1,399 parity cases**: 272 chunks containing every
+  one of the **1,112,063 PostgreSQL-representable Unicode scalars**, 104 whitespace
+  boundary cases and 1,023 case-context strings.
+- `python tool/test_backend_tag_normalization.py --candidate --fixtures .tools/tag-normalization/tag-normalization-parity.json`
+  passed before application; the same command without `--candidate` passed after
+  application. It also checks **23** shared/UTF-16-boundary name validations,
+  **26** whitespace boundaries, null handling, fixed paths and restricted invoker
+  grants. Native Dart tests independently check every scalar against the frozen
+  data and preserve malformed guest strings.
+- Targeted domain/SQLite/policy/normalization checks passed **23 tests**. A later
+  retained-v1-tag fixture verifies original UUID and membership reuse plus
+  whole-transaction rollback of a colliding rename.
+- Pinned `flutter pub get --enforce-lockfile`, `dart run build_runner build` and
+  generated-Dart diff passed. Initial analysis found three exporter lint issues
+  (relative lib import, interpolation braces, print); these were fixed.
+  `dart format --output=none --set-exit-if-changed lib test tool`, `flutter analyze`
+  (no issues, 4.7 seconds), and full `flutter test` then passed (**117 tests**).
+  No SQLite schema, generated database or lockfile changed.
+
+Staged `git diff --check` reports one trailing blank line at EOF in the newly
+generated, already locally applied migration 014. Its bytes are retained; this
+is a whitespace warning, not a passing check or SQL/runtime failure.
+
+Full backend regression and final-head CI/review evidence will be completed
+before merge and recorded here/in the PR timeline. Native compilation does not
+establish installed-device acceptance.
+
+### Next-session handoff — tag normalization, 24 October 2026
+
+Finish the normalization branch's remaining regression, independent review and
+Quality/Android/Windows CI, then guarded merge and remote-main verification.
+Record the reviewed SHA and actual merge in the PR timeline; inspect that timeline
+before resuming this dated handoff. Preserve all fourteen applied migrations.
+Next increment: server tag creation/edit/deletion, keeping normalized-name
+collision candidates under distinct UUIDs with their immutable original bases;
+then exact task/tag dependencies and versioned memberships. Never alias IDs or
+silently redirect memberships. Saved views/preferences and remaining commands,
+snapshot/retention/resolution, native account storage/auth and replication follow.
+
+The app stays guest-only; Phase 3.0 complete, 3.1 partial, Phase 4 gated. Remaining
+activation gaps include valid 100,000-UTF-16-unit descriptions versus the 64-KiB
+operation cap, JSONB NUL/raw-number and remaining normalization/representation
+parity, and historical/future timezone parity. Never truncate or silently upload
+guest content. Exact GitHub OAuth Android/Windows redirects, verified secure
+session/PKCE-verifier storage, a restricted endpoint reachable by both installed
+clients and installed Android/Windows test devices are still external/native
+prerequisites. No hosted project is linked. Retain accepted Phase 2 emulator entry
+and outstanding physical/native, latency and recovery gates. No production
+deployment/migration, release or store publication occurred.

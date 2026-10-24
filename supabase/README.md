@@ -2,12 +2,14 @@
 
 Initialized with CLI **2.120.0**, pinned in `../.supabase-version`. Configuration
 is for the synthetic `dourstuff-local` project only. No remote project is linked.
-Thirteen migrations now provide private account/device/log storage, RLS, restricted
+Fourteen migrations now provide private account/device/log storage, RLS, restricted
 device-registration/pull RPCs, atomic core task creation and title/priority/status/
 description/estimate/due edits, plus task deletion, exact-deletion restore and
 atomic milestone creation with immutable same-account parents/dependencies,
 independent milestone title/completion edits, durable child deletion and atomic
 task milestone ordering.
+Migration 014 additionally freezes tag-name normalization and exact name-group
+validation, without enabling tag commands.
 Apply stores canonical fields, immutable receipts, recovery candidates and device
 watermarks together, with durable status history. Creation requires the four
 core groups documented in the [v2 contract](../docs/architecture/account-protocol-v2.md),
@@ -83,6 +85,30 @@ credentials; do not paste or commit that raw output. No application secrets
 belong in this directory. Phone access needs separately restricted development
 networking and native OAuth configuration; this loopback baseline does not
 establish two-device acceptance.
+
+## Tag normalization prerequisite
+
+```powershell
+.tools/flutter/bin/dart.bat run tool/export_tag_normalization.dart .tools/tag-normalization
+python tool/test_backend_tag_normalization.py --fixtures .tools/tag-normalization/tag-normalization-parity.json
+```
+
+Use native Dart 3.13.5. The exporter measures every Unicode scalar, then emits a
+frozen mapping fixture, generated Dart/SQL helper source and 1,399 real parity
+cases into the scratch directory. It never updates source migrations itself.
+Compare generated data with `test/fixtures/tag-normalization-v1.json`; format the
+generated Dart before comparing with `lib/domain/tag_normalization_data.dart`.
+The generated SQL is the prefix of migration 014 up to its end-generated marker;
+the exact name-group validator and grants are hand-reviewed below it.
+Never overwrite an applied migration when updating SDKs or generators.
+
+Before first application only, `--candidate` executes 014 and these tests in a
+rollback-only transaction. After application, omit it. The harness verifies
+every PostgreSQL-representable Unicode scalar, casing context, whitespace/UTF-16
+boundaries and restricted invoker grants. Flutter tests independently compare
+the pinned native policy across all scalars and preserve malformed guest strings.
+Server tag creation/edit/delete and memberships still require atomic conflict,
+dependency, identity, RLS and transaction tests before enablement.
 
 ## Migration and test scope
 
