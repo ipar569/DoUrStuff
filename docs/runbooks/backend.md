@@ -92,6 +92,31 @@ exposure. The [HTTP TLS cipher notice](https://supabase.com/changelog/cbc-tls-ci
 remains relevant to future hosted/native acceptance; local HTTP tests do not
 verify those clients. No hosted backend or paid resource was provisioned.
 
+## Frozen tag-name normalization — 24 October 2026
+
+Migration 014 adds only private invoker functions with fixed empty search paths,
+restricted execute grants and explicit native Dart 3.13.5 character mappings.
+No public RPC/table or server tag command is added. All thirteen earlier applied
+migrations remain unchanged. Review [the contract](../architecture/account-protocol-v2.md)
+before adding tag writes: names collide by frozen key, never by ambient SQL locale.
+Distinct tag UUIDs and original candidate payloads must survive collisions.
+
+Use the exporter/parity commands in [local setup](../../supabase/README.md).
+The full scalar/whitespace/context checks passed in a rollback-only candidate
+transaction and after forward application. Foundation checks rehearsed empty
+application schema and retained-data upgrades through 014. The local pre-apply
+schema/data dumps are `.tools/backend-before-tag-normalization-schema.sql` and
+`.tools/backend-before-tag-normalization-data.sql`; restore rehearsal is unverified.
+All fourteen migration IDs match and advisors reported no issues.
+
+Docker was stopped at the first guarded attempt. `docker desktop start --detach`
+then `python tool/local_backend.py --start` restored the same nine pinned services,
+eight healthchecks and loopback bindings without replacing volumes/backups.
+CLI 2.120.0 remains pinned despite an available update. Official Supabase
+changelog/function-security and PostgreSQL string-function guidance were checked;
+this increment uses none of the ltree/legacy-encryption/btree_gist features in
+the 17.11 notice. Hosted TLS/native acceptance remains open.
+
 ## Running local foundation — 16 October 2026
 
 The Docker update is verified: Desktop 4.95.0, Engine 29.8.2/API 1.56, Linux amd64.

@@ -158,6 +158,27 @@ void main() {
       );
     },
   );
+  test('frozen tag keys preserve legacy identities and reject rename collisions atomically', () async {
+    const id = '00000000-0000-0000-0000-000000000080';
+    const name = 'İ ΟΣ 𐐀';
+    // Simulate a v1 row written by the previous native normalization policy.
+    await db.customStatement(
+      'INSERT INTO tags(id,name,normalized_name) VALUES (?,?,?)',
+      [id, name, normalized(name)],
+    );
+    await repo.saveTask(TaskDraft(title: 'Retained', tagIds: [id]));
+    final before = await snapshot();
+    expect(await repo.saveTag('\u0085İ\tΟΣ 𐐀\u0085'), id);
+    expect(await snapshot(), before);
+    final other = await repo.saveTag('Separate');
+    final withOther = await snapshot();
+    await expectLater(repo.saveTag('i οσ 𐐨', id: other), throwsArgumentError);
+    expect(await snapshot(), withOther);
+    expect((await read()).tasks.single.tags.single.id, id);
+    final interior = await repo.saveTag('A\u0085B');
+    expect(await repo.saveTag('A B'), isNot(interior));
+    expect(await repo.saveTag('CAFÉ'), isNot(await repo.saveTag('Cafe\u0301')));
+  });
   test('delete bulk deduplicates, hides children and undo has deletion precondition', () async {
     final a = await repo.saveTask(
       TaskDraft(

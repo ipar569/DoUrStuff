@@ -52,6 +52,10 @@ specify this policy, but the complete native paths below remain planned.
 
 ## Component overview
 
+The next 24 October increment pins native Dart/PostgreSQL tag-name normalization
+and exact atomic name validation. It enables no server tag commands or client
+account path; collision retention and memberships remain planned.
+
 The expanded client represents either Android or Windows. Each device has its
 own SQLite files, outbox, credentials and worker. Both devices synchronize
 through the account backend; they do not write directly to one another.

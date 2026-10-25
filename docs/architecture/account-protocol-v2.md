@@ -260,11 +260,28 @@ outlive detailed receipts/logs; old successful retries cannot revive a newer
 deletion and operation IDs cannot be reassigned. Physical content purging and
 child visibility remain unimplemented; this is not account UI/undo support.
 
-Tag policy retains the existing pinned Dart `trim`/`toLowerCase`/whitespace
-collapse behavior. Fixtures cover ASCII whitespace/case, accented uppercase,
-Turkish dotted I and composed versus decomposed accents (which remain distinct).
-Do not infer PostgreSQL/Unicode parity from these client fixtures; that is an
-explicit 3.1 integration requirement before account writes can be enabled.
+Tag policy v1 freezes native Dart 3.13.5 `trim`/`toLowerCase`/whitespace behavior
+in `tag_normalization_data.dart` and migration 014. The 1,023 lowercase mappings,
+26 trim characters and 25 collapsing whitespace characters are explicit; SQL
+does not use locale-dependent `lower` or a Unicode whitespace class. U+0085 is
+trimmed only at the ends. Dotted I becomes i, sigma always becomes ordinary
+sigma, and composed/decomposed accents and sharp-s/ss remain distinct. There is
+no NFC, NFKC, case folding or locale tailoring. SDK upgrades must preserve these
+persisted keys; changing the policy requires a compatibility/migration decision.
+
+The atomic `name` group's value is exactly `{name, normalized_name}`. Display
+name must already equal `cleanTagName(name)`, contain 1–80 UTF-16 units and have
+the exact derived normalized key. Validation never rewrites the original payload.
+PostgreSQL parity covers all 1,112,063 nonzero, nonsurrogate scalars, whitespace
+boundaries, casing contexts and length fixtures. NUL/unpaired-surrogate names
+cannot be represented by JSONB; the account validator rejects them while guest
+data remains untouched. Broader JSON/description/timezone representation gates
+remain open. No server tag command is enabled by this prerequisite increment.
+
+Guest capture retains its existing equivalent-name reuse behavior. Account
+collisions between different tag UUIDs must instead retain both original
+candidates for explicit recovery: never alias UUIDs, redirect memberships, or
+rewrite bases. That server behavior is the next increment.
 
 ### Milestone creation and parent dependencies — 23 October
 

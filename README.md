@@ -39,6 +39,9 @@ edits. Task milestone ordering now preserves concurrent reorder conflicts,
 appends independent additions by ID and filters deletions without rewriting the
 accepted list. Tags/memberships, content purging, history download and app integration
 remain pending.
+Tag-name normalization is now frozen to native Dart 3.13.5 and verified against
+PostgreSQL across every representable Unicode scalar. The private name validator
+does not enable server tag commands or account writes.
 
 | Platform | Status |
 | --- | --- |
