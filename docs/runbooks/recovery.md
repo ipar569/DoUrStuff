@@ -184,3 +184,16 @@ Pre-apply dumps are `.tools/backend-before-tag-normalization-schema.sql` and
 `.tools/backend-before-tag-normalization-data.sql`; they are not restore evidence.
 Preserve all fourteen applied migrations. NUL/raw-number, description-cap and
 timezone representation gaps still prevent account activation/adoption.
+
+25 October tag commands (015) retain original normalized-name collision
+candidates under their own UUIDs, even if no canonical tag exists. Held successors
+survive detailed-receipt expiry through unresolved recovery records; missing
+accepted predecessor evidence requires recovery rather than guessing a revision.
+Deleting the winning tag or freeing its name never auto-applies those candidates.
+
+Tag deletion retains content, creation payload and an immutable deletion ledger.
+Name reuse by a new UUID never restores the old UUID or redirects its future
+membership records. There is no tag restore/purge or native account recovery UI.
+Pre-apply dumps are `.tools/backend-before-tag-commands-schema.sql` and
+`.tools/backend-before-tag-commands-data.sql`, not restore evidence. Preserve
+all fifteen applied migrations; use forward fixes.

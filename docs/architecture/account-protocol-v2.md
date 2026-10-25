@@ -281,7 +281,35 @@ remain open. No server tag command is enabled by this prerequisite increment.
 Guest capture retains its existing equivalent-name reuse behavior. Account
 collisions between different tag UUIDs must instead retain both original
 candidates for explicit recovery: never alias UUIDs, redirect memberships, or
-rewrite bases. That server behavior is the next increment.
+rewrite bases. That server behavior is implemented by migration 015 below.
+
+### Server tag commands — 25 October 2026
+
+Migration 015 supports `tag.create` with exactly `name` and `existence: true`,
+both with absent bases; `tag.edit` with only the atomic name group; and
+`tag.delete` with an observed/predecessor true-to-false existence patch. The
+account lock covers name lookup, canonical writes, recovery candidates, receipts,
+log and contiguous watermark. A partial unique index on active owner/name keys
+uses byte-exact C collation. Dependencies are unsupported for these standalone
+tag commands; memberships will supply their own exact parent dependencies.
+
+A create collision by UUID or by active normalized name retains both original
+groups without creating a partial tag. Recovery stays keyed to the proposed
+UUID; it never points at another tag's canonical field or rewrites membership
+references. Renames preserve the existing name on either a name collision or a
+concurrent field conflict. Both display and normalized name remain one group.
+Exact predecessor binding happens before name availability/equivalence: dependent
+edits/deletes of conflicted creates remain held even without a canonical tag row,
+and freeing a name never silently retries those candidates. Unrelated work can
+continue through later contiguous sequences. Resolution remains future work.
+
+Deletion retains the tag content and original creation envelope. The private
+append-only `tag_deletions` ledger stores the winning deletion operation/revision
+and server time beyond receipt/log expiry; stale edits cannot restore visibility.
+A new UUID may reuse a deleted tag's name, but cannot reuse its identity. The
+future membership projection must suppress deleted tags without redirecting old
+memberships to the replacement UUID. No tag restore, purge, membership command
+or account client projection is implemented by this increment.
 
 ### Milestone creation and parent dependencies — 23 October
 

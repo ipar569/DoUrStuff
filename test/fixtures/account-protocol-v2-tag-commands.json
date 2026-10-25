@@ -1,0 +1,149 @@
+{
+  "protocol_version": 2,
+  "server_epoch": "00000000-0000-0000-0000-000000000099",
+  "after_revision": 0,
+  "operations": [
+    {
+      "protocol_version": 2,
+      "operation_id": "00000000-0000-0000-0000-000000000001",
+      "device_epoch": "00000000-0000-0000-0000-000000000010",
+      "sequence": 1,
+      "entity": {
+        "kind": "task",
+        "key": [
+          "00000000-0000-0000-0000-000000000020"
+        ]
+      },
+      "command": "task.create",
+      "patches": {
+        "existence": {
+          "base": {
+            "kind": "absent"
+          },
+          "value": true
+        },
+        "title": {
+          "base": {
+            "kind": "absent"
+          },
+          "value": "X"
+        },
+        "priority": {
+          "base": {
+            "kind": "absent"
+          },
+          "value": "none"
+        },
+        "status_group": {
+          "base": {
+            "kind": "absent"
+          },
+          "value": {
+            "status": "todo",
+            "completed_at": null
+          }
+        }
+      },
+      "dependencies": [],
+      "provenance": {
+        "occurred_at": 100
+      }
+    },
+    {
+      "protocol_version": 2,
+      "operation_id": "00000000-0000-0000-0000-000000000002",
+      "device_epoch": "00000000-0000-0000-0000-000000000010",
+      "sequence": 2,
+      "entity": {
+        "kind": "tag",
+        "key": [
+          "00000000-0000-0000-0000-000000000020"
+        ]
+      },
+      "command": "tag.create",
+      "patches": {
+        "existence": {
+          "base": {
+            "kind": "absent"
+          },
+          "value": true
+        },
+        "name": {
+          "base": {
+            "kind": "absent"
+          },
+          "value": {
+            "name": "Work",
+            "normalized_name": "work"
+          }
+        }
+      },
+      "dependencies": [],
+      "provenance": {
+        "occurred_at": 50
+      }
+    },
+    {
+      "protocol_version": 2,
+      "operation_id": "00000000-0000-0000-0000-000000000003",
+      "device_epoch": "00000000-0000-0000-0000-000000000010",
+      "sequence": 3,
+      "entity": {
+        "kind": "tag",
+        "key": [
+          "00000000-0000-0000-0000-000000000020"
+        ]
+      },
+      "command": "tag.edit",
+      "patches": {
+        "name": {
+          "base": {
+            "kind": "predecessor",
+            "operation_id": "00000000-0000-0000-0000-000000000002",
+            "sequence": 2,
+            "value": {
+              "name": "Work",
+              "normalized_name": "work"
+            }
+          },
+          "value": {
+            "name": "İ Work",
+            "normalized_name": "i work"
+          }
+        }
+      },
+      "dependencies": [],
+      "provenance": {
+        "occurred_at": 37
+      }
+    },
+    {
+      "protocol_version": 2,
+      "operation_id": "00000000-0000-0000-0000-000000000004",
+      "device_epoch": "00000000-0000-0000-0000-000000000010",
+      "sequence": 4,
+      "entity": {
+        "kind": "tag",
+        "key": [
+          "00000000-0000-0000-0000-000000000020"
+        ]
+      },
+      "command": "tag.delete",
+      "patches": {
+        "existence": {
+          "base": {
+            "kind": "predecessor",
+            "operation_id": "00000000-0000-0000-0000-000000000002",
+            "sequence": 2,
+            "value": true
+          },
+          "value": false
+        }
+      },
+      "dependencies": [],
+      "provenance": {
+        "occurred_at": 36
+      }
+    }
+  ]
+}

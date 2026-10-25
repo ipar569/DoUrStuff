@@ -2,7 +2,7 @@
 
 Initialized with CLI **2.120.0**, pinned in `../.supabase-version`. Configuration
 is for the synthetic `dourstuff-local` project only. No remote project is linked.
-Fourteen migrations now provide private account/device/log storage, RLS, restricted
+Fifteen migrations now provide private account/device/log storage, RLS, restricted
 device-registration/pull RPCs, atomic core task creation and title/priority/status/
 description/estimate/due edits, plus task deletion, exact-deletion restore and
 atomic milestone creation with immutable same-account parents/dependencies,
@@ -10,6 +10,8 @@ independent milestone title/completion edits, durable child deletion and atomic
 task milestone ordering.
 Migration 014 additionally freezes tag-name normalization and exact name-group
 validation, without enabling tag commands.
+Migration 015 adds atomic tag creation/renaming/deletion with distinct-UUID
+collision recovery and durable deletion identities. Memberships remain gated.
 Apply stores canonical fields, immutable receipts, recovery candidates and device
 watermarks together, with durable status history. Creation requires the four
 core groups documented in the [v2 contract](../docs/architecture/account-protocol-v2.md),
@@ -63,6 +65,8 @@ python tool/test_backend_milestone_commands.py --supabase .tools/supabase/supaba
 .tools/flutter/bin/dart.bat run tool/check_backend_wire.dart .tools/backend-milestone-commands-wire.json
 python tool/test_backend_milestone_order.py --supabase .tools/supabase/supabase.exe --wire-output .tools/backend-milestone-order-wire.json
 .tools/flutter/bin/dart.bat run tool/check_backend_wire.dart .tools/backend-milestone-order-wire.json
+python tool/test_backend_tag_commands.py --supabase .tools/supabase/supabase.exe --wire-output .tools/backend-tag-commands-wire.json
+.tools/flutter/bin/dart.bat run tool/check_backend_wire.dart .tools/backend-tag-commands-wire.json
 ```
 
 `local_backend.py` without `--start` checks the existing stack. It verifies the
@@ -107,8 +111,8 @@ rollback-only transaction. After application, omit it. The harness verifies
 every PostgreSQL-representable Unicode scalar, casing context, whitespace/UTF-16
 boundaries and restricted invoker grants. Flutter tests independently compare
 the pinned native policy across all scalars and preserve malformed guest strings.
-Server tag creation/edit/delete and memberships still require atomic conflict,
-dependency, identity, RLS and transaction tests before enablement.
+Migration 015 uses this name validator for tag creation/edit/deletion. Memberships
+still require atomic dependency, identity, RLS and transaction tests before enablement.
 
 ## Migration and test scope
 
@@ -192,3 +196,11 @@ and projection alongside real SQL/HTTP. Helpers stay private and ownership scope
 Order changes do not rewrite child records; child changes do not rewrite accepted
 order. Capability checks now use still-unsupported saved views. Run all ten suites
 sequentially; the foundation migration rehearsal must not overlap another suite.
+
+The tag suite adds real creation/rename/deletion, normalized-name collisions in
+both orders and simultaneous requests, whole-name conflicts, held-before-equivalence
+successors with no canonical row, original payloads through receipt/log expiry,
+Unicode keys, cross-owner denial and batch rollback. `--candidate` is only for
+the rollback-only pre-application smoke; omit it after migration 015 is applied.
+Run all eleven command/foundation suites sequentially plus normalization parity.
+No task/tag membership RPC or client account UI is enabled yet.

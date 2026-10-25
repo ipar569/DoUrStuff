@@ -6,6 +6,7 @@ import 'package:dourstuff/domain/account_sync_codec.dart';
 import 'package:dourstuff/domain/account_sync_rpc.dart';
 import 'package:dourstuff/domain/account_task_validation.dart';
 import 'package:dourstuff/domain/task.dart';
+import 'package:dourstuff/domain/tag_normalization.dart';
 
 /// Verifies sanitized synthetic responses captured by the backend harnesses.
 void main(List<String> args) {
@@ -29,6 +30,12 @@ void main(List<String> args) {
           final patches = request.operations[i].patches;
           if (receipt is! OperationReceipt) continue;
           final validity = <String, bool>{};
+          if (request.operations[i].entity.kind.name == 'tag' &&
+              patches.containsKey('name')) {
+            validity['invalid_tag_name'] = validAccountTagName(
+              patches['name']!.value,
+            );
+          }
           if (patches.containsKey('milestone_order') &&
               request.operations[i].command == 'task.milestone_order' &&
               patches.length == 1) {
@@ -93,6 +100,7 @@ void main(List<String> args) {
                     'invalid_due',
                     'invalid_completion',
                     'invalid_milestone_order',
+                    'invalid_tag_name',
                   }.contains(receipt.rejectionCode) &&
                   validity[receipt.rejectionCode] != false)) {
             throw const FormatException('Server and Dart task rules differ.');

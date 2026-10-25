@@ -1,7 +1,7 @@
 # Phase 3 verification
 
 Status: milestone **3.0 local readiness passed; 3.1 in progress**, reviewed
-24 October 2026. The user accepted
+25 October 2026. The user accepted
 the Android emulator offline/restart evidence on 12 October for local Phase 3
 entry. Immutable v2 operations, six strict RPC codecs and causal/policy fixtures exist;
 accounts and sync are not enabled. See the latest handoff below.
@@ -17,10 +17,11 @@ emulator. Supabase CLI 2.120.0 is now installed and checksum/version/help verifi
 through approved escalation after the permission change. Local configuration is
 initialized. The user subsequently updated Docker to Desktop 4.95.0 / Engine
 29.8.2. Local services, image pins and explicit loopback bindings passed checks.
-Fourteen migrations and real synthetic-account registration/pull/apply/ownership
+Fifteen migrations and real synthetic-account registration/pull/apply/ownership
 tests ran on PostgreSQL 17.11. Apply now covers core task creation and
 title/priority/status/description/estimate/due edits, task deletion, exact-deletion restore
-and milestone creation/edit/deletion/order with parent dependencies, with private durable status history. Full draft
+and milestone creation/edit/deletion/order with parent dependencies, plus tag creation/edit/deletion
+with frozen-name collision recovery and private durable status history. Full draft
 fields, history download, native OAuth and client sync remain unfinished.
 
 | Gate | Evidence/status |
@@ -1852,3 +1853,95 @@ clients and installed Android/Windows test devices are still external/native
 prerequisites. No hosted project is linked. Retain accepted Phase 2 emulator entry
 and outstanding physical/native, latency and recovery gates. No production
 deployment/migration, release or store publication occurred.
+
+## Server tag commands — 25 October 2026
+
+PR #11 merged as `69e957214619a5b7e8bb7609399c6c735e9c6682`, verified on remote
+main and fast-forwarded clean local main. Renewed independent review covered
+`e5fd2e85149411eb8d756821f1e62458b40aa735` against `eb128f0` with no actionable
+findings. Quality run `40079917945` and Native builds run `40079917934` passed
+for that exact head. No blocking reviews/unresolved threads were present; merge
+used the reviewed-head guard. Review and merge evidence are in the
+[PR timeline](https://github.com/ipar569/DoUrStuff/pull/11). The connector lacks
+repository write permission, so the authenticated CLI recorded evidence/merged.
+
+This increment starts from that merge on `codex/phase-3-tag-commands`. Forward
+migration 015, `20261025021609_tag_commands.sql`, enables server tag create,
+rename and delete. Active normalized-name collisions retain original candidates
+under their own UUIDs; neither canonical aliases nor membership redirects are
+created. Name is atomic display/key data. Exact predecessors bind before
+availability/equivalence, so successors of a conflicted create remain held even
+without a canonical row. Unrelated sequences continue. Delete dominates visibility,
+retaining content and immutable creation/deletion identities beyond receipt/log
+expiry. A replacement UUID may reuse the name without reviving the old tag.
+Memberships, tag restoration/purging and native account projection remain absent.
+
+Private forced-RLS tag tables use owner-qualified keys; an active-name unique
+index uses C collation and narrow column grants preserve identity. The existing
+account lock covers canonical state, recovery, ledger, receipts, log and watermark.
+No SQLite schema, provider dependency, new public RPC or client table grant changed.
+All fourteen earlier applied migration files remain unchanged.
+
+At resume Docker was stopped; `docker desktop start --detach` followed by
+`python tool/local_backend.py --start` restored nine pinned services, eight
+healthchecks and loopback-only bindings. Containers, volumes and stopped backups
+were preserved. CLI 2.120.0/help and the official Supabase changelog were rechecked;
+no upgrade/hosted resource was introduced. The earlier function-security and
+PostgreSQL string-function review remains applicable; the partial-index/RLS
+schema guidance was also read.
+
+Before applying, `python tool/test_backend_foundation.py --supabase
+.tools/supabase/supabase.exe --wire-output .tools/backend-foundation-tag-candidate-wire.json`
+passed all eight groups, including empty application schema and retained-data
+forward upgrades through fifteen migrations. `python tool/test_backend_tag_commands.py
+--supabase .tools/supabase/supabase.exe --candidate` passed a real-owner
+create/collision/held/delete batch and verified exact retained task/history/
+receipt/watermark rollback. Local pre-apply schema/data dumps are
+`.tools/backend-before-tag-commands-schema.sql` and
+`.tools/backend-before-tag-commands-data.sql`; restore rehearsal is unverified.
+`migration up --local --network-id dourstuff-local` applied only 015;
+`migration list --local` matched all fifteen IDs and local advisors found no issues.
+
+Implementation working-tree checks, before this documentation update:
+
+- `python tool/test_backend_tag_commands.py --supabase .tools/supabase/supabase.exe --wire-output .tools/backend-tag-commands-wire.json`:
+  initial 11 groups passed; the strengthened final **13 groups passed**, including
+  shared atomic task/tag create/edit/delete, both collision orders, simultaneous
+  creates/deletes/edits, original UUIDs/bases, held/expired chains, whole-name
+  conflicts, real Unicode distinctions, malformed/semantic rejection, X/Y raw
+  REST/RLS denial and a second-log-write rollback of rename/delete.
+- `dart run tool/check_backend_wire.dart .tools/backend-tag-commands-wire.json`:
+  **121 real replies passed** including name validation parity. Shared tag wire
+  fixture round-trips through Dart with original name/existence predecessors.
+- Targeted domain/SQLite/tag normalization/wire checks passed **16 tests**.
+  Pinned `flutter pub get --enforce-lockfile`, `dart run build_runner build`,
+  generated-Dart diff, `dart format --output=none --set-exit-if-changed lib test tool`,
+  `flutter analyze` (no issues, 33.8 seconds), and full `flutter test` passed
+  (**118 tests**). No lockfile/generated database/SQLite snapshot changed.
+
+The ten prior backend suites are being rerun sequentially on migration 015,
+followed by normalization parity and HTTP helpers; retained captures/logs use
+`.tools/backend-<suite>-tag-regression-wire.json` and the corresponding `.log`.
+Record final results, independent reviewed SHA, final-head CI and guarded merge
+in this increment's PR timeline. Native compilation is not installed-device proof.
+
+### Next-session handoff — tag commands, 25 October 2026
+
+Inspect the task PR timeline and current Git/GitHub state first. Finish any
+remaining regression/review/checks and merge only its reviewed head; confirm the
+merge on remote main. If merged, create a fresh branch for task/tag membership
+semantics with exact parent dependencies, independent add/remove bases and
+visibility suppression by either parent's tombstone. Never redirect a membership
+from a collided/deleted tag UUID to a same-name replacement. Saved views/preferences
+and remaining commands follow. Preserve all fifteen applied migrations.
+
+The app remains guest-only; Phase 3.0 complete, 3.1 partial and Phase 4 gated.
+Keep the description UTF-16/64-KiB cap, JSONB NUL/raw-number/remaining representation
+and historical/future timezone parity gates open. Never truncate or silently
+upload guest content. Native account storage/projection, secure session and
+PKCE-verifier storage, exact GitHub OAuth Android/Windows redirects, a restricted
+endpoint reachable by both installed clients, and installed test devices remain
+unverified prerequisites. Snapshots/retention/resolution, adoption/lifecycle,
+automatic sync, latency and recovery acceptance remain unfinished. Retain accepted
+Phase 2 emulator entry and outstanding physical/native gates. No production
+migration/deployment, release or store publication occurred.
