@@ -76,3 +76,18 @@ publication or production deployment/migrations, including those triggered by
 push/merge automation. Never bypass review or branch protections. If a required
 check/review or merge is blocked, leave the PR open and report the exact blocker.
 Preserve unrelated working-tree changes; use an isolated worktree when necessary.
+
+## Next-session continuation prompt
+
+When ending a work session with further steps, tasks or phases remaining, include
+a ready-to-copy continuation prompt in the final response. Base it on the current
+delivery plan, backlog and latest verification handoff; identify the earliest
+unfinished increment and its concrete next actions. Include the repository path,
+branch/PR and exact reviewed head or verified merge commit when relevant, completed
+checks, pending checks or blockers, required instructions/skills and safety or
+authorization boundaries needed to resume correctly. Tell the next agent to refresh
+Git/GitHub state and preserve newer work before continuing. Keep the prompt concise
+and self-contained, and link the detailed handoff rather than repeating its history.
+Do not invent completed work or acceptance evidence, imply broader authorization,
+or stop authorized work early merely to provide a prompt. If nothing remains within
+the agreed scope, say so instead of inventing a next task.
