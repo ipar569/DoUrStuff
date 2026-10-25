@@ -30,6 +30,13 @@ void main(List<String> args) {
           final patches = request.operations[i].patches;
           if (receipt is! OperationReceipt) continue;
           final validity = <String, bool>{};
+          if (request.operations[i].command == 'task.tag') {
+            final patch = patches['membership']!;
+            final base = patch.base.toJson();
+            validity['invalid_membership'] =
+                patch.value is bool &&
+                (base['kind'] == 'absent' || base['value'] is bool);
+          }
           if (request.operations[i].entity.kind.name == 'tag' &&
               patches.containsKey('name')) {
             validity['invalid_tag_name'] = validAccountTagName(
@@ -101,6 +108,7 @@ void main(List<String> args) {
                     'invalid_completion',
                     'invalid_milestone_order',
                     'invalid_tag_name',
+                    'invalid_membership',
                   }.contains(receipt.rejectionCode) &&
                   validity[receipt.rejectionCode] != false)) {
             throw const FormatException('Server and Dart task rules differ.');

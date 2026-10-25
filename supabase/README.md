@@ -11,7 +11,9 @@ task milestone ordering.
 Migration 014 additionally freezes tag-name normalization and exact name-group
 validation, without enabling tag commands.
 Migration 015 adds atomic tag creation/renaming/deletion with distinct-UUID
-collision recovery and durable deletion identities. Memberships remain gated.
+collision recovery and durable deletion identities. Migration 016 adds versioned
+task/tag memberships with exact parent dependencies, independent removal records
+and visibility suppression by either parent. No UUID redirection is performed.
 Apply stores canonical fields, immutable receipts, recovery candidates and device
 watermarks together, with durable status history. Creation requires the four
 core groups documented in the [v2 contract](../docs/architecture/account-protocol-v2.md),
@@ -67,6 +69,8 @@ python tool/test_backend_milestone_order.py --supabase .tools/supabase/supabase.
 .tools/flutter/bin/dart.bat run tool/check_backend_wire.dart .tools/backend-milestone-order-wire.json
 python tool/test_backend_tag_commands.py --supabase .tools/supabase/supabase.exe --wire-output .tools/backend-tag-commands-wire.json
 .tools/flutter/bin/dart.bat run tool/check_backend_wire.dart .tools/backend-tag-commands-wire.json
+python tool/test_backend_memberships.py --supabase .tools/supabase/supabase.exe --wire-output .tools/backend-memberships-wire.json
+.tools/flutter/bin/dart.bat run tool/check_backend_wire.dart .tools/backend-memberships-wire.json
 ```
 
 `local_backend.py` without `--start` checks the existing stack. It verifies the
@@ -203,4 +207,9 @@ successors with no canonical row, original payloads through receipt/log expiry,
 Unicode keys, cross-owner denial and batch rollback. `--candidate` is only for
 the rollback-only pre-application smoke; omit it after migration 015 is applied.
 Run all eleven command/foundation suites sequentially plus normalization parity.
-No task/tag membership RPC or client account UI is enabled yet.
+The subsequent membership suite extends the existing apply RPC; no client
+account UI is enabled. Run all twelve suites sequentially. It checks both
+add/remove orders, exact task/tag dependencies, held/missing/expired evidence,
+independent pairs, both parent-delete orders, restore, UUID replacement isolation,
+malformed/semantic rejection, RLS and second-log-write rollback. `--candidate`
+is only the rollback-only smoke before applying 016; omit it after application.

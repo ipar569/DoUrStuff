@@ -102,3 +102,12 @@ preference intentionally, use flutter config --jdk-dir=ABSOLUTE_JDK_PATH. For a
 project-only build, run android/gradlew with session JAVA_HOME set to JDK 21.
 No local SDK/JDK paths belong in Git. Official JDK downloads and hashes are at
 [Microsoft](https://learn.microsoft.com/en-us/java/openjdk/download).
+
+25 October: forward migration 016 and the synthetic membership harness extend
+the existing local apply RPC with exact task/tag pairs and independent add/remove
+bases. Use the twelve sequential backend suites in `supabase/README.md`. Existing
+stack startup remains `python tool/local_backend.py --start`; do not recreate
+containers, reset databases or rewrite applied migrations. Native account writes
+are disabled. Secure sessions/PKCE, exact Android/Windows OAuth redirects and a
+restricted development endpoint reachable by both installed clients remain
+unverified prerequisites. Local HTTP and build results do not close those gates.

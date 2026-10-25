@@ -216,15 +216,15 @@ def main():
             op = edit(f, a); op[path] = value
             code, _ = backend.request('POST', '/rest/v1/rpc/sync_apply', f.token, {'request': f.request(op)})
             require(code == 400 and state(f) == before, 'Malformed tag preflight consumes nothing')
-        for mode in ('dependency', 'unsupported', 'membership'):
+        for mode in ('dependency', 'unsupported', 'view'):
             op = edit(f, a)
             if mode == 'dependency': op['dependencies'] = [{'entity': a['entity'], 'operation_id': a['operation_id'], 'sequence': 1, 'group': 'existence'}]
             elif mode == 'unsupported': op['patches']['title'] = {'base': {'kind': 'absent'}, 'value': 'Bad'}
             else:
-                op['command'] = 'task.tag'; op['entity'] = {'kind': 'membership', 'key': [f.task, a['entity']['key'][0]]}
-                op['patches'] = {'membership': {'base': {'kind': 'absent'}, 'value': True}}
+                op['command'] = 'view.create'; op['entity'] = {'kind': 'view', 'key': [f.task]}
+                op['patches'] = {'name': {'base': {'kind': 'absent'}, 'value': 'View'}}
             require(f.apply(op)['code'] == 'unsupportedProtocol' and state(f) == before, 'Unsupported capability remains preflight-gated')
-        passed_check('strict tag preflight, unsupported dependencies/groups and membership gate')
+        passed_check('strict tag preflight, unsupported dependencies/groups and saved-view gate')
 
         f = TaskFixture(backend, epoch); a = tag(f); f.apply(a)
         missing = deepcopy(a); missing['operation_id'] = uid()

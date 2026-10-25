@@ -204,6 +204,21 @@ versioned task/tag memberships with exact parent dependencies and suppression
 by either parent tombstone, then saved views/preferences and remaining command
 semantics. Native account activation and installed acceptance remain gated.
 
+25 October: PR #12 merged at `259bd6b` with 118 Flutter tests, 97 backend groups
+and 868 Dart-validated real replies; PR #13's continuation instructions merged
+at `c50b106`. Migration 016 adds exact task/tag membership identities, independent
+boolean revisions and original add/remove bases, held parent dependencies and
+visibility suppression by either tombstone. Explicit removal survives task
+restore; same-name tags never redirect relationships. Next: saved views/preferences
+and remaining command semantics, then snapshot/retention/resolution and native
+integration. See the latest verification handoff/PR timeline for final evidence.
+All account-write representation and external/native gates remain open.
+
+26 October membership verification: 121 Flutter tests, 110 real backend groups
+and 1,006 Dart-validated replies passed, plus normalization/HTTP checks. The old
+tag capability test now gates saved views because membership is implemented.
+See the current handoff and PR timeline for exact-head review, CI and merge.
+
 Real Supabase migrations/RPC/RLS tests; secure tokens and GitHub PKCE; explicit
 adoption; resumable bootstrap; field conflicts and recovery UI; cursor/receipts/
 tombstones/high-water; catch-up/realtime/retries; sign-out/switch/deletion.

@@ -1,12 +1,13 @@
 # Optional backend and controlled deployment
 
-Local configuration prepared; reviewed 24 October 2026. The local
+Local configuration prepared; reviewed 25 October 2026. The local
 `supabase/config.toml` was initialized with pinned CLI 2.120.0 and reviewed.
 There is no remote project, client authentication adapter or deployment workflow.
-A real local stack now runs with thirteen migrations and tested registration/pull
+A real local stack now runs with sixteen migrations and tested registration/pull
 RPCs plus ownership isolation. Atomic apply handles core task creation and
 title/priority/status/description/estimate/due edits, with receipts, recovery candidates, status history
 and durable sequence progress.
+Task/tag membership add/remove is also supported through the existing apply RPC.
 Other commands and the remaining replication protocol are unfinished.
 The guest app ignores sync configuration.
 
@@ -409,3 +410,27 @@ delete the Auth user in the Dashboard and verify cleanup. Phase 3 must provide
 a recent-auth, resumable server-side deletion path; admin keys stay server-side.
 Offline copies cannot be remotely erased. Explicitly remove retained local
 copies. Phase 1 has no account data to delete remotely.
+
+## Exact task/tag memberships — 25 October 2026
+
+Forward migration `20261025080938_task_tag_memberships.sql` adds private
+forced-RLS pair storage and an append-only accepted mutation ledger. Composite
+owner/task/tag references and column grants prevent UUID reassignment. The existing
+account-locked apply RPC validates both parent dependencies and each original
+membership base; no new public endpoint or API table access is granted.
+
+Run all twelve suites sequentially from `supabase/README.md`, then the frozen
+normalization and HTTP helpers. The membership harness uses synthetic accounts;
+`--candidate` is only for the rollback-only pre-apply smoke. After application,
+run without that flag. Keep existing repaired containers/volumes and all sixteen
+migrations; use only `python tool/local_backend.py --start` for stack startup.
+
+The empty/retained-data migration rehearsal and candidate add/remove/re-add smoke
+passed before application. Ignored schema/data dumps are
+`.tools/backend-before-memberships-schema.sql` and
+`.tools/backend-before-memberships-data.sql`; they are not restore evidence.
+Migration listing matched all sixteen IDs and local advisors reported no issues.
+CLI 2.120.0 remains pinned; its telemetry write required authorized cache access.
+The official changelog and function/RLS guidance were rechecked: this slice uses
+none of the affected PostgreSQL extension/custom-operator features; hosted TLS
+compatibility still needs native acceptance. No hosted resource was provisioned.
