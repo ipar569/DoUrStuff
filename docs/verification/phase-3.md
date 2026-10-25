@@ -1945,3 +1945,150 @@ unverified prerequisites. Snapshots/retention/resolution, adoption/lifecycle,
 automatic sync, latency and recovery acceptance remain unfinished. Retain accepted
 Phase 2 emulator entry and outstanding physical/native gates. No production
 migration/deployment, release or store publication occurred.
+
+## Task/tag memberships — 25 October 2026
+
+Refreshed clean `main` and `origin/main` matched `c50b106` (PR #13). PR #12's
+[review/merge timeline](https://github.com/ipar569/DoUrStuff/pull/12) confirms
+reviewed head `9c4428847c6c5ea46c26b5b07fa9ca8f8d5014f5`, no actionable independent
+review findings, passing Quality/Android/Windows CI, and guarded squash merge
+`259bd6b61d683e960ec956df4e7e693779397bcd`. Its final evidence was 118 Flutter tests,
+97 backend groups and 868 real Dart response validations. This increment starts
+from `c50b106` on `codex/phase-3-task-tag-memberships`.
+
+Migration 016, `20261025080938_task_tag_memberships.sql`, adds `task.tag` through
+the existing apply RPC. The boolean field is versioned per exact task/tag UUID
+pair. Original absent/observed/predecessor bases and optional exact parent
+existence dependencies remain immutable. Conflicted parents hold the entire
+relationship while unrelated sequences advance. Additions need both live parents;
+explicit removal can persist while a retained parent is hidden. Either tombstone
+suppresses visibility without rewriting the pair revision, and task restore never
+undoes an independent remove. Same-name replacement tags cannot redirect old pairs.
+
+Owner-qualified foreign keys, forced RLS, restricted column grants and an
+append-only accepted membership ledger preserve account/identity boundaries. The
+account lock covers canonical changes, recovery, ledger, receipts, logs and device
+watermarks atomically. No SQLite version, generated database, dependency, public
+RPC or native account UI changed. All fifteen earlier migrations remain unchanged.
+The shared Dart/SQL fixture, matching removal policy and real wire checker cover
+the new command while account writes remain disabled.
+
+The required guarded startup verified nine pinned running services, eight Docker
+healthchecks and loopback bindings, preserving volumes and stopped backups. CLI
+2.120.0/help and official Supabase changelog/function/RLS guidance were rechecked;
+no upgrade or hosted resource was introduced. The initial sandboxed Git fetch
+and CLI telemetry access failed; authorized scoped invocations succeeded. The
+web reader could not render the Markdown changelog, and sandbox DNS initially
+failed; an authorized read of the official source succeeded.
+
+Pre-apply checks:
+
+- `python tool/test_backend_foundation.py --supabase .tools/supabase/supabase.exe --wire-output .tools/backend-foundation-membership-candidate-wire.json`:
+  all eight groups passed, including rollback-only empty application schema and
+  retained-data forward upgrades through sixteen migrations.
+- `python tool/test_backend_memberships.py --supabase .tools/supabase/supabase.exe --candidate`:
+  real-owner exact dependencies/add/remove/re-add passed in a rollback-only
+  transaction, preserving exact retained parent/history/receipt/watermark state.
+- `db dump --local --schema public,sync_private` saved ignored schema and data-only
+  dumps at `.tools/backend-before-memberships-{schema,data}.sql`; restoration is
+  not rehearsed. `migration up --local --network-id dourstuff-local` applied only
+  016; `migration list --local` matched all sixteen IDs; `db advisors --local
+  --type all --level warn --fail-on error` reported no issues.
+
+Implementation working-tree checks before the final documentation update:
+
+- Pinned `.tools/flutter/bin` `flutter pub get --enforce-lockfile`, `dart run
+  build_runner build`, generated-Dart diff, `dart format --output=none
+  --set-exit-if-changed lib test tool`, `flutter analyze` (no issues, 40.2 seconds)
+  and full `flutter test` passed: **121 tests**. Targeted domain/SQLite/schema/
+  membership checks passed 16 tests; the additional matching parent-removal
+  policy/fixture run passed 11 tests. No lockfile or schema snapshot changed.
+- `python tool/test_backend_memberships.py --supabase .tools/supabase/supabase.exe
+  --wire-output .tools/backend-memberships-wire.json`: initial **12 groups passed**.
+  `dart run tool/check_backend_wire.dart .tools/backend-memberships-wire.json`
+  validated **128 real replies**. An earlier checker invocation ran before the
+  capture was finished and failed with a missing file; the completed capture
+  subsequently passed. No incomplete capture is counted as passing evidence.
+- Coverage includes opposite add/remove arrival orders and simultaneous races,
+  independent pairs, exact parents, collided-tag held children, expired evidence,
+  dependency-order validation, both tombstone/add orders, remove/restore,
+  same-name replacement isolation, semantic/malformed rejections, X/Y raw
+  REST/RLS denial and a second-log-write batch rollback. A strengthened thirteenth
+  group additionally checks exact same-pair predecessor identity/value/expiry.
+
+At the 25 October interruption, the eleven prior suites were being rerun
+sequentially on migration 016. The completed results are recorded below. Captures
+and logs use `.tools/backend-<suite>-membership-regression-wire.json` and matching
+`.log` paths. Record final results, exact independent reviewed SHA, CI and guarded
+merge in this task's PR timeline. Native CI builds remain required and are not
+installed-device acceptance.
+
+### Next-session handoff — memberships, 25 October 2026
+
+Refresh Git/GitHub and the membership PR timeline before resuming; preserve newer
+work. Finish any outstanding regression, independent review and final-head
+Quality/Android/Windows CI. Merge only the reviewed head with the expected-head
+guard, then verify the actual merge on remote main. Preserve all sixteen applied
+migrations and repaired local volumes/backups. Once this increment is merged,
+start a fresh branch for saved views/preferences: atomic query specification,
+independent name edits, deletion and safe default-view reference/clearing with
+exact bases, dependencies and account isolation. Remaining commands and
+snapshot/retention/resolution precede native account integration.
+
+The app stays guest-only; 3.0 complete, 3.1 partial, Phase 4 gated. Keep the
+100,000-UTF-16-unit description/64-KiB operation cap, JSONB NUL/raw-number and
+remaining representation parity, and historical/future timezone gates open.
+Never truncate or silently upload guest data. Native account storage/projection,
+secure session/PKCE storage, exact Android/Windows GitHub OAuth redirects,
+restricted endpoint reachable by both installed clients, and installed devices
+remain prerequisites. Automatic sync, snapshots/recovery/resolution, adoption/
+lifecycle, latency and recovery acceptance are unfinished. Retain accepted
+Phase 2 emulator entry and all outstanding physical/native gates. No production
+deployment/migration, release or store publication was authorized or performed.
+
+### Final local membership verification — 26 October 2026
+
+The 25 October commit/push command did not execute: automatic approval review
+hit a usage limit. On 26 October the same authorized workflow resumed; fetch
+succeeded and `origin/main` remained `c50b106`, with only this task's staged
+changes present and no membership PR yet. Docker was stopped. Starting the
+installed Desktop runtime and then `python tool/local_backend.py --start`
+verified the preserved pinned services and loopback bindings again.
+
+All ten earlier suites completed on migration 016 before the interruption:
+foundation 8, apply 11, task_create 11, task_fields 5, task_due 7, task_delete 6,
+task_restore 8, milestone_create 9, milestone_commands 9 and milestone_order 10
+(**84 groups**). Due checks included 785 cases across 342 zones. Their retained
+captures passed `dart run tool/check_backend_wire.dart` individually:
+10/32/136/42/75/35/57/113/91/156 replies (**747 real responses**).
+
+The tag regression stopped at an obsolete assertion that `task.tag` was still
+unsupported (`KeyError: 'code'`). The capability check now uses the still-disabled
+`view.create` command. Its complete rerun passed all **13 groups**, with **121**
+real Dart-validated replies. No applied migration changed to fix that test.
+`python tool/test_backend_memberships.py --supabase .tools/supabase/supabase.exe
+--wire-output .tools/backend-memberships-final-wire.json` then passed the
+strengthened **13 groups**; Dart validated all **138** real replies. Final totals:
+**110 backend integration groups and 1,006 real response validations**.
+
+`python tool/test_backend_tag_normalization.py --fixtures
+.tools/tag-normalization/tag-normalization-parity.json` passed 1,399 normalization
+cases covering all 1,112,063 PostgreSQL-representable scalars plus context,
+23 name cases, 26 whitespace boundaries and private helper grants. An earlier
+invocation incorrectly supplied `--supabase`; argument parsing rejected it and
+the corrected command above passed. `python tool/test_backend_http.py` passed
+all three tests. Synthetic sync accounts, fixture Auth users and injected sync
+triggers all returned to zero. The 121-test Flutter quality result above remains
+applicable: subsequent implementation changes only updated Python regression
+coverage and documentation. All fifteen prior migrations and 53 relative Markdown
+links were verified; working/staged `git diff --check` passed.
+
+Retained final logs: `.tools/backend-tag_commands-membership-regression-final.log`,
+`.tools/backend-memberships-final.log` and
+`.tools/backend-membership-normalization-final.log`. The original failed tag log
+remains retained. These results precede the final documentation-only update.
+Record exact-head independent review, final Quality/Android/Windows CI and actual
+guarded merge in the task PR timeline, then refresh that timeline on resume.
+The next implementation increment after merge remains saved views/preferences
+as described in the handoff above; all activation/representation/external/native
+gates and production/release boundaries remain unchanged.

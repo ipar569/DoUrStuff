@@ -79,7 +79,9 @@ ParentDisposition checkParentDependency({
       result.accepted?.value != true ||
       result.recoveryId != null ||
       parentOwner == null ||
-      !parentVisible) {
+      (!parentVisible &&
+          !(child.command == 'task.tag' &&
+              child.patches['membership']?.value == false))) {
     return ParentDisposition.recovery;
   }
   return ParentDisposition.ready;

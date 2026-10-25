@@ -75,7 +75,7 @@ checked **before** equivalence, so matching the current value cannot bypass it.
 | Task | title, description, priority, estimate_minutes independently; due contains the entire none/date/timed value including zone/wall time; status_group contains status/completed_at; existence protects deletion/restore; milestone_order contains the ordered IDs |
 | Tag | name contains display/normalized name together; existence protects deletion; derive normalization using matching pinned client/server rules, not ambient SQL locale |
 | Milestone | title and completion independently; immutable parent relationship; existence controls deletion; task order remains separate |
-| Membership | membership add/remove for the exact task/tag pair; both parents must exist and be visible |
+| Membership | boolean membership for the exact task/tag pair; additions require live parents; explicit removals may persist while a retained parent is hidden |
 | View | name independently; query contains a complete validated versioned TaskQuery; existence controls deletion |
 | Preference | one value per key; default_view references an active view or null |
 
@@ -85,8 +85,9 @@ accepted `existence` result for child dependencies. Parent-existence dependencie
 carry the parent identity and preceding operation UUID/sequence separately from
 field bases. `checkParentDependency` now checks same-owner evidence, exact causal
 identity, the actual task/tag pair or milestone parent, and accepted visible
-existence. Conflicted parents hold children; missing/expired/deleted evidence
-requires recovery. This pure check must run under real ownership/transaction
+existence (explicit membership removal permits a retained hidden parent).
+Conflicted parents hold children; missing/expired evidence and additions to
+deleted parents require recovery. This pure check must run under real ownership/transaction
 controls in 3.1; it is not an RLS test. Canonical `existence` is boolean (true
 means present); minimal deletion operation identity is stored separately.
 
@@ -310,6 +311,45 @@ A new UUID may reuse a deleted tag's name, but cannot reuse its identity. The
 future membership projection must suppress deleted tags without redirecting old
 memberships to the replacement UUID. No tag restore, purge, membership command
 or account client projection is implemented by this increment.
+
+### Task/tag memberships — 25 October
+
+Migration 016 enables the existing v2 `task.tag` command with exactly one boolean
+`membership` patch and the ordered identity `[task UUID, tag UUID]`. True adds,
+false removes; an absent pair and an accepted false record are different bases.
+An observed base contains its original boolean/revision. A predecessor binds the
+exact same pair/group, device epoch, operation UUID and earlier sequence before
+equivalence. Conflicted/held predecessors stay held, including through retained
+recovery data after receipt expiry. Unrelated pairs merge independently; opposite
+concurrent values preserve the losing immutable candidate. No device time orders
+these decisions, and no name-based alias or membership redirect exists.
+
+Up to two optional parent-existence dependencies bind the exact task and/or tag.
+Already observed parents need no invented dependency. Every supplied dependency
+is validated: another entity/kind, duplicate parent, wrong operation/sequence/device,
+missing/expired receipt, rejected result or nonexistence outcome needs recovery.
+Conflicted/held parent evidence holds the complete membership even without a
+canonical tag. Invalid evidence takes precedence over held evidence regardless
+of dependency array order. More than two dependencies or nonboolean proposed/base
+values receive a consumed semantic rejection; malformed envelopes fail preflight.
+
+Both parents must exist under the caller's account. Additions also require both
+parents live. Explicit removal may write false under a retained parent tombstone,
+so restoring a task cannot undo an independently removed relationship. The private
+`membership_visible` helper combines the membership boolean and both parent
+existence values. Parent deletion/restoration never rewrites the pair's value or
+revision; a same-name replacement tag requires a new, explicit pair command.
+Canonical hidden/removed pairs remain in pull records for future local projection.
+
+`membership_shadow` uses owner/task/tag keys and composite ownership foreign keys.
+Forced RLS and narrow column grants prohibit pair/owner mutation. The append-only
+`membership_changes` ledger retains exact accepted add/remove envelopes and IDs
+beyond receipt/log expiry; equivalent values create no extra mutation event.
+The existing account lock covers pair changes, ledger, recovery, receipts, log
+and device watermark atomically. The shared Dart/SQL fixture pins same-UUID
+kind separation, parent dependencies and add/remove/re-add bases without changing
+protocol version. There is no new public RPC, SQLite schema or account UI. Ledger
+retention/storage measurement, snapshots and native projection remain unfinished.
 
 ### Milestone creation and parent dependencies — 23 October
 

@@ -60,6 +60,10 @@ account path; collision retention and memberships remain planned.
 retain original UUID candidates, causal successors remain held, and deletion
 retains durable identity. Memberships and the native paths below remain planned.
 
+The next 25 October server increment adds exact task/tag memberships with
+independent add/remove bases, parent dependencies and tombstone suppression.
+No native account worker/projection is enabled by that increment.
+
 The expanded client represents either Android or Windows. Each device has its
 own SQLite files, outbox, credentials and worker. Both devices synchronize
 through the account backend; they do not write directly to one another.

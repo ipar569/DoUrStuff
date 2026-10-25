@@ -197,3 +197,19 @@ membership records. There is no tag restore/purge or native account recovery UI.
 Pre-apply dumps are `.tools/backend-before-tag-commands-schema.sql` and
 `.tools/backend-before-tag-commands-data.sql`, not restore evidence. Preserve
 all fifteen applied migrations; use forward fixes.
+
+25 October membership increment: retain accepted false membership records,
+original pair keys, add/remove envelopes, receipts and unresolved candidates.
+Either parent tombstone hides a membership without changing its accepted base;
+a task restore preserves an independent removal. Never redirect an old tag UUID
+to a same-name replacement. Missing accepted predecessor/dependency receipts
+require recovery, not reconstruction from current rows or the mutation ledger.
+Held same-field chains retain their original candidates through receipt expiry.
+
+The local pre-apply schema/data dumps are
+`.tools/backend-before-memberships-schema.sql` and
+`.tools/backend-before-memberships-data.sql`. Candidate rollback preserves exact
+retained parent/history/receipt/watermark state; an injected second-log-write
+failure checks whole membership batch rollback. These are not physical crash,
+backup restore or installed-client evidence. All sixteen migrations are retained;
+ledger retention/storage measurement and snapshot recovery remain unfinished.
