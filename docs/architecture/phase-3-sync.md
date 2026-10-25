@@ -56,6 +56,10 @@ The next 24 October increment pins native Dart/PostgreSQL tag-name normalization
 and exact atomic name validation. It enables no server tag commands or client
 account path; collision retention and memberships remain planned.
 
+25 October adds server tag creation/edit/deletion. Normalized-name collisions
+retain original UUID candidates, causal successors remain held, and deletion
+retains durable identity. Memberships and the native paths below remain planned.
+
 The expanded client represents either Android or Windows. Each device has its
 own SQLite files, outbox, credentials and worker. Both devices synchronize
 through the account backend; they do not write directly to one another.

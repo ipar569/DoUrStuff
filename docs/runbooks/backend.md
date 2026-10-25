@@ -117,6 +117,24 @@ changelog/function-security and PostgreSQL string-function guidance were checked
 this increment uses none of the ltree/legacy-encryption/btree_gist features in
 the 17.11 notice. Hosted TLS/native acceptance remains open.
 
+## Server tag commands — 25 October 2026
+
+Migration 015 adds private forced-RLS `tag_shadow`/`tag_deletions` and extends the
+existing account-locked apply RPC. Name keys use migration 014's frozen policy
+and an owner-qualified partial unique index with C collation. Column grants
+protect UUID/owner/creation payload; the deletion ledger is append-only for the
+RPC role. No client table grant or new public endpoint is added. Run the new
+tag suite and all prior suites sequentially, as listed in local setup.
+
+Pre-apply retained-data/all-migration rehearsal and real-owner collision/held/
+deletion smoke passed in rollback-only transactions. Local dumps are
+`.tools/backend-before-tag-commands-schema.sql` and
+`.tools/backend-before-tag-commands-data.sql`; restore rehearsal is unverified.
+All fifteen migration IDs match and advisors reported no issues. Keep all
+fourteen earlier applied migrations unchanged. Docker was stopped at resume;
+Desktop startup followed by the guarded start preserved containers/volumes and
+stopped backups. No provider upgrade or hosted resource was introduced.
+
 ## Running local foundation — 16 October 2026
 
 The Docker update is verified: Desktop 4.95.0, Engine 29.8.2/API 1.56, Linux amd64.

@@ -196,6 +196,14 @@ collision candidates, then membership dependencies/add/remove without UUID
 aliasing; saved views/preferences and remaining command semantics follow.
 Representation and installed-device gates remain open.
 
+25 October: PR #11 merged at `69e9572` after exact-head independent review and
+passing Quality/Android/Windows CI. Migration 015 adds tag create/rename/delete,
+whole-name collision candidates without UUID aliasing, held causal successors,
+active-name uniqueness, and retained deletion/creation identities. Next:
+versioned task/tag memberships with exact parent dependencies and suppression
+by either parent tombstone, then saved views/preferences and remaining command
+semantics. Native account activation and installed acceptance remain gated.
+
 Real Supabase migrations/RPC/RLS tests; secure tokens and GitHub PKCE; explicit
 adoption; resumable bootstrap; field conflicts and recovery UI; cursor/receipts/
 tombstones/high-water; catch-up/realtime/retries; sign-out/switch/deletion.
