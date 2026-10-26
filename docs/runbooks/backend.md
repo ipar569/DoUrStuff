@@ -370,6 +370,29 @@ The accepted architecture sections 8–9 define server tables, cursor locking,
 field revisions, receipts, bootstrap snapshots, retention and account isolation.
 Supabase supplies primitives, not this replication implementation.
 
+### Saved views/default references — 26 October 2026
+
+Migrations `20261026071200_saved_views_preferences.sql` and
+`20261026072100_saved_view_empty_name.sql` extend the existing apply RPC with
+private forced-RLS view/preference storage and append-only deletion/preference
+ledgers. No public endpoint or API table grant was added. Original bases and
+exact dependencies remain immutable; view deletion and a matching default clear
+commit in one revision, preserving other selected views. The second migration
+fixes an empty-name edge case found by integration tests; preserve both files.
+
+Use all thirteen sequential suites in `supabase/README.md`, including
+`tool/test_backend_saved_views.py`, then normalization parity and HTTP helpers.
+Never run the foundation schema rehearsal concurrently with another backend
+suite. `--candidate` for saved views was the rollback-only pre-017 smoke and must
+not run on an applied schema. Only `python tool/local_backend.py --start` starts
+the preserved local stack. No hosted resources or production changes are involved.
+
+The pinned CLI remains 2.120.0. The official changelog and function-security
+guidance were rechecked. The PostgreSQL extension/custom-operator notice does
+not affect these new plain tables/functions; hosted TLS compatibility remains a
+native acceptance prerequisite. Account activation and all representation gates
+remain open. See the latest [verification handoff](../verification/phase-3.md).
+
 ## Configuration when phase 3 ships
 
 Create an optional Free project, configure GitHub OAuth/PKCE and strict native

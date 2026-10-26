@@ -129,7 +129,7 @@ def main():
         gap = f.apply(f.op(5, "gap"))
         require(gap["code"] == "sequenceGap" and gap["expected_sequence"] == 4, "Gap reports durable expected sequence")
         pending, unsupported = f.op(4, "valid"), f.op(5, [], group="milestone_order")
-        unsupported["command"] = "view.create"
+        unsupported["command"] = "view.restore"
         unsupported["entity"]["kind"] = "view"
         unsupported["patches"] = {"name": {"base": {"kind": "absent"}, "value": "View"}}
         require(f.apply(pending, unsupported)["code"] == "unsupportedProtocol", "Whole-batch capability preflight")

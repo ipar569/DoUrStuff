@@ -40,8 +40,11 @@ appends independent additions by ID and filters deletions without rewriting the
 accepted list. Server tag creation, renaming and deletion now retain distinct
 UUID collision candidates and immutable deletion identities. Task/tag memberships
 now retain exact parent UUIDs, independent add/remove revisions and causal bases;
-either parent tombstone suppresses visibility. Saved views/preferences, content
-purging, history download and app integration remain pending.
+either parent tombstone suppresses visibility. Saved-view names and complete query
+specifications now merge independently; deletion clears only the still-selected
+default at the same revision. Default selections have exact bases and optional
+view-create dependencies. Content purging, history download, snapshots, explicit
+resolution and app integration remain pending.
 Tag-name normalization is now frozen to native Dart 3.13.5 and verified against
 PostgreSQL across every representable Unicode scalar. Native account writes
 remain disabled.

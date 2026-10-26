@@ -48,6 +48,9 @@ ParentDisposition checkParentDependency({
     SyncEntityKind.milestone =>
       parent.kind == SyncEntityKind.task &&
           child.patches['parent']?.value == parent.key.single,
+    SyncEntityKind.preference =>
+      parent.kind == SyncEntityKind.view &&
+          child.patches['value']?.value == parent.key.single,
     _ => false,
   };
   if (!isParent) return ParentDisposition.recovery;

@@ -1,0 +1,200 @@
+{
+  "protocol_version": 2,
+  "server_epoch": "30000000-0000-0000-0000-000000000001",
+  "after_revision": 0,
+  "operations": [
+    {
+      "protocol_version": 2,
+      "operation_id": "00000000-0000-0000-0000-000000000001",
+      "device_epoch": "10000000-0000-0000-0000-000000000001",
+      "sequence": 1,
+      "entity": {
+        "kind": "view",
+        "key": [
+          "20000000-0000-0000-0000-000000000001"
+        ]
+      },
+      "command": "view.create",
+      "patches": {
+        "name": {
+          "base": {
+            "kind": "absent"
+          },
+          "value": "Work"
+        },
+        "query": {
+          "base": {
+            "kind": "absent"
+          },
+          "value": {
+            "version": 1,
+            "search": "",
+            "builtIn": "all",
+            "statuses": [],
+            "priorities": [],
+            "tags": [],
+            "allTags": false,
+            "from": null,
+            "to": null,
+            "undated": false,
+            "overdue": false,
+            "group": "none",
+            "sort": "due",
+            "descending": false
+          }
+        },
+        "existence": {
+          "base": {
+            "kind": "absent"
+          },
+          "value": true
+        }
+      },
+      "dependencies": [],
+      "provenance": {}
+    },
+    {
+      "protocol_version": 2,
+      "operation_id": "00000000-0000-0000-0000-000000000002",
+      "device_epoch": "10000000-0000-0000-0000-000000000001",
+      "sequence": 2,
+      "entity": {
+        "kind": "preference",
+        "key": [
+          "default_view"
+        ]
+      },
+      "command": "preference.set",
+      "patches": {
+        "value": {
+          "base": {
+            "kind": "absent"
+          },
+          "value": "20000000-0000-0000-0000-000000000001"
+        }
+      },
+      "dependencies": [
+        {
+          "entity": {
+            "kind": "view",
+            "key": [
+              "20000000-0000-0000-0000-000000000001"
+            ]
+          },
+          "operation_id": "00000000-0000-0000-0000-000000000001",
+          "sequence": 1,
+          "group": "existence"
+        }
+      ],
+      "provenance": {}
+    },
+    {
+      "protocol_version": 2,
+      "operation_id": "00000000-0000-0000-0000-000000000003",
+      "device_epoch": "10000000-0000-0000-0000-000000000001",
+      "sequence": 3,
+      "entity": {
+        "kind": "view",
+        "key": [
+          "20000000-0000-0000-0000-000000000001"
+        ]
+      },
+      "command": "view.edit",
+      "patches": {
+        "name": {
+          "base": {
+            "kind": "predecessor",
+            "operation_id": "00000000-0000-0000-0000-000000000001",
+            "sequence": 1,
+            "value": "Work"
+          },
+          "value": "Renamed"
+        }
+      },
+      "dependencies": [],
+      "provenance": {}
+    },
+    {
+      "protocol_version": 2,
+      "operation_id": "00000000-0000-0000-0000-000000000004",
+      "device_epoch": "10000000-0000-0000-0000-000000000001",
+      "sequence": 4,
+      "entity": {
+        "kind": "view",
+        "key": [
+          "20000000-0000-0000-0000-000000000001"
+        ]
+      },
+      "command": "view.edit",
+      "patches": {
+        "query": {
+          "base": {
+            "kind": "predecessor",
+            "operation_id": "00000000-0000-0000-0000-000000000001",
+            "sequence": 1,
+            "value": {
+              "version": 1,
+              "search": "",
+              "builtIn": "all",
+              "statuses": [],
+              "priorities": [],
+              "tags": [],
+              "allTags": false,
+              "from": null,
+              "to": null,
+              "undated": false,
+              "overdue": false,
+              "group": "none",
+              "sort": "due",
+              "descending": false
+            }
+          },
+          "value": {
+            "version": 1,
+            "search": "Focus",
+            "builtIn": "all",
+            "statuses": [],
+            "priorities": [],
+            "tags": [],
+            "allTags": false,
+            "from": null,
+            "to": null,
+            "undated": false,
+            "overdue": false,
+            "group": "none",
+            "sort": "due",
+            "descending": false
+          }
+        }
+      },
+      "dependencies": [],
+      "provenance": {}
+    },
+    {
+      "protocol_version": 2,
+      "operation_id": "00000000-0000-0000-0000-000000000005",
+      "device_epoch": "10000000-0000-0000-0000-000000000001",
+      "sequence": 5,
+      "entity": {
+        "kind": "view",
+        "key": [
+          "20000000-0000-0000-0000-000000000001"
+        ]
+      },
+      "command": "view.delete",
+      "patches": {
+        "existence": {
+          "base": {
+            "kind": "predecessor",
+            "operation_id": "00000000-0000-0000-0000-000000000001",
+            "sequence": 1,
+            "value": true
+          },
+          "value": false
+        }
+      },
+      "dependencies": [],
+      "provenance": {}
+    }
+  ]
+}

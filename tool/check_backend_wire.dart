@@ -5,6 +5,7 @@ import 'package:dourstuff/data/time_policy.dart';
 import 'package:dourstuff/domain/account_sync_codec.dart';
 import 'package:dourstuff/domain/account_sync_rpc.dart';
 import 'package:dourstuff/domain/account_task_validation.dart';
+import 'package:dourstuff/domain/account_view_validation.dart';
 import 'package:dourstuff/domain/task.dart';
 import 'package:dourstuff/domain/tag_normalization.dart';
 
@@ -30,6 +31,18 @@ void main(List<String> args) {
           final patches = request.operations[i].patches;
           if (receipt is! OperationReceipt) continue;
           final validity = <String, bool>{};
+          if (request.operations[i].entity.kind.name == 'view') {
+            if (patches.containsKey('name')) {
+              validity['invalid_view_name'] = validAccountViewName(
+                patches['name']!.value,
+              );
+            }
+            if (patches.containsKey('query')) {
+              validity['invalid_view_query'] = validAccountViewQuery(
+                patches['query']!.value,
+              );
+            }
+          }
           if (request.operations[i].command == 'task.tag') {
             final patch = patches['membership']!;
             final base = patch.base.toJson();
@@ -109,6 +122,8 @@ void main(List<String> args) {
                     'invalid_milestone_order',
                     'invalid_tag_name',
                     'invalid_membership',
+                    'invalid_view_name',
+                    'invalid_view_query',
                   }.contains(receipt.rejectionCode) &&
                   validity[receipt.rejectionCode] != false)) {
             throw const FormatException('Server and Dart task rules differ.');

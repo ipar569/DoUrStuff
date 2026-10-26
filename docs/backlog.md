@@ -226,6 +226,18 @@ Prove p95 <=5 seconds over 100 changes under the documented test conditions.
 Add protected migration deployment only with real tested migrations and recovery.
 This gate precedes recurrence and reminders.
 
+26 October saved-view increment: PR #14 merged at `87f8dc0` after independent
+review and passing Quality/Android/Windows CI. Forward migrations 017–018 add
+atomic canonical view queries, independent names, retained deletion identities
+and versioned default-view references/clearing. Deletion clears only the matching
+selection in the same revision; stale references are recoverable rejections and
+exact conflicted create dependencies remain held. The second migration corrects
+empty-name validation without rewriting applied history. SQLite stays v1 and
+account writes remain disabled. Next audit remaining Phase 2 command and
+representation gaps, then implement snapshot/retention/explicit-resolution
+recovery before native account integration. See the latest verification handoff
+and PR timeline for exact checks, reviewed head and merge evidence.
+
 ## Phase 4: recurrence, calendar and reminders
 
 Bounded deterministic generation/history; immutable future segments and offline
