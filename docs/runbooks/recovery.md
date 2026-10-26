@@ -21,6 +21,23 @@ epoch, fetch an authoritative snapshot and preserve original conflict bases.
 Server restoration increments server epoch. Account restore does not exist yet.
 Never clear pending operations/tombstones to make synchronization appear healthy.
 
+26 October saved-view/default-reference increment: ignored local pre-apply dumps
+are `.tools/backend-before-saved-views-schema.sql` and
+`.tools/backend-before-saved-views-data.sql`. The empty-application-schema and
+retained-data forward rehearsal, plus real-owner candidate create/select/rename/
+delete rollback, passed before applying 017. Migration 018 corrects empty-name
+validation while preserving applied 017 and all sixteen earlier migrations.
+These dumps and rollback tests do not constitute a restoration rehearsal.
+
+View deletion retains content and its immutable operation. If the current default
+still references that view, the same transaction clears it and logs both records
+under one revision. A stale selection cannot revive it; original rejected or
+conflicting candidates stay recoverable. The preference ledger retains explicit
+changes and implicit clears with their source operations. Never infer a field
+predecessor from that ledger when its receipt expired. View restore/purge,
+snapshot installation, explicit resolution and native account recovery remain
+unfinished. Preserve the existing local stack, volumes and stopped backups.
+
 Phase 3 readiness review, 10 October 2026: reserved v1 sync tables are not an
 account recovery implementation. The planned upgrade must retain original bases,
 held dependent candidates and adoption mappings through snapshot/receipt expiry;

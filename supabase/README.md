@@ -2,7 +2,7 @@
 
 Initialized with CLI **2.120.0**, pinned in `../.supabase-version`. Configuration
 is for the synthetic `dourstuff-local` project only. No remote project is linked.
-Fifteen migrations now provide private account/device/log storage, RLS, restricted
+Eighteen migrations now provide private account/device/log storage, RLS, restricted
 device-registration/pull RPCs, atomic core task creation and title/priority/status/
 description/estimate/due edits, plus task deletion, exact-deletion restore and
 atomic milestone creation with immutable same-account parents/dependencies,
@@ -14,6 +14,9 @@ Migration 015 adds atomic tag creation/renaming/deletion with distinct-UUID
 collision recovery and durable deletion identities. Migration 016 adds versioned
 task/tag memberships with exact parent dependencies, independent removal records
 and visibility suppression by either parent. No UUID redirection is performed.
+Migrations 017–018 add saved views with atomic canonical query specifications,
+independent names and deletion, plus versioned default-view references and atomic
+conditional clearing. The second is a forward fix for empty-name validation.
 Apply stores canonical fields, immutable receipts, recovery candidates and device
 watermarks together, with durable status history. Creation requires the four
 core groups documented in the [v2 contract](../docs/architecture/account-protocol-v2.md),
@@ -71,6 +74,8 @@ python tool/test_backend_tag_commands.py --supabase .tools/supabase/supabase.exe
 .tools/flutter/bin/dart.bat run tool/check_backend_wire.dart .tools/backend-tag-commands-wire.json
 python tool/test_backend_memberships.py --supabase .tools/supabase/supabase.exe --wire-output .tools/backend-memberships-wire.json
 .tools/flutter/bin/dart.bat run tool/check_backend_wire.dart .tools/backend-memberships-wire.json
+python tool/test_backend_saved_views.py --supabase .tools/supabase/supabase.exe --wire-output .tools/backend-saved-views-wire.json
+.tools/flutter/bin/dart.bat run tool/check_backend_wire.dart .tools/backend-saved-views-wire.json
 ```
 
 `local_backend.py` without `--start` checks the existing stack. It verifies the
@@ -198,7 +203,7 @@ arrival orders, parent restore, immutable retries, malformed commands, isolation
 and injected rollback. A shared golden fixture covers Dart requests, validation
 and projection alongside real SQL/HTTP. Helpers stay private and ownership scoped.
 Order changes do not rewrite child records; child changes do not rewrite accepted
-order. Capability checks now use still-unsupported saved views. Run all ten suites
+order. Capability checks now use still-unsupported view restoration. Run all thirteen suites
 sequentially; the foundation migration rehearsal must not overlap another suite.
 
 The tag suite adds real creation/rename/deletion, normalized-name collisions in
@@ -213,3 +218,14 @@ add/remove orders, exact task/tag dependencies, held/missing/expired evidence,
 independent pairs, both parent-delete orders, restore, UUID replacement isolation,
 malformed/semantic rejection, RLS and second-log-write rollback. `--candidate`
 is only the rollback-only smoke before applying 016; omit it after application.
+
+The saved-view suite tests complete canonical query validation, independent name
+edits, atomic filter conflicts, partial results, exact create/field dependencies,
+explicit clearing, both default/delete arrival orders and simultaneous races.
+Deletion and a matching default clear share a single revision/pull group;
+selecting another view first prevents that clear. A later stale selection of the
+deleted view is rejected with retained recovery. RLS, raw REST denial, immutable
+ledgers, receipt expiry and injected rollback are covered. Run all thirteen
+suites sequentially; never overlap the foundation schema rehearsal with others.
+Its `--candidate` option is only for the pre-017 rollback-only smoke; do not use it
+on the applied schema. Preserve all eighteen migrations and local volumes/backups.

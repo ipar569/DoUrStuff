@@ -1,7 +1,7 @@
 # Phase 3 verification
 
 Status: milestone **3.0 local readiness passed; 3.1 in progress**, reviewed
-25 October 2026. The user accepted
+26 October 2026. The user accepted
 the Android emulator offline/restart evidence on 12 October for local Phase 3
 entry. Immutable v2 operations, six strict RPC codecs and causal/policy fixtures exist;
 accounts and sync are not enabled. See the latest handoff below.
@@ -17,12 +17,14 @@ emulator. Supabase CLI 2.120.0 is now installed and checksum/version/help verifi
 through approved escalation after the permission change. Local configuration is
 initialized. The user subsequently updated Docker to Desktop 4.95.0 / Engine
 29.8.2. Local services, image pins and explicit loopback bindings passed checks.
-Fifteen migrations and real synthetic-account registration/pull/apply/ownership
+Eighteen migrations and real synthetic-account registration/pull/apply/ownership
 tests ran on PostgreSQL 17.11. Apply now covers core task creation and
 title/priority/status/description/estimate/due edits, task deletion, exact-deletion restore
 and milestone creation/edit/deletion/order with parent dependencies, plus tag creation/edit/deletion
-with frozen-name collision recovery and private durable status history. Full draft
-fields, history download, native OAuth and client sync remain unfinished.
+with frozen-name collision recovery, exact task/tag memberships, saved views and
+versioned default-view selection/clearing, plus private durable status history.
+Full command/representation acceptance, history download, snapshots, explicit
+resolution, native OAuth and client sync remain unfinished.
 
 | Gate | Evidence/status |
 | --- | --- |
@@ -2092,3 +2094,113 @@ guarded merge in the task PR timeline, then refresh that timeline on resume.
 The next implementation increment after merge remains saved views/preferences
 as described in the handoff above; all activation/representation/external/native
 gates and production/release boundaries remain unchanged.
+
+## Saved views and preferences — 26 October 2026
+
+Refreshed clean `main`/`origin/main` matched PR #14's verified merge
+`87f8dc02575ba8a80b4100aec0e5abca51ed30d0`. Its
+[review/merge timeline](https://github.com/ipar569/DoUrStuff/pull/14) confirms
+independent review at `bd7388667a21bce2153ac93759a43a53aabf384c`, no actionable
+findings, 121 Flutter tests, 110 backend groups, 1,006 real Dart-validated replies
+and passing Quality/Android/Windows CI. This increment starts on fresh branch
+`codex/phase-3-saved-views-preferences` from that merge.
+
+Migration 017, `20261026071200_saved_views_preferences.sql`, implements
+`view.create/edit/delete` and `preference.set` under the existing account lock.
+Queries are complete canonical version-1 TaskQuery objects with atomic conflicts;
+names merge independently. Same-name views can coexist. Deletion retains content
+and immutable creation/deletion identity. A matching default is conditionally
+cleared at the deletion revision with both records in one pull group; another
+selected view is preserved. Default choices/explicit clears retain absent,
+observed and exact predecessor bases. Optional exact view-create dependencies
+hold conflicted children while unrelated sequences advance. Missing/deleted/
+foreign references receive consumed rejections with immutable recovery candidates.
+
+Private forced-RLS tables use owner-qualified keys, narrow column grants and
+append-only deletion/preference ledgers. An implicit clear retains its source
+deletion operation, never fabricates a preference predecessor. Entity, preference,
+recovery, ledger, receipt, log and watermark writes commit together. No new public
+RPC, API table grant, provider dependency, generated SQLite source or schema version
+changed. The guest app/account-write guard is unchanged. All sixteen prior
+migrations remain byte-for-byte unchanged.
+
+`python tool/local_backend.py --start` verified nine pinned running services,
+eight healthchecks and loopback-only bindings, preserving repaired containers,
+volumes and stopped backups. CLI 2.120.0/help and the official Supabase changelog,
+function-security and relevant breaking-change notices were rechecked. No upgrade
+or hosted resource was introduced. Git fetch initially lacked sandbox access to
+`.git`; its scoped authorized retry succeeded. The web reader could not render
+the Markdown changelog/functions guide; official HTTPS reads succeeded.
+
+Pre-apply checks:
+
+- `python tool/test_backend_foundation.py --supabase .tools/supabase/supabase.exe
+  --wire-output .tools/backend-foundation-views-candidate-wire.json` passed all
+  **8 groups**, including empty application schema and retained-data forward
+  upgrades. Its first attempt caught a candidate SQL syntax error; the transaction
+  rolled back, the unapplied candidate was corrected and the complete rerun passed.
+- `python tool/test_backend_saved_views.py --supabase .tools/supabase/supabase.exe
+  --candidate` passed real-owner create/select/rename/delete in a rollback-only
+  transaction and verified exact retained task/history/receipt/watermark state.
+- `db dump --local --schema public,sync_private` saved ignored schema/data-only
+  backups at `.tools/backend-before-saved-views-{schema,data}.sql`. Restoration
+  is not rehearsed. Advisors found no issues. `migration up --local --network-id
+  dourstuff-local` applied only 017 and `migration list --local` matched 17 IDs.
+
+The first complete saved-view suite passed its first nine groups but exposed an
+empty-name validator bug: PostgreSQL splits an empty string into one empty row,
+which the UTF-16 length sum counted as one. Synthetic accounts were cleaned up.
+Forward migration 018, `20261026072100_saved_view_empty_name.sql`, explicitly
+requires nonempty text. Applied 017 was preserved. The full eight-group foundation
+rehearsal passed through 018 before its local application; advisors again reported
+no issues. No production migration or reset was performed.
+
+Implementation working-tree verification before this documentation update:
+
+- Targeted `flutter test test/domain_test.dart test/local_database_test.dart
+  test/schema_test.dart test/account_saved_views_test.dart`: **17 passed**.
+- Pinned `flutter pub get --enforce-lockfile`, `dart run build_runner build`,
+  generated-Dart diff, `dart format --output=none --set-exit-if-changed lib test
+  tool`, `flutter analyze` (**no issues**, 39.4 seconds) and full `flutter test
+  --reporter expanded`: **124 passed**. `dart run drift_dev schema dump
+  lib/data/local/database.dart drift_schemas/drift_schema_v1.json` and snapshot/
+  lockfile diff passed. An earlier formatter completed but exited on denied
+  telemetry-file access; the scoped full quality run above passed.
+- Corrected `python tool/test_backend_saved_views.py --supabase
+  .tools/supabase/supabase.exe --wire-output .tools/backend-saved-views-final-wire.json`
+  passed **13 groups**. `dart run tool/check_backend_wire.dart
+  .tools/backend-saved-views-final-wire.json` passed **150 real responses**.
+  These include atomic queries, independent edits, held chains, both delete/edit
+  and default/delete orders, simultaneous races, exact/expired dependencies,
+  validation, RLS/REST isolation and injected batch rollback including default
+  clearing. Two added groups strengthen partial-field/original-base checks and
+  competing default choices; adversarial RLS insert/update coverage is strengthened.
+
+All thirteen backend suites are being rerun sequentially on 018, followed by
+normalization parity and HTTP helpers. Captures/logs use
+`.tools/backend-<suite>-views-regression-wire.json` and matching `.log` paths.
+Earlier unsupported-capability fixtures now use still-unsupported `view.restore`.
+Record final totals, independent reviewed SHA, final-head CI and guarded merge
+in this task's PR timeline. Native compilation is not installed-device proof.
+
+### Next-session handoff — saved views/preferences, 26 October 2026
+
+Refresh Git/GitHub and this task's PR timeline first; preserve newer work. Finish
+any outstanding regression/review/checks and merge only the reviewed head with
+the expected-head guard. Verify the merge on remote main. Preserve all eighteen
+applied migrations and repaired local volumes/backups. Once merged, audit the
+remaining Phase 2 command/representation gaps, then implement the earliest
+unfinished server snapshot/retention/explicit-resolution increment under the
+delivery plan before native account integration. Use AGENTS.md and the
+sync-protocol, database-migrations, Supabase and finish-task skills.
+
+The app stays guest-only; 3.0 complete, 3.1 partial, Phase 4 gated. The
+100,000-UTF-16-unit description/64-KiB operation cap, JSONB NUL/raw-number/remaining
+representation parity and historical/future timezone gates stay open. Never
+truncate or silently upload guest content. Native account storage/projection,
+secure session/PKCE storage, exact Android/Windows OAuth redirects, a restricted
+endpoint reachable by both installed clients and installed-device tests remain
+prerequisites. Automatic sync, snapshots/recovery/resolution, adoption/lifecycle,
+latency and recovery acceptance remain unfinished. Retain accepted Phase 2
+emulator entry and all physical/native gates. Production deployment/migrations,
+release and store publication remain unauthorized and were not performed.

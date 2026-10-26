@@ -111,3 +111,10 @@ containers, reset databases or rewrite applied migrations. Native account writes
 are disabled. Secure sessions/PKCE, exact Android/Windows OAuth redirects and a
 restricted development endpoint reachable by both installed clients remain
 unverified prerequisites. Local HTTP and build results do not close those gates.
+
+26 October: migrations 017–018 add saved views/default preferences and a forward
+empty-name validation correction. All eighteen migration IDs must remain in
+history. Use the thirteen sequential suites and saved-view wire checker documented
+in `supabase/README.md`. The pinned SDK/CLI and SQLite v1 are unchanged. Account
+writes, native auth/secure storage, endpoint/device and representation gates
+remain open; no production deployment or release is authorized by local setup.

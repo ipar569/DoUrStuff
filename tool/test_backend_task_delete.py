@@ -110,10 +110,10 @@ def main():
         require(f.apply(missing)["result"]["results"][0]["rejection_code"] == "entity_missing", "Missing task rejected")
         before = f.state(), ledger(f)
         child = deletion(f, 9)
-        child["command"] = "view.create"
+        child["command"] = "view.restore"
         child["entity"]["kind"] = "view"
         child["patches"] = {"name": {"base": {"kind": "absent"}, "value": "View"}}
-        require(f.apply(child)["code"] == "unsupportedProtocol" and (f.state(), ledger(f)) == before, "Saved views remain capability gated")
+        require(f.apply(child)["code"] == "unsupportedProtocol" and (f.state(), ledger(f)) == before, "View restoration remains capability gated")
         passed_check("invalid/stale/held/missing deletion and child-command gating")
 
         f.apply(deletion(f, 9))

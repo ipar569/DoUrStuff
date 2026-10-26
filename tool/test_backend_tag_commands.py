@@ -221,10 +221,10 @@ def main():
             if mode == 'dependency': op['dependencies'] = [{'entity': a['entity'], 'operation_id': a['operation_id'], 'sequence': 1, 'group': 'existence'}]
             elif mode == 'unsupported': op['patches']['title'] = {'base': {'kind': 'absent'}, 'value': 'Bad'}
             else:
-                op['command'] = 'view.create'; op['entity'] = {'kind': 'view', 'key': [f.task]}
+                op['command'] = 'view.restore'; op['entity'] = {'kind': 'view', 'key': [f.task]}
                 op['patches'] = {'name': {'base': {'kind': 'absent'}, 'value': 'View'}}
             require(f.apply(op)['code'] == 'unsupportedProtocol' and state(f) == before, 'Unsupported capability remains preflight-gated')
-        passed_check('strict tag preflight, unsupported dependencies/groups and saved-view gate')
+        passed_check('strict tag preflight, unsupported dependencies/groups and view-restoration gate')
 
         f = TaskFixture(backend, epoch); a = tag(f); f.apply(a)
         missing = deepcopy(a); missing['operation_id'] = uid()

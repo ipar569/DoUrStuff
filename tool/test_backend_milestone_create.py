@@ -174,11 +174,11 @@ def main():
             code, _ = backend.request("POST", "/rest/v1/rpc/sync_apply", f.token, {"request": f.request(parent, op)})
             require(code == 400 and state(f) == before, "Malformed dependency rolls back whole batch: " + mutation)
         unsupported = milestone(f, dependency=parent)
-        unsupported["command"] = "view.create"
+        unsupported["command"] = "view.restore"
         unsupported["entity"] = {"kind": "view", "key": [uid()]}
         unsupported["patches"] = {"name": {"base": {"kind": "absent"}, "value": "View"}}
         unsupported["dependencies"] = []
-        require(f.apply(parent, unsupported)["code"] == "unsupportedProtocol" and state(f) == before, "Saved views stay capability-gated")
+        require(f.apply(parent, unsupported)["code"] == "unsupportedProtocol" and state(f) == before, "View restoration stays capability-gated")
         passed_check("whole-batch strict dependency preflight and unchanged unsupported-command gates")
 
         f = TaskFixture(backend, epoch)

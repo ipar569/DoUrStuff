@@ -79,6 +79,48 @@ checked **before** equivalence, so matching the current value cannot bypass it.
 | View | name independently; query contains a complete validated versioned TaskQuery; existence controls deletion |
 | Preference | one value per key; default_view references an active view or null |
 
+### Saved views and preferences — server increment, 26 October 2026
+
+Migrations 017–018 implement the existing v2 `view.create`, `view.edit`,
+`view.delete` and `preference.set` shapes. No wire version or SQLite version
+changes. Create requires exactly name/query/existence with absent bases and
+`existence: true`; all groups commit together. Edit permits name and/or query,
+with independent original bases. The full query is indivisible; competing
+filters never produce a hybrid specification. Same-name views may coexist.
+
+Name is cleaned display text with 1–80 UTF-16 units, using the frozen whitespace
+policy already shared with guest names. Query is exactly `TaskQuery.toJson()`
+version 1: all keys present, sorted unique status/priority/tag arrays, canonical
+UUID tag filters, valid civil dates and consistent undated/date filters. Search
+has the existing 2,000-UTF-16-unit limit. No defaults or normalization are applied
+to received values or original bases. Tag filters are retained UUID predicates,
+not parent mutations or aliases; missing/deleted tags need not destroy a view.
+Account projection must always query only its own task/tag data.
+
+View deletion uses the observed/predecessor true existence base and retains
+content, creation identity and an append-only deletion ledger. It cannot restore
+or recreate a UUID. Late edits remain in recovery. A default selection is the
+`value` group of preference key `default_view`, either a live same-owner view
+UUID or null. An optional existence dependency must bind that exact view's
+operation/sequence/device. Conflicted creates hold the selection; missing,
+expired or mismatched evidence requires recovery. Field predecessors bind only
+the same preference entity/group. No ledger is used to guess an expired receipt.
+
+Under the account lock, deletion clears the default only when it still equals
+the deleted UUID. The clear receives the deletion's revision and a second record
+in the same pull group. Its ledger retains the source deletion operation; the
+deletion cannot masquerade as a preference-field predecessor. A subsequent
+selection needs the newly observed null revision. A stale competing selection
+remains a conflict; a stale reference to a deleted/missing/foreign view is a
+consumed rejection with the immutable candidate retained. Selecting another view
+before deletion leaves that preference intact. Explicit clears are normal
+versioned commands; absence and an accepted null remain distinct.
+
+Private forced-RLS tables, owner-qualified keys and narrow column grants retain
+identity boundaries. Entity/default/ledger/recovery/receipt/log/watermark writes
+are atomic. Account writes, native projection, view restoration, physical content
+purging, snapshots and explicit resolution remain disabled or unfinished.
+
 Create requires absent identity plus all mandatory valid groups atomically; it
 must not populate pieces of an existing different entity. Creation yields an
 accepted `existence` result for child dependencies. Parent-existence dependencies
