@@ -1,5 +1,12 @@
 # Optional backend and controlled deployment
 
+27 October update: local migration 019 supplies consistent snapshot begin/page
+RPCs in addition to the seventeen current v2 command handlers. All eighteen prior
+migrations are preserved. This remains a local, guest-gated implementation;
+history transport, retention scheduling, explicit resolution and native recovery
+are unfinished. Use the [current audit](../architecture/account-recovery-audit.md)
+and latest verification handoff rather than the dated summaries below.
+
 Local configuration prepared; reviewed 25 October 2026. The local
 `supabase/config.toml` was initialized with pinned CLI 2.120.0 and reviewed.
 There is no remote project, client authentication adapter or deployment workflow.

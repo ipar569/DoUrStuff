@@ -229,3 +229,27 @@ ledgers, receipt expiry and injected rollback are covered. Run all thirteen
 suites sequentially; never overlap the foundation schema rehearsal with others.
 Its `--candidate` option is only for the pre-017 rollback-only smoke; do not use it
 on the applied schema. Preserve all eighteen migrations and local volumes/backups.
+
+27 October: migration 019 adds `sync_snapshot_begin`/`sync_snapshot_page`.
+Run `python tool/test_backend_snapshots.py --supabase .tools/supabase/supabase.exe
+--wire-output .tools/backend-snapshots-wire.json`, then
+`dart run tool/check_backend_wire.dart .tools/backend-snapshots-wire.json`.
+Use the pinned CLI path appropriate to the machine. All fourteen backend suites
+run sequentially; do not overlap the foundation schema rehearsal with any suite.
+The snapshot `--candidate` mode is only for the pre-019 rollback-only rehearsal.
+Its pages preserve current shadows/deletion IDs and original unresolved recovery;
+they do not yet transport historical status events. See the
+[recovery audit](../docs/architecture/account-recovery-audit.md).
+
+The Windows restart failure was a host reservation: IPv4 TCP exclusion
+54227–54326 included 54321–54324, producing WSAEACCES despite no listener.
+A user-approved administrator stop of WinNAT, followed by **only**
+`python tool/local_backend.py --start` and restoration of WinNAT in `finally`,
+recovered all nine existing containers. No migration, container or volume was
+reset, recreated or deleted; stopped pre-loopback backups remain stopped.
+This is a diagnosed host repair, not an automatic startup action: check
+`netsh interface ipv4 show excludedportrange protocol=tcp` and listeners first;
+briefly stopping WinNAT affects other WSL/Hyper-V networking and needs separate
+host authorization. It does not establish a permanent reservation fix.
+The guard now rejects missing or changed actual bindings and reports Docker's
+start error without printing credential-bearing inspect/status output.

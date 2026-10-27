@@ -1,5 +1,11 @@
 # Account protocol v2 — milestone 3.0
 
+27 October implementation update: migration 019 adds `sync_snapshot_begin` and
+`sync_snapshot_page` for the existing v2 manifest/shadow/recovery contract. See
+the [command and recovery audit](account-recovery-audit.md) for exact coverage,
+capture bounds and remaining history/retention/resolution gaps. Native staging
+and account writes remain disabled; the dated milestones below remain history.
+
 12 October 2026. Contract foundation and executable field-chain model, **not a
 server implementation**. The guest app still uses protocol v1 and schema v1;
 account commands still fail closed. The user accepted Android emulator evidence

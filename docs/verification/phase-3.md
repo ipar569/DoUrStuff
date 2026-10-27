@@ -2204,3 +2204,115 @@ prerequisites. Automatic sync, snapshots/recovery/resolution, adoption/lifecycle
 latency and recovery acceptance remain unfinished. Retain accepted Phase 2
 emulator entry and all physical/native gates. Production deployment/migrations,
 release and store publication remain unauthorized and were not performed.
+
+### Server snapshot increment — 27 October 2026
+
+Refreshed Git/GitHub and PR #15's final timeline: reviewed head
+`ce0c52dd43ec9341a76c995160b0f564300c40c4` merged at
+`4ac3a9e029eb0ccb054ed72f327b08a6727de64b`, with independent review,
+Quality/Android/Windows CI, 124 Flutter tests, 125 backend groups and 1,178
+Dart-validated replies. Started `codex/phase-3-server-snapshots` from that clean
+remote main. Preserve the final reviewed head/checks/merge in this task's PR
+timeline; the evidence below describes the implementation checks before review.
+
+The restart diagnosis found Windows IPv4 TCP exclusion **54227–54326** covering
+all four configured local ports, with no listening process. Docker reported
+WSAEACCES when binding 127.0.0.1:54321–54324. The initial non-administrator
+WinNAT stop failed without changing the service. After explicit user approval,
+an elevated script stopped WinNAT, invoked only
+`python tool/local_backend.py --start`, and restored WinNAT in `finally`.
+All nine existing containers recovered; eight healthchecks were healthy and
+PostgREST was running. A subsequent guard check verified exact saved versus
+actual loopback mappings. All original volumes/containers/stopped backups remain;
+there was no reset/recreation or permanent Windows networking configuration
+change. This repair may need diagnosis again if Windows reallocates exclusions.
+
+The guard previously accepted an empty actual binding list because `all([])`
+is true. It now compares normalized saved/actual mappings and rejects missing,
+changed or public bindings. Docker start errors are shown, while inspect/status
+output remains suppressed. Three portable regression tests are added to Quality
+CI. A temporary automatic approval review usage-limit failure prevented one edit;
+the user resumed and the normal reviewed tool path subsequently succeeded.
+
+The [command/recovery audit](../architecture/account-recovery-audit.md) inventories
+all 17 current v2 command handlers and their remaining boundaries. New forward
+migration `20261026212133_consistent_snapshots.sql` (019) implements private,
+forced-RLS immutable captures and two restricted fixed-search-path RPCs:
+`sync_snapshot_begin` and `sync_snapshot_page`. The account lock freezes revision,
+device watermarks, six shadow kinds including deletion identities, and original
+unresolved recovery payloads. Pages are stable across later commits/receipt expiry;
+24-hour tokens bind owner/epoch/page and live account identity. Per-page counts,
+3 MiB content, three active captures and 64 MiB per capture bound storage/replies.
+Same-revision/watermark begin retries reuse the token. Capacity and injected
+failures roll back partial captures; only expired caller-owned snapshots are
+cleaned up. No task/history/receipt/tombstone retention policy runs yet.
+
+Before local apply, ignored schema/data backups were saved at
+`.tools/backend-before-snapshots-{schema,data}.sql`. The eight-group foundation
+fixture rebuilt all nineteen migrations inside a rollback-only transaction with
+retained task/history/watermark data; the new snapshot harness's `--candidate`
+mode proved a real owner's snapshot and exact retained-state rollback. Only 019
+was applied using `supabase migration up --local --network-id dourstuff-local`.
+`migration list --local` matched all 19 IDs and `db advisors --local --type all
+--level warn --fail-on error` reported no issues. All eighteen earlier files are
+unchanged. Official Supabase changelog/RLS guidance and pinned CLI help were
+checked; no image, CLI, dependency or hosted resource was upgraded/provisioned.
+
+Implementation verification:
+
+- `python tool/test_backend_snapshots.py --supabase .tools/supabase/supabase.exe
+  --wire-output .tools/backend-snapshots-wire.json`: **14 groups passed**.
+  These cover empty snapshots/TTL, concurrent/lost begin replies, all six kinds,
+  original conflict/held candidates, deletion IDs, receipt/log expiry, stable
+  pages and pull continuation, same-revision new devices, late commits, 205-shadow
+  and 205-candidate pagination, byte limits, X/Y/anonymous/raw REST/RLS isolation,
+  malformed pages, revoked/deleted identities, expiry/quota cleanup, injected
+  rollback, oversized records and aggregate 64 MiB pressure. Capacity pressure
+  fixtures use privileged synthetic rows and are not command-validation evidence.
+- `dart run tool/check_backend_wire.dart .tools/backend-snapshots-wire.json`:
+  **84 real responses passed** production decoding/correlation, including
+  snapshot manifests and pages with captured validation times.
+- Pinned `flutter pub get --enforce-lockfile`, `dart run build_runner build`,
+  generated-source diff, `dart format --output=none --set-exit-if-changed lib test
+  tool`, `flutter analyze` (**no issues**, 37.1 seconds), full
+  `flutter test --reporter expanded` (**124 passed**, including real SQLite/domain/
+  schema tests), and schema-v1 dump/diff all passed. Generated Dart, schema and
+  lockfile remain unchanged. Output is in `.tools/snapshots-quality.log`.
+- `python tool/test_local_backend.py`: **3 passed**. The test is now in Quality CI.
+  Existing backend regressions run sequentially on 019 with captures/logs at
+  `.tools/backend-<suite>-snapshots-wire.json` and matching `.log` files. Final
+  regression totals, normalization/HTTP checks and final-head CI are recorded in
+  the PR timeline, along with the independent review and guarded merge.
+
+Two test-harness failures were corrected: the late-writer probe initially
+searched query text that psql had already replaced with `pg_sleep`; it now uses
+the synthetic session's application name. After 019 was applied, the foundation
+rehearsal also needed to drop both new public RPCs inside its rollback-only
+transaction before recreating them. Neither failure changed applied migrations
+or discarded retained data. Native builds are CI evidence only, not installed
+Android/Windows or latency/recovery acceptance.
+
+### Next-session handoff — snapshots, 27 October 2026
+
+Refresh Git/GitHub and this task's final PR timeline; preserve newer work. Finish
+any remaining review/check/merge steps on the same branch/PR before starting a
+new increment. Use the reviewed-head guard and verify remote main. Preserve all
+**19 applied migrations**, existing containers/volumes and stopped backups;
+start only with `python tool/local_backend.py --start`. WinNAT is running after
+the authorized repair; do not silently repeat machine-wide service changes.
+
+Earliest unfinished representation increment: define a versioned status-history
+download contract and extend codecs/fixtures plus server pull/snapshot transport
+for retained events (including unknown legacy originals), with fixed-revision,
+duplicate/page interruption, concurrent status and owner-isolation tests. Current
+v2 shadows cannot reconstruct history. Then continue retention scheduling and
+explicit conflict resolution before native account integration, following the
+delivery plan and [audit](../architecture/account-recovery-audit.md). Preserve
+original candidate bases and durable deletion/sequence identities throughout.
+
+Follow AGENTS.md and sync-protocol, database-migrations, Supabase and finish-task.
+Account writes remain disabled; SQLite remains v1. Representation parity,
+history/full bootstrap, durable native staging, PKCE/secure storage/redirects,
+reachable restricted endpoint, installed two-device behavior, latency/recovery
+acceptance and Phase 4 remain open. Production deployment/migrations, releases
+and store publication remain unauthorized.
