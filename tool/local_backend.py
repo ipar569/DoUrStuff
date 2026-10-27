@@ -14,13 +14,29 @@ import time
 def docker(*args):
     result = subprocess.run(["docker", *args], text=True, capture_output=True, timeout=30)
     if result.returncode:
-        raise RuntimeError("Docker command failed; inspect local runtime availability.")
+        # Only start's error stream is safe operational detail. Never expose
+        # inspect/status output, which can contain injected service credentials.
+        detail = ': ' + result.stderr.strip() if args[0] == 'start' else ''
+        raise RuntimeError(f"Docker {args[0]} failed (exit {result.returncode}){detail}")
     return result.stdout.strip()
 
 
 def require(condition, message):
     if not condition:
         raise RuntimeError(message)
+
+
+def bindings(ports):
+    return sorted((port, p['HostIp'], p['HostPort'])
+                  for port, mappings in (ports or {}).items()
+                  for p in (mappings or []))
+
+
+def verify_bindings(info):
+    expected = bindings(info['HostConfig']['PortBindings'])
+    actual = bindings(info['NetworkSettings']['Ports'])
+    require(actual == expected and all(ip == '127.0.0.1' for _, ip, _ in actual),
+            'Actual published bindings differ from the approved configuration')
 
 
 def main():
@@ -67,9 +83,7 @@ def main():
         time.sleep(1)
     require(ready, "Some services are stopped or unhealthy")
     for info in states:
-        require(all(p["HostIp"] == "127.0.0.1" for ports in
-                    info["NetworkSettings"]["Ports"].values() if ports for p in ports),
-                "Actual published bindings differ from the approved configuration")
+        verify_bindings(info)
     print("Nine pinned services running; eight Docker healthchecks healthy; PostgREST running.")
     print("Published ports are loopback-only. Run the integration harness to verify HTTP behavior.")
 

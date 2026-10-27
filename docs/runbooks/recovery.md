@@ -1,5 +1,14 @@
 # Preservation and recovery
 
+27 October local snapshot increment: pre-019 schema/data dumps are retained at
+`.tools/backend-before-snapshots-{schema,data}.sql` (ignored). The retained-data
+forward rehearsal and real-owner snapshot candidate both rolled back safely;
+this is not a backup-restoration rehearsal. All eighteen earlier migrations,
+existing containers, volumes and stopped backups were preserved. Snapshot
+tokens/pages are server recovery building blocks only: historical event
+transport, pending-safe client staging/install, retention scheduling and explicit
+resolution remain open. See the [audit](../architecture/account-recovery-audit.md).
+
 Saved means committed locally. The current Phase 2 app is guest-only; it has no cloud backup or
 in-app export. Back up the device and retain the entire profile directory before
 repairs. Never clear app data merely to fix an open/migration failure.

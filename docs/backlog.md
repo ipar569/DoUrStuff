@@ -226,7 +226,7 @@ Prove p95 <=5 seconds over 100 changes under the documented test conditions.
 Add protected migration deployment only with real tested migrations and recovery.
 This gate precedes recurrence and reminders.
 
-26 October saved-view increment: PR #14 merged at `87f8dc0` after independent
+26 October saved-view increment: PR #15 merged at `4ac3a9e` after independent
 review and passing Quality/Android/Windows CI. Forward migrations 017–018 add
 atomic canonical view queries, independent names, retained deletion identities
 and versioned default-view references/clearing. Deletion clears only the matching
@@ -237,6 +237,19 @@ account writes remain disabled. Next audit remaining Phase 2 command and
 representation gaps, then implement snapshot/retention/explicit-resolution
 recovery before native account integration. See the latest verification handoff
 and PR timeline for exact checks, reviewed head and merge evidence.
+
+27 October server recovery increment: migration 019 provides immutable,
+owner-bound snapshot manifests/pages for six shadow kinds and unresolved
+recovery, fixed revision/device watermarks, 24-hour tokens and bounded capture
+storage. All eighteen prior migrations are preserved. Windows NAT's excluded
+port range was diagnosed and the user-approved brief WinNAT restart restored
+the existing local stack. No container/volume recreation was needed.
+The [command/recovery audit](architecture/account-recovery-audit.md) identifies
+status-history transport as the earliest remaining representation increment;
+retention cleanup and explicit conflict resolution follow. Current v2 has all
+17 command handlers but no complete history bootstrap. Native staging/account
+writes, representation parity, external/installed acceptance and Phase 4 stay
+gated. See the latest verification handoff and PR timeline for final evidence.
 
 ## Phase 4: recurrence, calendar and reminders
 

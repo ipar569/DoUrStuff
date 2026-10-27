@@ -18,6 +18,7 @@ void main(List<String> args) {
   if (entries.isEmpty) {
     throw const FormatException('Expected real backend replies.');
   }
+  final manifests = <String, SnapshotManifest>{};
   for (final entry in entries) {
     switch (entry['rpc']) {
       case 'apply':
@@ -142,6 +143,26 @@ void main(List<String> args) {
           (pullCodec.decodeReply(
             entry['reply'],
           ) as SyncSuccess<PullResult>).value,
+        );
+      case 'snapshot_begin':
+        final manifest = (beginSnapshotCodec.decodeReply(
+          entry['reply'],
+        ) as SyncSuccess<SnapshotManifest>).value;
+        validateBeginSnapshotReply(
+          beginSnapshotCodec.decodeRequest(entry['request']),
+          manifest,
+          DateTime.parse(entry['checked_at_utc'] as String),
+        );
+        manifests[manifest.token] = manifest;
+      case 'snapshot_page':
+        final request = snapshotPageCodec.decodeRequest(entry['request']);
+        validateSnapshotPage(
+          manifests[request.token]!,
+          request,
+          (snapshotPageCodec.decodeReply(
+            entry['reply'],
+          ) as SyncSuccess<SnapshotPage>).value,
+          DateTime.parse(entry['checked_at_utc'] as String),
         );
       default:
         throw const FormatException('Unexpected backend RPC.');
