@@ -1,0 +1,624 @@
+{
+  "operations": [
+    {
+      "protocol_version": 2,
+      "operation_id": "00000000-0000-0000-0000-000000000001",
+      "device_epoch": "00000000-0000-0000-0000-000000000003",
+      "sequence": 1,
+      "entity": {
+        "kind": "task",
+        "key": [
+          "00000000-0000-0000-0000-000000000002"
+        ]
+      },
+      "command": "task.create",
+      "patches": {
+        "existence": {
+          "base": {
+            "kind": "absent"
+          },
+          "value": true
+        },
+        "title": {
+          "base": {
+            "kind": "absent"
+          },
+          "value": "Retained"
+        },
+        "priority": {
+          "base": {
+            "kind": "absent"
+          },
+          "value": "none"
+        },
+        "status_group": {
+          "base": {
+            "kind": "absent"
+          },
+          "value": {
+            "status": "todo",
+            "completed_at": null
+          }
+        }
+      },
+      "dependencies": [],
+      "provenance": {
+        "occurred_at": 200
+      }
+    },
+    {
+      "protocol_version": 2,
+      "operation_id": "00000000-0000-0000-0000-000000000004",
+      "device_epoch": "00000000-0000-0000-0000-000000000003",
+      "sequence": 2,
+      "entity": {
+        "kind": "task",
+        "key": [
+          "00000000-0000-0000-0000-000000000002"
+        ]
+      },
+      "command": "task.status",
+      "patches": {
+        "status_group": {
+          "base": {
+            "kind": "observed",
+            "revision": 1,
+            "value": {
+              "status": "todo",
+              "completed_at": null
+            }
+          },
+          "value": {
+            "status": "completed",
+            "completed_at": 100
+          }
+        }
+      },
+      "dependencies": [],
+      "provenance": {
+        "occurred_at": 100
+      }
+    }
+  ],
+  "events": [
+    {
+      "version": 1,
+      "operation_id": "00000000-0000-0000-0000-000000000001",
+      "task_id": "00000000-0000-0000-0000-000000000002",
+      "revision": 1,
+      "previous_status": null,
+      "status": {
+        "revision": 1,
+        "value": {
+          "status": "todo",
+          "completed_at": null
+        }
+      },
+      "fields": {
+        "existence": {
+          "revision": 1,
+          "value": true
+        },
+        "title": {
+          "revision": 1,
+          "value": "Retained"
+        },
+        "priority": {
+          "revision": 1,
+          "value": "none"
+        },
+        "status_group": {
+          "revision": 1,
+          "value": {
+            "status": "todo",
+            "completed_at": null
+          }
+        }
+      },
+      "provenance": {
+        "occurred_at": 200
+      },
+      "recorded_at_utc": "2026-10-28T00:00:00.000Z",
+      "operation": null
+    },
+    {
+      "version": 1,
+      "operation_id": "00000000-0000-0000-0000-000000000004",
+      "task_id": "00000000-0000-0000-0000-000000000002",
+      "revision": 2,
+      "previous_status": {
+        "revision": 1,
+        "value": {
+          "status": "todo",
+          "completed_at": null
+        }
+      },
+      "status": {
+        "revision": 2,
+        "value": {
+          "status": "completed",
+          "completed_at": 100
+        }
+      },
+      "fields": {
+        "existence": {
+          "revision": 1,
+          "value": true
+        },
+        "title": {
+          "revision": 1,
+          "value": "Retained"
+        },
+        "priority": {
+          "revision": 1,
+          "value": "none"
+        },
+        "status_group": {
+          "revision": 2,
+          "value": {
+            "status": "completed",
+            "completed_at": 100
+          }
+        }
+      },
+      "provenance": {
+        "occurred_at": 100
+      },
+      "recorded_at_utc": "2026-10-28T00:00:00.000Z",
+      "operation": {
+        "protocol_version": 2,
+        "operation_id": "00000000-0000-0000-0000-000000000004",
+        "device_epoch": "00000000-0000-0000-0000-000000000003",
+        "sequence": 2,
+        "entity": {
+          "kind": "task",
+          "key": [
+            "00000000-0000-0000-0000-000000000002"
+          ]
+        },
+        "command": "task.status",
+        "patches": {
+          "status_group": {
+            "base": {
+              "kind": "observed",
+              "revision": 1,
+              "value": {
+                "status": "todo",
+                "completed_at": null
+              }
+            },
+            "value": {
+              "status": "completed",
+              "completed_at": 100
+            }
+          }
+        },
+        "dependencies": [],
+        "provenance": {
+          "occurred_at": 100
+        }
+      }
+    }
+  ],
+  "pull": {
+    "request": {
+      "protocol_version": 2,
+      "history_version": 1,
+      "after": {
+        "server_epoch": "00000000-0000-0000-0000-000000000005",
+        "revision": 0
+      },
+      "limit": 200
+    },
+    "reply": {
+      "protocol_version": 2,
+      "status": "success",
+      "result": {
+        "history_version": 1,
+        "through": {
+          "server_epoch": "00000000-0000-0000-0000-000000000005",
+          "revision": 2
+        },
+        "committed_high_water": 2,
+        "has_more": false,
+        "groups": [
+          {
+            "revision": 1,
+            "records": [
+              {
+                "entity": {
+                  "kind": "task",
+                  "key": [
+                    "00000000-0000-0000-0000-000000000002"
+                  ]
+                },
+                "fields": {
+                  "existence": {
+                    "revision": 1,
+                    "value": true
+                  },
+                  "title": {
+                    "revision": 1,
+                    "value": "Retained"
+                  },
+                  "priority": {
+                    "revision": 1,
+                    "value": "none"
+                  },
+                  "status_group": {
+                    "revision": 1,
+                    "value": {
+                      "status": "todo",
+                      "completed_at": null
+                    }
+                  }
+                },
+                "delete_operation_id": null
+              }
+            ],
+            "recovery": [],
+            "history": [
+              {
+                "version": 1,
+                "operation_id": "00000000-0000-0000-0000-000000000001",
+                "task_id": "00000000-0000-0000-0000-000000000002",
+                "revision": 1,
+                "previous_status": null,
+                "status": {
+                  "revision": 1,
+                  "value": {
+                    "status": "todo",
+                    "completed_at": null
+                  }
+                },
+                "fields": {
+                  "existence": {
+                    "revision": 1,
+                    "value": true
+                  },
+                  "title": {
+                    "revision": 1,
+                    "value": "Retained"
+                  },
+                  "priority": {
+                    "revision": 1,
+                    "value": "none"
+                  },
+                  "status_group": {
+                    "revision": 1,
+                    "value": {
+                      "status": "todo",
+                      "completed_at": null
+                    }
+                  }
+                },
+                "provenance": {
+                  "occurred_at": 200
+                },
+                "recorded_at_utc": "2026-10-28T00:00:00.000Z",
+                "operation": null
+              }
+            ]
+          },
+          {
+            "revision": 2,
+            "records": [
+              {
+                "entity": {
+                  "kind": "task",
+                  "key": [
+                    "00000000-0000-0000-0000-000000000002"
+                  ]
+                },
+                "fields": {
+                  "existence": {
+                    "revision": 1,
+                    "value": true
+                  },
+                  "title": {
+                    "revision": 1,
+                    "value": "Retained"
+                  },
+                  "priority": {
+                    "revision": 1,
+                    "value": "none"
+                  },
+                  "status_group": {
+                    "revision": 2,
+                    "value": {
+                      "status": "completed",
+                      "completed_at": 100
+                    }
+                  }
+                },
+                "delete_operation_id": null
+              }
+            ],
+            "recovery": [],
+            "history": [
+              {
+                "version": 1,
+                "operation_id": "00000000-0000-0000-0000-000000000004",
+                "task_id": "00000000-0000-0000-0000-000000000002",
+                "revision": 2,
+                "previous_status": {
+                  "revision": 1,
+                  "value": {
+                    "status": "todo",
+                    "completed_at": null
+                  }
+                },
+                "status": {
+                  "revision": 2,
+                  "value": {
+                    "status": "completed",
+                    "completed_at": 100
+                  }
+                },
+                "fields": {
+                  "existence": {
+                    "revision": 1,
+                    "value": true
+                  },
+                  "title": {
+                    "revision": 1,
+                    "value": "Retained"
+                  },
+                  "priority": {
+                    "revision": 1,
+                    "value": "none"
+                  },
+                  "status_group": {
+                    "revision": 2,
+                    "value": {
+                      "status": "completed",
+                      "completed_at": 100
+                    }
+                  }
+                },
+                "provenance": {
+                  "occurred_at": 100
+                },
+                "recorded_at_utc": "2026-10-28T00:00:00.000Z",
+                "operation": {
+                  "protocol_version": 2,
+                  "operation_id": "00000000-0000-0000-0000-000000000004",
+                  "device_epoch": "00000000-0000-0000-0000-000000000003",
+                  "sequence": 2,
+                  "entity": {
+                    "kind": "task",
+                    "key": [
+                      "00000000-0000-0000-0000-000000000002"
+                    ]
+                  },
+                  "command": "task.status",
+                  "patches": {
+                    "status_group": {
+                      "base": {
+                        "kind": "observed",
+                        "revision": 1,
+                        "value": {
+                          "status": "todo",
+                          "completed_at": null
+                        }
+                      },
+                      "value": {
+                        "status": "completed",
+                        "completed_at": 100
+                      }
+                    }
+                  },
+                  "dependencies": [],
+                  "provenance": {
+                    "occurred_at": 100
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "begin": {
+    "request": {
+      "protocol_version": 2,
+      "history_version": 1,
+      "server_epoch": "00000000-0000-0000-0000-000000000005"
+    },
+    "reply": {
+      "protocol_version": 2,
+      "status": "success",
+      "result": {
+        "history_version": 1,
+        "token": "00000000-0000-0000-0000-000000000006",
+        "at": {
+          "server_epoch": "00000000-0000-0000-0000-000000000005",
+          "revision": 2
+        },
+        "expires_at_utc": "2026-10-29T00:00:00.000Z",
+        "page_count": 1,
+        "record_count": 3,
+        "device_high_waters": {
+          "00000000-0000-0000-0000-000000000003": 2
+        }
+      }
+    }
+  },
+  "page": {
+    "request": {
+      "protocol_version": 2,
+      "history_version": 1,
+      "server_epoch": "00000000-0000-0000-0000-000000000005",
+      "token": "00000000-0000-0000-0000-000000000006",
+      "page": 0
+    },
+    "reply": {
+      "protocol_version": 2,
+      "status": "success",
+      "result": {
+        "history_version": 1,
+        "token": "00000000-0000-0000-0000-000000000006",
+        "at": {
+          "server_epoch": "00000000-0000-0000-0000-000000000005",
+          "revision": 2
+        },
+        "page": 0,
+        "is_last": true,
+        "records": [
+          {
+            "entity": {
+              "kind": "task",
+              "key": [
+                "00000000-0000-0000-0000-000000000002"
+              ]
+            },
+            "fields": {
+              "existence": {
+                "revision": 1,
+                "value": true
+              },
+              "title": {
+                "revision": 1,
+                "value": "Retained"
+              },
+              "priority": {
+                "revision": 1,
+                "value": "none"
+              },
+              "status_group": {
+                "revision": 2,
+                "value": {
+                  "status": "completed",
+                  "completed_at": 100
+                }
+              }
+            },
+            "delete_operation_id": null
+          }
+        ],
+        "recovery": [],
+        "history": [
+          {
+            "version": 1,
+            "operation_id": "00000000-0000-0000-0000-000000000001",
+            "task_id": "00000000-0000-0000-0000-000000000002",
+            "revision": 1,
+            "previous_status": null,
+            "status": {
+              "revision": 1,
+              "value": {
+                "status": "todo",
+                "completed_at": null
+              }
+            },
+            "fields": {
+              "existence": {
+                "revision": 1,
+                "value": true
+              },
+              "title": {
+                "revision": 1,
+                "value": "Retained"
+              },
+              "priority": {
+                "revision": 1,
+                "value": "none"
+              },
+              "status_group": {
+                "revision": 1,
+                "value": {
+                  "status": "todo",
+                  "completed_at": null
+                }
+              }
+            },
+            "provenance": {
+              "occurred_at": 200
+            },
+            "recorded_at_utc": "2026-10-28T00:00:00.000Z",
+            "operation": null
+          },
+          {
+            "version": 1,
+            "operation_id": "00000000-0000-0000-0000-000000000004",
+            "task_id": "00000000-0000-0000-0000-000000000002",
+            "revision": 2,
+            "previous_status": {
+              "revision": 1,
+              "value": {
+                "status": "todo",
+                "completed_at": null
+              }
+            },
+            "status": {
+              "revision": 2,
+              "value": {
+                "status": "completed",
+                "completed_at": 100
+              }
+            },
+            "fields": {
+              "existence": {
+                "revision": 1,
+                "value": true
+              },
+              "title": {
+                "revision": 1,
+                "value": "Retained"
+              },
+              "priority": {
+                "revision": 1,
+                "value": "none"
+              },
+              "status_group": {
+                "revision": 2,
+                "value": {
+                  "status": "completed",
+                  "completed_at": 100
+                }
+              }
+            },
+            "provenance": {
+              "occurred_at": 100
+            },
+            "recorded_at_utc": "2026-10-28T00:00:00.000Z",
+            "operation": {
+              "protocol_version": 2,
+              "operation_id": "00000000-0000-0000-0000-000000000004",
+              "device_epoch": "00000000-0000-0000-0000-000000000003",
+              "sequence": 2,
+              "entity": {
+                "kind": "task",
+                "key": [
+                  "00000000-0000-0000-0000-000000000002"
+                ]
+              },
+              "command": "task.status",
+              "patches": {
+                "status_group": {
+                  "base": {
+                    "kind": "observed",
+                    "revision": 1,
+                    "value": {
+                      "status": "todo",
+                      "completed_at": null
+                    }
+                  },
+                  "value": {
+                    "status": "completed",
+                    "completed_at": 100
+                  }
+                }
+              },
+              "dependencies": [],
+              "provenance": {
+                "occurred_at": 100
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}

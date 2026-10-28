@@ -1,5 +1,14 @@
 # Preservation and recovery
 
+28 October: history transport migration 020 preserves existing legacy captures
+and adds opt-in history-enabled captures. Original operation IDs remain stable;
+unknown older original envelopes remain null. The shared record count includes
+events as well as shadows/recovery, and a legacy token cannot be used to claim
+history completeness. Pre-apply dumps are ignored
+`.tools/backend-before-history-{schema,data}.sql`; forward/real-owner rollback
+rehearsals passed, but backup restoration was not rehearsed. Pending-safe native
+installation and all scheduled retention remain unfinished.
+
 27 October local snapshot increment: pre-019 schema/data dumps are retained at
 `.tools/backend-before-snapshots-{schema,data}.sql` (ignored). The retained-data
 forward rehearsal and real-owner snapshot candidate both rolled back safely;

@@ -253,3 +253,14 @@ briefly stopping WinNAT affects other WSL/Hyper-V networking and needs separate
 host authorization. It does not establish a permanent reservation fix.
 The guard now rejects missing or changed actual bindings and reports Docker's
 start error without printing credential-bearing inspect/status output.
+
+28 October: migration 020 adds opt-in history transport (`history_version: 1`) to
+pull/snapshot requests. Old clients and tokens retain legacy shapes; the new
+codecs reject downgrade/missing history. Run
+`python tool/test_backend_history.py --supabase .tools/supabase/supabase.exe
+--wire-output .tools/backend-history-wire.json`, then
+`dart run tool/check_backend_wire.dart .tools/backend-history-wire.json`.
+Its `--candidate` mode is only for the pre-020 rollback-only rehearsal. All fifteen
+backend suites run sequentially when using the foundation schema rehearsal.
+Keep all twenty applied migrations, volumes and stopped backups. No retention
+schedule or account/native integration is activated by this change.

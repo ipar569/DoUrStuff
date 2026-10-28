@@ -20,6 +20,7 @@ void main(List<String> args) {
   }
   final manifests = <String, SnapshotManifest>{};
   for (final entry in entries) {
+    final withHistory = entry['request']['history_version'] == 1;
     switch (entry['rpc']) {
       case 'apply':
         final request = applyCodec.decodeRequest(entry['request']);
@@ -138,6 +139,15 @@ void main(List<String> args) {
           ) as SyncSuccess<RegisteredDevice>).value,
         );
       case 'pull':
+        if (withHistory) {
+          validateHistoryPullReply(
+            historyPullCodec.decodeRequest(entry['request']),
+            (historyPullCodec.decodeReply(
+              entry['reply'],
+            ) as SyncSuccess<HistoryPullResult>).value,
+          );
+          break;
+        }
         validatePullReply(
           pullCodec.decodeRequest(entry['request']),
           (pullCodec.decodeReply(
@@ -145,16 +155,33 @@ void main(List<String> args) {
           ) as SyncSuccess<PullResult>).value,
         );
       case 'snapshot_begin':
-        final manifest = (beginSnapshotCodec.decodeReply(
+        final codec = withHistory
+            ? historyBeginSnapshotCodec
+            : beginSnapshotCodec;
+        final manifest = (codec.decodeReply(
           entry['reply'],
         ) as SyncSuccess<SnapshotManifest>).value;
         validateBeginSnapshotReply(
-          beginSnapshotCodec.decodeRequest(entry['request']),
+          codec.decodeRequest(entry['request']),
           manifest,
           DateTime.parse(entry['checked_at_utc'] as String),
         );
         manifests[manifest.token] = manifest;
       case 'snapshot_page':
+        if (withHistory) {
+          final request = historySnapshotPageCodec.decodeRequest(
+            entry['request'],
+          );
+          validateHistorySnapshotPage(
+            manifests[request.token]!,
+            request,
+            (historySnapshotPageCodec.decodeReply(
+              entry['reply'],
+            ) as SyncSuccess<HistorySnapshotPage>).value,
+            DateTime.parse(entry['checked_at_utc'] as String),
+          );
+          break;
+        }
         final request = snapshotPageCodec.decodeRequest(entry['request']);
         validateSnapshotPage(
           manifests[request.token]!,

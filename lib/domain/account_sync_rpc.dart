@@ -273,4 +273,72 @@ abstract interface class AccountSyncTransport {
   Future<SyncReply<ApplyResult>> resolveConflict(
     ResolveConflictRequest request,
   );
+  Future<SyncReply<HistoryPullResult>> pullWithHistory(PullRequest request);
+  Future<SyncReply<SnapshotManifest>> beginSnapshotWithHistory(
+    BeginSnapshotRequest request,
+  );
+  Future<SyncReply<HistorySnapshotPage>> readSnapshotPageWithHistory(
+    SnapshotPageRequest request,
+  );
+}
+
+/// History extension v1 retains operation identity even when the original
+/// payload is unknown. Provenance never determines replication order.
+final class StatusHistoryEvent {
+  StatusHistoryEvent({
+    required this.operationId,
+    required this.taskId,
+    required this.revision,
+    required this.previousStatus,
+    required this.status,
+    required Map<String, AcceptedField> fields,
+    required Map<String, Object?> provenance,
+    required this.recordedAtUtc,
+    required this.operation,
+  }) : fields = Map.unmodifiable(fields),
+       _provenanceJson = canonicalSyncJson(provenance);
+  final String operationId, taskId;
+  final int revision;
+  final AcceptedField? previousStatus;
+  final AcceptedField status;
+  final Map<String, AcceptedField> fields;
+  final String _provenanceJson;
+  // Defensive deep copy: callers cannot change retained provenance.
+  Map<String, Object?> get provenance =>
+      (jsonDecode(_provenanceJson) as Map).cast<String, Object?>();
+  final DateTime recordedAtUtc;
+  final AccountOperation? operation;
+}
+
+final class HistoryRevisionGroup {
+  HistoryRevisionGroup(this.changes, List<StatusHistoryEvent> history)
+    : history = List.unmodifiable(history);
+  final RevisionGroup changes;
+  final List<StatusHistoryEvent> history;
+}
+
+final class HistoryPullResult {
+  HistoryPullResult({
+    required this.through,
+    required this.committedHighWater,
+    required this.hasMore,
+    required List<HistoryRevisionGroup> groups,
+  }) : groups = List.unmodifiable(groups);
+  final AccountCursor through;
+  final int committedHighWater;
+  final bool hasMore;
+  final List<HistoryRevisionGroup> groups;
+  PullResult get changes => PullResult(
+    through: through,
+    committedHighWater: committedHighWater,
+    hasMore: hasMore,
+    groups: groups.map((g) => g.changes).toList(),
+  );
+}
+
+final class HistorySnapshotPage {
+  HistorySnapshotPage(this.changes, List<StatusHistoryEvent> history)
+    : history = List.unmodifiable(history);
+  final SnapshotPage changes;
+  final List<StatusHistoryEvent> history;
 }

@@ -251,6 +251,16 @@ retention cleanup and explicit conflict resolution follow. Current v2 has all
 writes, representation parity, external/installed acceptance and Phase 4 stay
 gated. See the latest verification handoff and PR timeline for final evidence.
 
+28 October history transport increment: forward migration 020 extends pull and
+snapshots with explicitly negotiated history v1 while preserving legacy v2
+shapes/tokens. Retained event IDs, known original operations and null unknown
+originals survive receipt/log expiry; concurrent status changes and fixed-revision
+pages preserve history independently of current shadows. SQLite stays v1 and
+account writes stay disabled. Next: bounded 180-day log/receipt retention with
+durable watermark/deletion/history/recovery preservation, then remaining content
+retention and explicit resolution. See the latest verification handoff/PR timeline;
+all representation, external, native and Phase 4 gates remain open.
+
 ## Phase 4: recurrence, calendar and reminders
 
 Bounded deterministic generation/history; immutable future segments and offline
