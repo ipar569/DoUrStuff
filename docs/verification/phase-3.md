@@ -2316,3 +2316,100 @@ history/full bootstrap, durable native staging, PKCE/secure storage/redirects,
 reachable restricted endpoint, installed two-device behavior, latency/recovery
 acceptance and Phase 4 remain open. Production deployment/migrations, releases
 and store publication remain unauthorized.
+
+### Versioned status-history transport — 28 October 2026
+
+Refreshed Git/GitHub and PR #16's final timeline, confirming merge
+`b885fda4d09ad9f48cbf2528d427d2e84e03a1df` with independent review, passing
+Quality/Android/Windows CI, 124 Flutter tests, 139 backend groups and 1,262 real
+response validations. Created `codex/phase-3-status-history-transport` from clean
+remote main. A usage-limit failure in automatic approval review prevented the
+initial implementation edit; it was retried through the normal approval path
+after the user resumed on 28 October. No rejected action was bypassed.
+
+On resume Docker Desktop was stopped. Starting the runtime and then invoking
+only `python tool/local_backend.py --start` recovered all nine preserved services,
+eight healthchecks and exact loopback bindings. No WinNAT change, container/volume
+replacement, database reset or migration rewrite was needed in this increment.
+Official Supabase changelog/RLS guidance and pinned CLI migration help were
+checked. No CLI/image/dependency upgrade or hosted provisioning was performed.
+
+Forward migration `20261027100646_status_history_transport.sql` (020) adds
+explicit `history_version: 1` negotiation to the existing pull/snapshot RPCs.
+Successful results echo that version and include history arrays. Legacy v2
+requests/replies and existing captures keep their shapes. Capture version is
+checked on reuse/read; old tokens cannot claim complete historical data. All
+versions share the existing expiry/storage quotas. All nineteen prior migration
+files remain unchanged. SQLite stays v1; generated source and lockfile are unchanged.
+
+History records preserve owner-qualified operation/task identity, accepted
+revision/status transition, historical fields, provenance and original operation
+where known. Unknown original envelopes remain null. Trusted recording time is
+serialized to canonical UTC milliseconds without modifying stored microseconds;
+revision, not either timestamp, orders events. Pull joins retained events into
+whole committed revision groups under the account lock. Snapshots freeze all
+events through R with shadows/recovery and device watermarks. Byte/count bounds
+include history; known/null originals survive receipt/log expiry. No-op/retried
+status updates add no events; losing concurrent changes remain recovery.
+
+Pre-apply verification saved ignored schema/data backups at
+`.tools/backend-before-history-{schema,data}.sql`. The eight-group foundation
+rehearsal rebuilt all twenty migrations in a rollback-only transaction while
+preserving task/history/original-payload/watermark fixtures. The new harness's
+`--candidate` mode additionally checked a real owner's known/unknown history and
+exact preexisting legacy-capture/state rollback. Only 020 was applied with
+`migration up --local --network-id dourstuff-local`. The subsequent local migration
+list matched 20 IDs; `db advisors --local --type all --level warn --fail-on error`
+reported no issues. These checks are not a backup-restoration rehearsal.
+
+Implementation checks before independent review:
+
+- `flutter test test/account_history_test.dart test/domain_test.dart
+  test/local_database_test.dart test/schema_test.dart --reporter expanded`:
+  **19 passed**. The new five-test shared golden suite checks version negotiation,
+  strict legacy boundaries, known/null originals, defensive provenance copying,
+  forged identity/value/revision/time rejection, duplicates, group/page bounds
+  and expired/fixed-revision page correlation.
+- Pinned locked pub get, build_runner, generated-Dart diff, format, analysis
+  (**no issues**, 5.2 seconds), full Flutter tests (**129 passed**), schema-v1 dump
+  and schema/lockfile diff all passed. An initial analyze run found two missing
+  control-flow braces; they were fixed before the complete quality run above.
+  Evidence: `.tools/history-quality.log`.
+- `python tool/test_backend_history.py --supabase .tools/supabase/supabase.exe
+  --wire-output .tools/backend-history-wire.json`: **11 groups passed**. Coverage
+  includes shared event goldens, backwards provenance, stable known/unknown
+  originals, legacy compatibility, token version binding, frozen pages and pull
+  continuation, deleted-task history, no-op/retry/receipt expiry, late commits,
+  competing status changes, 206-event pagination and interrupted reverse-page
+  reads, large historical content byte limits, X/Y/anonymous/raw REST/RLS checks,
+  revoked/deleted identities, expiry/shared quotas and injected page rollback.
+- `dart run tool/check_backend_wire.dart .tools/backend-history-wire.json`:
+  **90 real replies passed** production decoding/correlation. Existing fourteen
+  suites run sequentially on 020 with captures/logs at
+  `.tools/backend-<suite>-history-wire.json` and matching `.log` files. Final totals,
+  normalization/helpers, reviewed head, final-head CI and guarded merge are in
+  this task's PR timeline. Native compilation remains distinct from installed
+  platform or two-device/latency/recovery acceptance.
+
+### Next-session handoff — status history, 28 October 2026
+
+Refresh Git/GitHub and this task's final PR timeline; preserve newer work. Finish
+any remaining checks/review/guarded merge on this branch/PR before starting a
+new increment. Preserve all **20 applied migrations**, existing containers,
+volumes and stopped backups; start only with `python tool/local_backend.py --start`.
+
+Next implement a bounded local server retention increment beginning with the
+180-day change-log/detailed-receipt cutoff, under the account row lock. Prove
+exact time boundaries, concurrent apply/pull/snapshot behavior, expired-cursor
+bootstrap and missing-predecessor recovery. Preserve device high-water marks,
+minimal deletion/operation identities, retained status events and unresolved
+original candidates. Deleted-content/resolved-conflict policies and explicit
+resolution/held-successor choices remain separate unfinished increments. Read
+the updated protocol contract, recovery audit, delivery plan and backlog.
+
+Follow AGENTS.md and sync-protocol, database-migrations, Supabase and finish-task.
+Account writes stay disabled; no native staging/install or pending-work recovery
+is claimed. Representation parity (description limits, JSONB NUL/raw numbers and
+remaining timezone/value cases), external/native identity/configuration,
+installed-device/latency/recovery acceptance and Phase 4 remain open. Production
+deployment/migrations, releases and store publication remain unauthorized.

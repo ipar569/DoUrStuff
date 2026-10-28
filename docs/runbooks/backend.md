@@ -1,5 +1,11 @@
 # Optional backend and controlled deployment
 
+28 October: migration 020 adds versioned retained status-history transport to
+the existing pull/snapshot RPCs without changing v2 command identities or legacy
+download shapes. Explicit `history_version: 1` is required; all twenty migrations
+are retained. See the protocol contract and current verification handoff for
+evidence. Native account writes and retention scheduling remain disabled.
+
 27 October update: local migration 019 supplies consistent snapshot begin/page
 RPCs in addition to the seventeen current v2 command handlers. All eighteen prior
 migrations are preserved. This remains a local, guest-gated implementation;

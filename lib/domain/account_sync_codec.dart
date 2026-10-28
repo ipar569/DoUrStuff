@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'account_sync.dart';
 import 'account_sync_rpc.dart';
+import 'account_task_validation.dart';
 
 typedef _Json = Map<String, Object?>;
 
@@ -744,4 +745,198 @@ void validateSnapshotPage(
     _bad();
   }
   // Global duplicate/count checks remain the durable staging installer's job.
+}
+
+// Explicit negotiation keeps legacy v2 codecs strict: they cannot silently
+// discard history. Embedded command envelopes retain their original v2 bytes.
+_Json _withoutHistoryVersion(_Json json) {
+  if (json['history_version'] is! int || json['history_version'] != 1) _bad();
+  return {...json}..remove('history_version');
+}
+
+_Json _historyJson(StatusHistoryEvent e) => {
+  'version': 1,
+  'operation_id': e.operationId,
+  'task_id': e.taskId,
+  'revision': e.revision,
+  'previous_status': e.previousStatus == null
+      ? null
+      : _acceptedJson(e.previousStatus!),
+  'status': _acceptedJson(e.status),
+  'fields': {for (final f in e.fields.entries) f.key: _acceptedJson(f.value)},
+  'provenance': e.provenance,
+  'recorded_at_utc': e.recordedAtUtc.toIso8601String(),
+  'operation': e.operation?.toJson(),
+};
+
+StatusHistoryEvent _history(Object? value) {
+  final j = _map(
+    value,
+    'version operation_id task_id revision previous_status status fields provenance recorded_at_utc operation',
+  );
+  if (j['version'] is! int || j['version'] != 1) _bad();
+  final operationId = _id(j['operation_id']);
+  final taskId = _id(j['task_id']);
+  final revision = _int(j['revision'], min: 1);
+  final previous = j['previous_status'] == null
+      ? null
+      : _accepted(j['previous_status']);
+  final status = _accepted(j['status']);
+  final fields = {
+    for (final f in _map(j['fields']).entries) f.key: _accepted(f.value),
+  };
+  final provenance = _map(j['provenance']);
+  _bounded(provenance, maxAccountOperationBytes);
+  final time = _string(j['recorded_at_utc']);
+  final recorded = DateTime.tryParse(time);
+  final op = j['operation'] == null
+      ? null
+      : decodeAccountOperation(j['operation']);
+  if (recorded == null ||
+      !recorded.isUtc ||
+      recorded.toIso8601String() != time ||
+      status.revision != revision ||
+      !validAccountStatusGroup(status.value) ||
+      (previous != null &&
+          (previous.revision >= revision ||
+              !validAccountStatusGroup(previous.value))) ||
+      fields.keys.any((g) => !isSyncFieldGroup(SyncEntityKind.task, g)) ||
+      fields.values.any((f) => f.revision > revision) ||
+      fields['status_group'] == null ||
+      canonicalSyncJson(_acceptedJson(fields['status_group']!)) !=
+          canonicalSyncJson(_acceptedJson(status)) ||
+      (op != null &&
+          (op.operationId != operationId ||
+              op.entity.kind != SyncEntityKind.task ||
+              op.entity.key.single != taskId ||
+              !const {
+                'task.create',
+                'task.status',
+                'task.edit',
+              }.contains(op.command) ||
+              !op.patches.containsKey('status_group') ||
+              canonicalSyncJson(op.patches['status_group']!.value) !=
+                  canonicalSyncJson(status.value) ||
+              canonicalSyncJson(op.provenance) !=
+                  canonicalSyncJson(provenance)))) {
+    _bad();
+  }
+  return StatusHistoryEvent(
+    operationId: operationId,
+    taskId: taskId,
+    revision: revision,
+    previousStatus: previous,
+    status: status,
+    fields: fields,
+    provenance: provenance,
+    recordedAtUtc: recorded,
+    operation: op,
+  );
+}
+
+List<StatusHistoryEvent> _historyList(
+  Object? value,
+  int revision, {
+  bool exact = false,
+  int max = 200,
+}) {
+  final events = _list(value, _history, max: max);
+  _unique(events.map((e) => e.operationId));
+  if (events.any(
+    (e) => exact ? e.revision != revision : e.revision > revision,
+  )) {
+    _bad();
+  }
+  return events;
+}
+
+final historyPullCodec = AccountRpcCodec<PullRequest, HistoryPullResult>._(
+  (q) => {...pullCodec.encodeRequest(q), 'history_version': 1},
+  (j) => pullCodec.decodeRequest(_withoutHistoryVersion(j)),
+  (r) => {
+    ...pullCodec._writeResult(r.changes),
+    'history_version': 1,
+    'groups': r.groups
+        .map(
+          (g) => {
+            'revision': g.changes.revision,
+            'records': g.changes.records.map(_shadowJson).toList(),
+            'recovery': g.changes.recovery.map(_recoveryJson).toList(),
+            'history': g.history.map(_historyJson).toList(),
+          },
+        )
+        .toList(),
+  },
+  (j) {
+    final plain = _withoutHistoryVersion(j);
+    final groups = _list(
+      plain['groups'],
+      (g) => _map(g, 'revision records recovery history'),
+    );
+    final histories = groups
+        .map(
+          (g) => _historyList(
+            g['history'],
+            _int(g['revision'], min: 1),
+            exact: true,
+            max: 1000,
+          ),
+        )
+        .toList();
+    plain['groups'] = groups.map((g) => {...g}..remove('history')).toList();
+    final changes = pullCodec._readResult(plain);
+    _unique(histories.expand((h) => h).map((e) => e.operationId));
+    return HistoryPullResult(
+      through: changes.through,
+      committedHighWater: changes.committedHighWater,
+      hasMore: changes.hasMore,
+      groups: [
+        for (var i = 0; i < groups.length; i++)
+          HistoryRevisionGroup(changes.groups[i], histories[i]),
+      ],
+    );
+  },
+);
+
+final historyBeginSnapshotCodec =
+    AccountRpcCodec<BeginSnapshotRequest, SnapshotManifest>._(
+      (q) => {...beginSnapshotCodec.encodeRequest(q), 'history_version': 1},
+      (j) => beginSnapshotCodec.decodeRequest(_withoutHistoryVersion(j)),
+      (r) => {...beginSnapshotCodec._writeResult(r), 'history_version': 1},
+      (j) => beginSnapshotCodec._readResult(_withoutHistoryVersion(j)),
+    );
+
+final historySnapshotPageCodec =
+    AccountRpcCodec<SnapshotPageRequest, HistorySnapshotPage>._(
+      (q) => {...snapshotPageCodec.encodeRequest(q), 'history_version': 1},
+      (j) => snapshotPageCodec.decodeRequest(_withoutHistoryVersion(j)),
+      (r) => {
+        ...snapshotPageCodec._writeResult(r.changes),
+        'history_version': 1,
+        'history': r.history.map(_historyJson).toList(),
+      },
+      (j) {
+        final plain = _withoutHistoryVersion(j);
+        final history = plain.remove('history');
+        final changes = snapshotPageCodec._readResult(plain);
+        return HistorySnapshotPage(
+          changes,
+          _historyList(history, changes.at.revision),
+        );
+      },
+    );
+
+void validateHistoryPullReply(PullRequest request, HistoryPullResult result) {
+  historyPullCodec.encodeReply(SyncSuccess(result));
+  validatePullReply(request, result.changes);
+}
+
+void validateHistorySnapshotPage(
+  SnapshotManifest manifest,
+  SnapshotPageRequest request,
+  HistorySnapshotPage page,
+  DateTime nowUtc,
+) {
+  historySnapshotPageCodec.encodeReply(SyncSuccess(page));
+  validateSnapshotPage(manifest, request, page.changes, nowUtc);
 }

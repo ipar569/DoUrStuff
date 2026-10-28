@@ -1,5 +1,41 @@
 # Account protocol v2 — milestone 3.0
 
+## Status-history extension v1 — 28 October 2026
+
+Migration 020 adds opt-in `history_version: 1` to `sync_pull`,
+`sync_snapshot_begin` and `sync_snapshot_page` requests. Their successful results
+echo `history_version: 1`; pull groups and snapshot pages add a required `history`
+array. Omitted negotiation preserves legacy v2 shapes exactly. Unsupported
+extension versions fail with `unsupportedProtocol`. Commands/receipts and embedded
+original operations remain v2; the extension has independent versioned codecs and
+the shared `account-history-v1.json` fixture. Legacy codecs reject the extra keys.
+
+Each event has exactly `version: 1`, `operation_id`, `task_id`, `revision`,
+`previous_status` (nullable accepted field), `status` (accepted field), `fields`
+(historical accepted task fields), `provenance`, `recorded_at_utc` and `operation`
+(original immutable envelope or null when unknown). Identity is owner plus
+operation ID, not a synthesized UUID or device timestamp. Recorded server time
+is serialized as canonical UTC milliseconds; stored microseconds are untouched.
+Revision orders events. No original operation is fabricated from current status.
+Decoders validate task/operation identity, field/status revisions and known
+operation values/provenance, preserving unknown originals explicitly.
+
+Pull joins retained events at each whole committed revision under the account
+lock, with at most 1,000 events per group and the existing 4 MiB response cap.
+An oversized indivisible group fails closed. History-enabled captures freeze all
+retained events at R alongside shadows/recovery; page limits are 200 of each and
+3 MiB combined serialized content. Manifest `record_count` counts all three lists.
+Capture version is immutable and checked on reads/reuse; legacy tokens cannot
+claim history completeness. Both versions share the three-capture/64 MiB limits
+and 24-hour expiry. Client staging must still validate global counts/duplicates
+and install accepted data atomically while preserving pending work.
+
+Status no-ops, equivalent changes and receipt retries do not create extra events;
+conflicting status candidates stay in recovery. Deleted task shadows and retained
+events remain downloadable until the separate content-retention policy is
+implemented. History transport does not enable native account mode or scheduled
+pruning, and does not close representation/external/native acceptance gates.
+
 27 October implementation update: migration 019 adds `sync_snapshot_begin` and
 `sync_snapshot_page` for the existing v2 manifest/shadow/recovery contract. See
 the [command and recovery audit](account-recovery-audit.md) for exact coverage,
