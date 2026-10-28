@@ -26,6 +26,9 @@ starts/recreates services or accepts a remote endpoint. Startup remains only
 2-second lock timeout and 10-second statement timeout. Batch size is 1–1000
 whole revisions and up to that many receipts; passes are capped at 100 batches
 and stop early when neither stream deletes a row. Output is counts/cursor only.
+Transport failure or subprocess timeout reports an unconfirmed batch outcome,
+since COMMIT may have succeeded before acknowledgement was lost. Repeating the
+pass is safe; earlier confirmed batches remain committed.
 The private invoker function is executable by the database operator, not any API
 role. No automatic schedule is installed by this migration or runner.
 

@@ -10,6 +10,9 @@ import subprocess
 import sys
 import uuid
 
+UNCONFIRMED = ('Local retention batch outcome could not be confirmed. It may have committed; '
+               'repeating the bounded pass is safe. Earlier confirmed batches remain committed.')
+
 
 def bounded(maximum):
     def parse(value):
@@ -30,13 +33,17 @@ def main():
     for _ in range(args.batches):
         source = ("begin; set local lock_timeout='2s'; set local statement_timeout='10s'; "
                   f"select sync_private.prune_log_receipts('{args.owner}',{args.batch_size}); commit;")
-        result = subprocess.run(['docker', 'exec', '-i', 'supabase_db_dourstuff-local',
-                                 'psql', '-XqAt', '-U', 'postgres', '-d', 'postgres',
-                                 '-v', 'ON_ERROR_STOP=1'], input=source, encoding='utf-8',
-                                capture_output=True, timeout=20)
+        try:
+            result = subprocess.run(['docker', 'exec', '-i', 'supabase_db_dourstuff-local',
+                                     'psql', '-XqAt', '-U', 'postgres', '-d', 'postgres',
+                                     '-v', 'ON_ERROR_STOP=1'], input=source, encoding='utf-8',
+                                    capture_output=True, timeout=20)
+        except (OSError, subprocess.TimeoutExpired):
+            raise RuntimeError(UNCONFIRMED) from None
         if result.returncode:
-            # Database errors can include row payloads; report only the category.
-            raise RuntimeError('Local retention batch failed; transaction rolled back. Earlier batches remain committed.')
+            # A transport loss can follow COMMIT. Never infer rollback or print
+            # database error details, which can contain row payloads.
+            raise RuntimeError(UNCONFIRMED)
         counts = json.loads(result.stdout)
         print(json.dumps(counts), flush=True)
         if counts['logs_deleted'] == 0 and counts['receipts_deleted'] == 0:

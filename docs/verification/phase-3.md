@@ -2496,6 +2496,14 @@ Implementation verification before independent review:
 
 ### Next-session handoff — bounded retention, 28 October 2026
 
+Independent review of initial head `54c618c010d477edd0befacdceac601c356b25cd`
+identified overly strong rollback wording in the local runner after a failed
+Docker/psql transport. The runner now reports an unconfirmed current-batch outcome
+(COMMIT may have succeeded), preserves earlier confirmed results and recommends
+safe repetition. `python tool/test_retention_runner.py` adds two portable lost-
+acknowledgement/timeout regressions to Quality CI. No applied migration changes.
+Record final review/check results for the updated head in PR #18's timeline.
+
 Refresh Git/GitHub and this task's PR timeline first; preserve newer work. Finish
 any outstanding regression/review/check/guarded-merge steps on this branch/PR
 before starting a new increment. Verify the merged commit on remote main. Keep

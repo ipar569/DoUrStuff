@@ -14,8 +14,10 @@ Ignored pre-021 schema/data dumps are `.tools/backend-before-retention-{schema,d
 Rollback-only candidate and retained-data migration rehearsals passed; this is
 not a backup-restoration rehearsal. Preserve all 21 migrations and local volumes.
 Run the local maintenance command only for an explicitly selected local owner.
-Each batch commits independently; on timeout/error, the current batch rolls back
-and earlier batches remain committed. Repeating is safe. Never manually advance
+Each batch commits independently. A server SQL error rolls back that batch;
+transport loss or a subprocess timeout leaves its outcome unconfirmed, so the
+runner reports uncertainty. Earlier confirmed batches remain committed and
+repeating the pass is safe. Never manually advance
 the floor past a gap or remove an identity to make cleanup pass. No deletion of
 canonical content, resolved candidates or account data is implemented here.
 

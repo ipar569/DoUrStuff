@@ -31,5 +31,7 @@ jobs:
         run: python3 tool/test_backend_http.py
       - name: Verify local backend binding guard
         run: python3 tool/test_local_backend.py
+      - name: Verify retention runner uncertain outcomes
+        run: python3 tool/test_retention_runner.py
       - run: dart run drift_dev schema dump lib/data/local/database.dart drift_schemas/drift_schema_v1.json
       - run: git diff --exit-code -- drift_schemas
