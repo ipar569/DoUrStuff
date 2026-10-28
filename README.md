@@ -43,8 +43,11 @@ now retain exact parent UUIDs, independent add/remove revisions and causal bases
 either parent tombstone suppresses visibility. Saved-view names and complete query
 specifications now merge independently; deletion clears only the still-selected
 default at the same revision. Default selections have exact bases and optional
-view-create dependencies. Content purging, history download, snapshots, explicit
-resolution and app integration remain pending.
+view-create dependencies. Versioned history downloads and fixed-revision server
+snapshots are implemented. Bounded local operator retention now expires 180-day
+logs/detailed receipts while retaining compact operation identities, watermarks,
+history and recovery candidates. Automatic maintenance scheduling, deleted-content
+purging, explicit resolution and native account integration remain pending.
 Tag-name normalization is now frozen to native Dart 3.13.5 and verified against
 PostgreSQL across every representable Unicode scalar. Native account writes
 remain disabled.

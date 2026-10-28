@@ -1,5 +1,48 @@
 # Account protocol v2 — milestone 3.0
 
+## Bounded log/receipt retention — 28 October 2026
+
+Migration 021 implements the existing 180-day policy without changing v2 wire
+shapes or history negotiation. `sync_private.prune_log_receipts(owner, batch_size)`
+is a private operator-only invoker function. No API role, including the service
+role or `dourstuff_rpc`, can execute it. It acquires the account row lock, then
+samples trusted `clock_timestamp()`. Rows expire at age **4320 elapsed hours or
+greater**; an exact cutoff is eligible regardless of session timezone/DST.
+
+Each transaction removes at most 1–1000 whole log revisions and the same maximum
+number of detailed receipts (default 200 each). Logs are removed only as a
+contiguous expired prefix starting at `retained_after + 1`. A gap or a newer row
+stops that prefix, even when a later legacy timestamp is older. Floor advancement
+and deletions commit together; they do not change the account revision. Receipt
+cleanup uses an owner/time index and proceeds independently of that prefix.
+Future log/receipt timestamps use insertion time after the apply account lock;
+existing recording times remain unchanged.
+
+Compact `operation_identities` stores account/device/sequence/operation ID plus a
+32-byte SHA-256 of the accepted JSONB payload. All available receipts are
+backfilled before pruning is possible. A receipt-insert trigger commits identity
+with the command; whole-batch preflight rejects identity or payload reassignment
+before consuming any entry. The hash follows existing accepted JSONB equality;
+it does not close raw JSON/native representation gaps. Previously missing
+receipts cannot be reconstructed. Existing history/deletion/creation/mutation
+ledgers still protect their known originals and unknown historical identities.
+Missing or inconsistent compact proof aborts a pruning batch, preserving receipts.
+
+Identical consumed retries return `already_processed` after receipt expiry and
+must reconcile from a snapshot. Stale cursors still return `cursorExpired` before
+upload can proceed. Compact identity proves no accepted field revision: an
+expired accepted predecessor or parent receipt requires recovery, while existing
+unresolved conflict/held records retain original candidates and keep successors
+held. The runner never removes those records, device watermarks, deletion keys,
+canonical content, status history or snapshot captures. At unchanged revision
+and watermarks an in-flight snapshot remains valid and reusable; pull resumes
+after its fixed R. Native pending-safe staging/install remains unfinished.
+
+`tool/run_backend_retention.py` offers bounded local operator passes with separate
+transactions and lock/statement timeouts; it installs no automatic schedule.
+Deleted-content and resolved-conflict cleanup are separate increments. Permanent
+identity metadata grows until account deletion; no unbounded log is substituted.
+
 ## Status-history extension v1 — 28 October 2026
 
 Migration 020 adds opt-in `history_version: 1` to `sync_pull`,

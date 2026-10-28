@@ -2413,3 +2413,107 @@ is claimed. Representation parity (description limits, JSONB NUL/raw numbers and
 remaining timezone/value cases), external/native identity/configuration,
 installed-device/latency/recovery acceptance and Phase 4 remain open. Production
 deployment/migrations, releases and store publication remain unauthorized.
+
+### Bounded log/receipt retention — 28 October 2026
+
+Refreshed Git/GitHub and PR #17's final timeline, confirming merge
+`e4492f707cbd531e01068f7168c048792249fda2` from independently reviewed head
+`bef7ee02f54ccaf9ab9340bb96d7c76b8ff8e659`, with passing CI, 129 Flutter tests,
+150 backend groups and 1,352 validated replies. Started the clean
+`codex/phase-3-log-receipt-retention` branch from refreshed remote main.
+
+Initial sandboxed Git/CLI/Docker commands failed on filesystem/pipe permissions;
+the normal authorized escalation succeeded. Only `python tool/local_backend.py
+--start` started/verified the existing stack: nine services, eight healthchecks,
+exact loopback bindings. No runtime/service repair, replacement, reset or volume
+deletion occurred. The official Supabase changelog/RLS guidance and PostgreSQL 17
+SHA-256 documentation were checked, along with pinned CLI 2.120.0 help. The web
+tool could not render the Markdown docs; official HTML pages were used. No tool,
+image, dependency or hosted resource was upgraded/provisioned.
+
+Forward migration `20261028062241_log_receipt_retention.sql` (021) adds:
+
+- Private, forced-RLS compact operation identities (owner/device/sequence/ID
+  plus SHA-256 of accepted JSONB), backfilled from available receipts and written
+  atomically with future receipts. Existing v2 apply checks these before any batch
+  entry consumes a sequence. All existing content-specific identity checks stay.
+- An operator-only invoker pruning function with no API role execution grant.
+  It locks one account, samples trusted time after the lock, expires records at
+  age **4320 elapsed hours or greater**, and removes only a contiguous expired
+  log prefix while atomically advancing `retained_after`. Receipt deletion is
+  separately bounded and requires matching durable identity proof. Defaults are
+  200 logs/receipts per call; maximum 1,000 each. Legacy nonmonotonic timestamps
+  or missing revisions cannot cause skipped logs or conceal corruption.
+- A guarded local runner, `tool/run_backend_retention.py --owner <local-owner-uuid>
+  --batch-size 200 --batches 1`, with one transaction per batch, 2-second lock and
+  10-second statement timeouts and a maximum 100 batches per invocation. It has
+  no remote endpoint/startup option and installs no schedule.
+
+Canonical content, all deletion/restore/mutation ledgers, watermarks, status
+history, unresolved original candidates and frozen captures remain unchanged.
+Compact identities cannot substitute for accepted predecessor/parent revisions;
+expired evidence requires recovery and held chains stay held. Wire shapes and
+history negotiation stay compatible; `already_processed`, `cursorExpired` and
+`payloadMismatch` use the existing v2 contract. SQLite stays v1 and native account
+writes stay disabled. Already-missing old receipts cannot be reconstructed.
+
+Before local apply, schema/data dumps were saved at ignored
+`.tools/backend-before-retention-{schema,data}.sql`. The real-owner candidate
+backfill/capture rollback and eight-group foundation rehearsal through all 21
+migrations passed. Only 021 was applied using `migration up --local --network-id
+dourstuff-local`; `migration list --local` matched all 21 IDs. Advisors before
+and after apply (`db advisors --local --type all --level warn --fail-on error`)
+reported no issues. All twenty earlier migrations are unchanged. These checks
+are retained-data/transaction evidence, not backup-restoration acceptance.
+
+Implementation verification before independent review:
+
+- `python tool/test_backend_retention.py --supabase .tools/supabase/supabase.exe
+  --wire-output .tools/backend-retention-retention-wire.json`: **16 groups passed**.
+  Exact minus/equal/plus-microsecond boundaries in three timezones, bounded and
+  repeated passes, legacy timestamp inversion/gaps, cursor bootstrap, immutable
+  captures, every populated identity/content ledger, expired field/parent evidence,
+  held/unrelated progress, identity reuse, whole-batch preflight, concurrent
+  apply/pull/snapshot/pruners in both orders, expiry during lock wait, raw REST/RLS/
+  grant isolation, injected apply/prune rollback and local runner commits passed.
+- `dart run tool/check_backend_wire.dart .tools/backend-retention-retention-wire.json`:
+  **65 real replies passed** production decoding/correlation. Failure codes are
+  asserted by the backend suite. A boundary fixture initially omitted a separator
+  after `pg_get_functiondef`; that rollback-only test was fixed before this run.
+- Pinned `flutter pub get --enforce-lockfile`, `dart run build_runner build`,
+  generated-source diff, `dart format --output=none --set-exit-if-changed lib test
+  tool`, `flutter analyze` (**no issues**, 31.6 seconds), full `flutter test
+  --reporter expanded` (**129 passed**, including real SQLite/domain/schema tests),
+  schema-v1 dump and schema/lockfile diff all passed. Evidence:
+  `.tools/retention-quality.log`. No generated source/schema/lockfile changed.
+- `python tool/test_backend_http.py` and `python tool/test_local_backend.py`:
+  **3 tests each passed**. Existing fifteen backend suites plus the retention
+  suite run sequentially on 021, followed by normalization parity. Captures and
+  logs are `.tools/backend-<suite>-retention-wire.json` and matching `.log` files;
+  aggregate output is `.tools/backend-retention-regressions.log`. Final totals,
+  independent reviewed SHA, final-head CI and guarded merge belong in this PR's
+  timeline. Native builds are CI evidence, not installed-device acceptance.
+
+### Next-session handoff — bounded retention, 28 October 2026
+
+Refresh Git/GitHub and this task's PR timeline first; preserve newer work. Finish
+any outstanding regression/review/check/guarded-merge steps on this branch/PR
+before starting a new increment. Verify the merged commit on remote main. Keep
+all **21 applied migrations**, containers, volumes and stopped backups; start
+only with `python tool/local_backend.py --start`. Never rewrite applied migrations.
+
+Next in the Phase 3 delivery plan: audit and implement bounded 30-day deleted-
+content cleanup. Separate minimal durable identities from purgeable shadow/ledger
+payloads; retain status history and unresolved originals, keep restore fail-closed
+after expiry, and explicitly handle snapshot revision/reuse when representation
+changes. Follow with version-checked explicit resolution/held-successor choices
+and 90-day resolved-candidate cleanup. Automatic scheduling, capacity and lock-
+duration measurements remain open. Use the [recovery audit](../architecture/account-recovery-audit.md),
+protocol contract, backlog and delivery plan.
+
+Follow AGENTS.md and sync-protocol, database-migrations, Supabase and finish-task.
+Account writes remain disabled; no native staging/install or pending-work
+recovery is claimed. Description/JSONB NUL/raw-number/timezone representation
+gaps, native PKCE/secure storage/redirects, a restricted reachable endpoint,
+installed two-device/latency/recovery acceptance and Phase 4 remain open.
+Production deployment/migrations, releases and store publication remain unauthorized.

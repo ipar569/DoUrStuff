@@ -1,5 +1,13 @@
 # Operating costs and limits
 
+28 October local retention increment: bounded operator passes can now remove
+180-day logs/detailed receipts. Compact operation hashes and deletion identities,
+device watermarks, history and unresolved recovery still grow. This is not a
+bounded total-storage guarantee or a measured free-tier capacity claim. Automatic
+scheduling and storage/lock-duration measurements remain open; no paid dependency,
+cloud project, keepalive or hosted resource was added. Provider figures below
+retain their recorded review dates.
+
 Official sources were checked on 3 October 2026; recheck before provisioning or
 publishing. Phase 1 has no hosted backend or paid package.
 

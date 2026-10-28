@@ -1,6 +1,6 @@
 # Account command and recovery audit — 27 October 2026
 
-Updated 28 October after PR #16 merged at `b885fda4d09ad9f48cbf2528d427d2e84e03a1df`.
+Updated 28 October after PR #17 merged at `e4492f707cbd531e01068f7168c048792249fda2`.
 This audit compares `task_repository.dart`, the v2 command vocabulary, the
 forward migrations and the Phase 3 delivery plan. It does not authorize
 account writes or close the representation or installed-device gates.
@@ -14,7 +14,7 @@ account writes or close the representation or installed-device gates.
 | Views/preferences | atomic query, independent name, deletion, versioned default reference/clear | Native account projection; view restore is deliberately outside v2 vocabulary |
 | Status history | Migration 020 transports retained events via explicit history extension v1, including known/null original operations | Native history storage/projection and pending-safe installation |
 | Snapshot recovery | Fixed-revision begin/page for six shadow kinds, unresolved recovery and opt-in retained history | Durable client staging/install and pending-work reconciliation |
-| Retention/resolution | Watermarks/deletion identities retained; expiry failure contracts and recovery candidates exist | Scheduled 180-day log/receipt, 30-day deleted-content, 90-day resolved-conflict cleanup; explicit version-checked resolution RPC and lifecycle |
+| Retention/resolution | Migration 021 provides bounded operator-only 180-day log/receipt cleanup, compact operation identities and atomic cursor floor | Automatic scheduling, 30-day deleted-content and 90-day resolved-conflict cleanup; explicit version-checked resolution RPC and lifecycle |
 
 All **17** current v2 command names have server handlers. This is command-name
 coverage, not full Phase 2 semantic or representation parity. Guest v1 envelopes
@@ -61,12 +61,18 @@ the same revision while reusing an older capture.
 
 ## Earliest unfinished recovery work
 
-Next implement a bounded local server retention increment, starting with the
-180-day log/receipt cutoff under the account lock. Preserve device watermarks,
-deletion/operation identities, status history and unresolved candidates; prove
-expired-cursor bootstrap and missing-predecessor recovery at exact boundaries.
-Do not prune dependent canonical/history content to make storage appear smaller.
-Deleted-content and resolved-conflict cleanup must honor their separate policies
-and unresolved recovery, with explicit resolution and held-successor choices
-still required before pending-safe native recovery. Keep 3.1 partial and
+The bounded 180-day log/receipt increment is implemented locally in 021. Its
+operator runner commits one account batch at a time. Automatic scheduling and
+capacity/lock-duration measurements remain open. Exact cutoff, concurrent
+apply/pull/snapshot and predecessor recovery evidence belongs in the latest
+verification handoff and PR timeline.
+
+Next audit and implement bounded 30-day deleted-content cleanup: distinguish
+minimal permanent identities from purgeable shadow/ledger payloads, preserve
+retained status history and unresolved original candidates, and keep task restore
+fail-closed after expiry. Any changed snapshot representation must advance its
+revision or invalidate capture reuse consistently. Then implement version-checked
+explicit resolution and held-successor choices, followed by the 90-day resolved
+candidate policy. There is no resolved-candidate lifecycle to prune yet. Do not
+prune canonical/history content merely to reduce storage. Keep 3.1 partial and
 3.2–3.6, all external/native acceptance and Phase 4 open.
