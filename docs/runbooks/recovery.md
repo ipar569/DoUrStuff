@@ -1,5 +1,26 @@
 # Preservation and recovery
 
+28 October retention increment: migration 021 retains compact immutable
+account/device/sequence/operation identities before any detailed receipt expires.
+Only a contiguous expired log prefix advances the cursor floor, under the same
+account lock as apply/pull/snapshot. Exact 4320-hour boundaries use trusted server
+time after the lock. Retrying a pruned receipt cannot replay or reassign its ID;
+missing predecessor evidence requires recovery, never a guessed accepted base.
+Unresolved originals, history, deletion/restore ledgers and watermarks remain.
+Existing snapshot pages remain immutable; expired cursors bootstrap and resume
+after the captured R. Native pending-work installation is still unimplemented.
+
+Ignored pre-021 schema/data dumps are `.tools/backend-before-retention-{schema,data}.sql`.
+Rollback-only candidate and retained-data migration rehearsals passed; this is
+not a backup-restoration rehearsal. Preserve all 21 migrations and local volumes.
+Run the local maintenance command only for an explicitly selected local owner.
+Each batch commits independently. A server SQL error rolls back that batch;
+transport loss or a subprocess timeout leaves its outcome unconfirmed, so the
+runner reports uncertainty. Earlier confirmed batches remain committed and
+repeating the pass is safe. Never manually advance
+the floor past a gap or remove an identity to make cleanup pass. No deletion of
+canonical content, resolved candidates or account data is implemented here.
+
 28 October: history transport migration 020 preserves existing legacy captures
 and adds opt-in history-enabled captures. Original operation IDs remain stable;
 unknown older original envelopes remain null. The shared record count includes

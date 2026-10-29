@@ -1,5 +1,12 @@
 # Optional backend and controlled deployment
 
+28 October retention increment: forward migration 021 adds private operator-only
+180-day log/receipt cleanup and compact durable operation identities. The guarded
+local runner is documented in [supabase/README](../../supabase/README.md). It has
+no remote option and installs no recurring job. All twenty earlier migrations
+remain unchanged. Production execution, global scheduling and native accounts
+remain outside this increment; see the latest verification handoff for evidence.
+
 28 October: migration 020 adds versioned retained status-history transport to
 the existing pull/snapshot RPCs without changing v2 command identities or legacy
 download shapes. Explicit `history_version: 1` is required; all twenty migrations

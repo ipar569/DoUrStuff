@@ -261,6 +261,19 @@ durable watermark/deletion/history/recovery preservation, then remaining content
 retention and explicit resolution. See the latest verification handoff/PR timeline;
 all representation, external, native and Phase 4 gates remain open.
 
+28 October bounded retention increment: migration 021 adds operator-only
+180-day log/receipt cleanup with an atomic contiguous cursor floor and compact
+durable operation identities. The bounded local runner installs no schedule.
+Watermarks, history, every deletion/mutation ledger, unresolved originals and
+immutable snapshots survive. Exact boundary/concurrency/expired-cursor and
+missing-predecessor tests use synthetic local accounts. See the latest Phase 3
+verification handoff and this task's PR timeline for final results/review/merge.
+Next in 3.1: audit and implement bounded 30-day deleted-content cleanup while
+preserving minimal identities, retained history and unresolved candidates; then
+explicit version-checked resolution/held-successor choices and 90-day resolved
+cleanup. Automatic scheduling/measurement and all native/representation/external
+gates remain open. No account writes, production deployment or release enabled.
+
 ## Phase 4: recurrence, calendar and reminders
 
 Bounded deterministic generation/history; immutable future segments and offline

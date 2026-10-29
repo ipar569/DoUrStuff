@@ -1,5 +1,48 @@
 # Local backend — Phase 3.1 foundation
 
+## Bounded local retention (migration 021)
+
+All twenty prior migrations are preserved. The app remains guest-only. Run the
+sixteen backend suites sequentially, including:
+
+```powershell
+python tool/test_backend_retention.py --supabase .tools/supabase/supabase.exe --wire-output .tools/backend-retention-wire.json
+.tools/flutter/bin/dart.bat run tool/check_backend_wire.dart .tools/backend-retention-wire.json
+```
+
+The optional `--candidate` flag is only for a rollback-only rehearsal before 021
+is applied; omit it on the applied schema. Foundation rehearsals must not overlap
+other backend tests. The new suite creates and cleans up synthetic accounts only.
+
+Operator maintenance for one explicitly selected **local** account:
+
+```powershell
+python tool/run_backend_retention.py --owner <local-owner-uuid> --batch-size 200 --batches 1
+```
+
+This command checks the existing stack through `local_backend.py`; it never
+starts/recreates services or accepts a remote endpoint. Startup remains only
+`python tool/local_backend.py --start`. Each batch commits independently with a
+2-second lock timeout and 10-second statement timeout. Batch size is 1–1000
+whole revisions and up to that many receipts; passes are capped at 100 batches
+and stop early when neither stream deletes a row. Output is counts/cursor only.
+Transport failure or subprocess timeout reports an unconfirmed batch outcome,
+since COMMIT may have succeeded before acknowledgement was lost. Repeating the
+pass is safe; earlier confirmed batches remain committed.
+The private invoker function is executable by the database operator, not any API
+role. No automatic schedule is installed by this migration or runner.
+
+The 180-day cutoff is 4320 elapsed hours, inclusive at equality. A contiguous log
+prefix and its floor commit atomically under the account lock; nonmonotonic old
+timestamps cannot create holes. Compact immutable hashes are backfilled from
+available receipts and written with every future receipt. They prevent payload,
+operation-ID and sequence reassignment after pruning. No canonical content,
+history, watermarks, unresolved candidates, deletion/mutation ledgers or captures
+are pruned. Missing predecessor receipts require recovery; hashes are not field
+revision evidence. See the [contract](../docs/architecture/account-protocol-v2.md).
+
+## Earlier implementation record
+
 Initialized with CLI **2.120.0**, pinned in `../.supabase-version`. Configuration
 is for the synthetic `dourstuff-local` project only. No remote project is linked.
 Eighteen migrations now provide private account/device/log storage, RLS, restricted
