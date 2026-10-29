@@ -2525,3 +2525,79 @@ recovery is claimed. Description/JSONB NUL/raw-number/timezone representation
 gaps, native PKCE/secure storage/redirects, a restricted reachable endpoint,
 installed two-device/latency/recovery acceptance and Phase 4 remain open.
 Production deployment/migrations, releases and store publication remain unauthorized.
+
+### Deleted-content cleanup candidate — 29 October 2026
+
+Refreshed Git/GitHub and PR #18's final timeline: merge
+`b0b7f130109b3126158b587abc148d43b61027fc` is unchanged on remote main, with
+independently reviewed head `be5d9d74f97800f23f7459f402a993d83c2952f9` and the
+previously recorded 129 Flutter tests, 166 backend groups and 1,417 validated
+replies. Began clean branch `codex/phase-3-deleted-content-retention`.
+
+Candidate migration `20261029090000_deleted_content_retention.sql` (022) adds
+bounded operator-only 720-hour canonical/ledger compaction. Each call changes
+at most 200 shadows and 200 payload rows by default (maximum 1,000 each), under
+one account lock. Permanent entity/deletion/operation identities, history and
+unresolved originals remain. Each changed shadow receives a new log revision;
+frozen captures remain readable and pull continuation carries the compact state.
+Inherited milestone visibility preserves its own existence and parent. Nullable
+ledger originals require matching compact identity proof before removal. The
+local runner requires explicit `--policy deleted-content` and keeps uncertain
+commit-acknowledgement reporting, separate transactions and timeout bounds.
+
+This is not account erasure: existing logs/receipts, retained historical content
+and frozen captures retain their independent policies. SQLite stays v1, no
+native account guard changes, no dependency upgrades or scheduling. The official
+Supabase changelog and database-function guidance, pinned CLI 2.120.0 query/pull
+help and applicable skills were read. This is a forward SQL candidate preserving
+all 21 earlier migration files; no schema diff/startup that creates replacement
+containers was run.
+
+Checks completed:
+
+- Pinned `flutter pub get --enforce-lockfile`, `dart run build_runner build`,
+  `dart format --output=none --set-exit-if-changed lib test tool` (49 files,
+  no changes), `flutter analyze` (no issues, 33.9 seconds),
+  `flutter test --reporter expanded` (**129 passed**),
+  `dart run drift_dev schema dump lib/data/local/database.dart drift_schemas/drift_schema_v1.json`
+  and generated Dart/schema/lockfile diff all passed. Log:
+  `.tools/deleted-content-quality.log`.
+- `python tool/test_retention_runner.py`: **3 passed**; default log policy and
+  lost-ack/timeout behavior retained, explicit content-policy selection/empty
+  pass verified. `python tool/test_local_backend.py`: **3 passed**.
+  `python tool/test_backend_http.py`: **3 passed** after approved escalation.
+  Initial sandbox attempts blocked Flutter/CLI telemetry and loopback sockets;
+  the successful runs used ordinary authorized escalation.
+- `python -m py_compile tool/test_backend_deleted_content.py tool/run_backend_retention.py`
+  and `git diff --check` passed. Compilation is not PostgreSQL execution evidence.
+
+Blocked backend checks: `python tool/local_backend.py --start` failed before any
+container operation because Docker's Linux-engine pipe
+`//./pipe/dockerDesktopLinuxEngine` does not exist. Elevated `docker version`
+confirmed the same missing daemon, not a port-binding failure. The user was
+asked to start Docker Desktop. No service repair, container/volume replacement,
+reset, migration application or backend data change occurred. New real backend
+suite, rollback candidate/foundation rehearsals, pre-apply backups, advisors,
+22-ID migration comparison and all regression/wire checks remain unrun.
+
+### Next-session handoff — deleted-content candidate
+
+Refresh Git/GitHub and this task's PR timeline; preserve newer work. Reuse
+`codex/phase-3-deleted-content-retention` and its PR. Finish this candidate before
+starting another increment. Once Docker Desktop's engine is available, start
+only with `python tool/local_backend.py --start`; preserve all 21 applied
+migrations, containers, volumes and stopped backups. Save local pre-022 dumps,
+run the rollback-only content candidate and foundation migration rehearsal,
+address failures before applying the new forward migration, and never rewrite
+an applied migration. Run advisors, confirm migration IDs, all seventeen real
+backend suites sequentially, production Dart wire decoding and normalization
+parity. Complete independent review, applicable CI and guarded merge only after
+these required checks pass. Update this handoff and PR with actual evidence.
+
+Follow AGENTS.md and sync-protocol, database-migrations, Supabase and finish-task.
+Account writes remain disabled. All representation, external/native identity,
+staging/install, two-device/latency/recovery acceptance and Phase 4 gates remain
+open. Production deployment/migrations, releases and distribution remain
+unauthorized. After this increment, the next planned work is version-checked
+explicit resolution/held-successor choices, then 90-day resolved cleanup;
+automatic scheduling and capacity/lock measurements remain open.

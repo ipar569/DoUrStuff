@@ -1,5 +1,55 @@
 # Account protocol v2 — milestone 3.0
 
+## Bounded deleted-content retention — 29 October 2026
+
+Forward migration 022 adds private operator-only
+`sync_private.prune_deleted_content(owner, batch_size)`. It locks one account,
+then samples trusted time. Current deletions become eligible at **720 elapsed
+hours or greater**, independently of session timezone. An older deletion of a
+currently restored task is ineligible. Milestone content also expires when its
+parent's current deletion expires; its own existence and parent remain intact.
+
+Each call compacts at most 1–1000 shadows and at most that many operation payload
+rows **in total across all supported ledgers**, default 200 per budget. Task,
+tag and view shadows retain existence/revision and winning deletion ID. Milestones
+also retain their immutable parent and their own lifecycle state. Keys/rows are
+never deleted, so foreign keys, exact membership pairs, default preferences and
+stale identity rejection survive. Task restore requires retained core fields as
+well as the original deletion precondition and open window; cleanup cannot make
+an expired task restorable even if the server clock later moves backwards.
+
+Creation envelopes for deleted tags/views/milestones and operation envelopes in
+task deletion/restore, child/tag/view deletion and hidden membership ledgers are
+nullable after compaction. Implicit preference clears can drop their duplicate
+source view-delete envelope. Ledger IDs, revisions, times, relationships and
+minimal preference fields remain. Before removing an envelope, cleanup verifies
+or backfills its exact account/device/sequence/operation/hash identity using the
+retained original and device watermark. Inconsistent proof aborts the whole
+batch. No identity is guessed from an expired receipt or reconstructed payload.
+
+Every changed shadow is a complete minimal record in a new ordinary log revision;
+the account cursor, shadow and log commit together. Field revisions remain their
+original accepted revisions. A downloaded shadow replaces the accepted entity
+map; it is not a merge-patch that leaves omitted content behind. Existing captures
+stay immutable and readable until their normal expiry; begin after cleanup uses
+the advanced revision, and pull after an old capture includes compaction records.
+Payload-only batches do not change downloaded state or invalidate capture reuse.
+No v2 wire shape/version or history extension changes are needed.
+
+This policy is **canonical/ledger content cleanup, not account erasure**. Original
+unresolved candidates and retained status history remain byte-for-byte unchanged,
+including historical fields and known original envelopes. Existing logs/receipts
+retain their separate 180-day policy, and already captured pages retain their
+24-hour lifetime. Membership/preference state and explicit preference-set ledgers
+contain identity/value metadata and remain. The function does not shorten those
+policies, resolve a candidate, or rewrite a client's pending bases.
+
+The local runner requires explicit `--policy deleted-content`; its default stays
+log/receipt cleanup. It uses one transaction per batch, 2-second lock and 10-second
+statement timeouts, and no remote endpoint or scheduler. Row bounds do not claim
+measured scan/lock-duration bounds; capacity and scheduling remain open. SQLite
+stays v1, native staging remains unfinished, and account writes stay disabled.
+
 ## Bounded log/receipt retention — 28 October 2026
 
 Migration 021 implements the existing 180-day policy without changing v2 wire

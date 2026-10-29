@@ -10,6 +10,25 @@ from run_backend_retention import main
 
 
 class RetentionRunnerTests(unittest.TestCase):
+    def test_deleted_content_selects_policy_and_stops_on_empty_pass(self):
+        counts = dict(shadows_compacted=0, payloads_compacted=0, revision=42)
+        calls = []
+
+        def run(args, **kwargs):
+            calls.append((args, kwargs))
+            return subprocess.CompletedProcess(args, 0, json.dumps(counts), '')
+
+        output = io.StringIO()
+        with patch('sys.argv', ['retention', '--owner', '11111111-1111-4111-8111-111111111111',
+                               '--policy', 'deleted-content', '--batches', '3']), \
+                patch('run_backend_retention.subprocess.run', side_effect=run), redirect_stdout(output):
+            main()
+        self.assertEqual(len(calls), 2)
+        self.assertNotIn('--start', calls[0][0])
+        self.assertIn('sync_private.prune_deleted_content', calls[1][1]['input'])
+        self.assertIn("lock_timeout='2s'", calls[1][1]['input'])
+        self.assertEqual(json.loads(output.getvalue()), counts)
+
     def test_lost_commit_ack_preserves_prior_success_and_reports_unknown(self):
         counts = dict(logs_deleted=1, receipts_deleted=1, retained_after=1)
         calls = []
