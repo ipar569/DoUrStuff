@@ -1,11 +1,12 @@
 # Local backend — Phase 3.1 foundation
 
-## Deleted-content candidate (migration 022)
+## Deleted-content cleanup (migration 022)
 
-Preserve all 21 applied migrations and existing containers/volumes. Start only
-with `python tool/local_backend.py --start`. The current host's Docker Linux
-engine was unavailable when this candidate was written; consult the latest
-verification handoff before treating it as applied or tested.
+Preserve all 22 applied migrations and existing containers/volumes. Start only
+with `python tool/local_backend.py --start`. After the user started Docker Desktop,
+rollback rehearsals and local application passed, with matching migration IDs
+and no advisor findings. The new suite passed 12 groups/87 decoded replies;
+consult the latest verification handoff/PR for final regression and review status.
 
 The new real suite is `python tool/test_backend_deleted_content.py --supabase
 .tools/supabase/supabase.exe --wire-output .tools/backend-deleted-content-wire.json`,

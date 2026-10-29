@@ -14,7 +14,7 @@ account writes or close the representation or installed-device gates.
 | Views/preferences | atomic query, independent name, deletion, versioned default reference/clear | Native account projection; view restore is deliberately outside v2 vocabulary |
 | Status history | Migration 020 transports retained events via explicit history extension v1, including known/null original operations | Native history storage/projection and pending-safe installation |
 | Snapshot recovery | Fixed-revision begin/page for six shadow kinds, unresolved recovery and opt-in retained history | Durable client staging/install and pending-work reconciliation |
-| Retention/resolution | 021 provides bounded 180-day log/receipt cleanup; candidate 022 adds bounded 30-day canonical/ledger compaction with permanent identities and new download revisions | Verify/apply 022 and complete its PR; automatic scheduling, explicit version-checked resolution/held-successor choices and 90-day resolved cleanup |
+| Retention/resolution | 021 provides bounded 180-day log/receipt cleanup; 022 adds bounded 30-day canonical/ledger compaction with permanent identities and new download revisions | Complete 022 final regression/review/PR; automatic scheduling, explicit version-checked resolution/held-successor choices and 90-day resolved cleanup |
 
 All **17** current v2 command names have server handlers. This is command-name
 coverage, not full Phase 2 semantic or representation parity. Guest v1 envelopes
@@ -67,13 +67,13 @@ capacity/lock-duration measurements remain open. Exact cutoff, concurrent
 apply/pull/snapshot and predecessor recovery evidence belongs in the latest
 verification handoff and PR timeline.
 
-The 30-day cleanup candidate distinguishes minimal permanent identities from
+The locally applied 30-day cleanup distinguishes minimal permanent identities from
 purgeable shadow/ledger payloads, preserves retained status history and unresolved
 original candidates, and keeps task restore fail-closed after expiry. Changed
 shadows receive new log revisions; frozen captures survive and pull continuation
 delivers compaction. Logs/receipts, historical originals and immutable captures
-keep their independent retention policies; this is not account erasure. Complete
-its real-backend verification and PR workflow before calling it delivered.
+keep their independent retention policies; this is not account erasure. Its 12 new real-backend groups and 87 decoded replies pass; finish all
+regressions, final independent review and the PR workflow before merge.
 Then implement version-checked
 explicit resolution and held-successor choices, followed by the 90-day resolved
 candidate policy. There is no resolved-candidate lifecycle to prune yet. Do not

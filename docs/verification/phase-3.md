@@ -2614,3 +2614,53 @@ remain untouched. Review found no other concrete SQL/identity/restore/snapshot
 or authorization defect by inspection; this does not replace backend execution.
 The updated head requires re-review. GitHub connector PR creation returned 403;
 the authorized authenticated CLI successfully created draft PR #19 instead.
+
+### Deleted-content backend verification — 29 October 2026
+
+The user started Docker Desktop, resolving the missing-engine blocker above.
+Only `python tool/local_backend.py --start` started/verified the existing stack:
+nine pinned services, eight healthy checks and exact loopback bindings. All
+containers, volumes and stopped backups remain; no runtime repair was needed.
+Saved local pre-022 schema/data dumps at ignored
+`.tools/backend-before-deleted-content-{schema,data}.sql` using `pg_dump` in the
+existing DB container. Candidate cleanup/retained-data rollback passed, as did
+the eight-group foundation rehearsal including all 22 migrations. This does not
+constitute a backup-restoration rehearsal.
+
+Pinned `db advisors --local --type all --level warn --fail-on error` passed before
+and after `migration up --local --network-id dourstuff-local`, which applied only
+`20261029002956_deleted_content_retention.sql`. `migration list --local` matched
+all **22 IDs**. All 21 earlier migration files remain unchanged. No remote or
+production target was used. Never edit 022 now that it is applied.
+
+`python tool/test_backend_deleted_content.py --supabase .tools/supabase/supabase.exe
+--wire-output .tools/backend-deleted-content-wire.json`: **12 integration groups
+passed**. Exact microsecond/DST cutoff, pre/post-expiry restore and backward-clock
+fail-closed behavior, fixed old/new captures and continuation, 205-entity multiple
+pages/batches, payload-only reuse, all ledger kinds and inherited child visibility,
+legacy identity proof/reuse, corruption and injected rollback, both lock orders,
+expiry during a reader lock, private/RLS/REST boundaries and the local runner passed.
+`dart run tool/check_backend_wire.dart .tools/backend-deleted-content-wire.json`:
+**87 real replies passed** production decoding/correlation. Logs/captures are
+ignored `.tools/backend-deleted-content*`. No SQL changes were needed after apply.
+
+All sixteen previous backend suites are running sequentially on 022, followed
+by normalization parity; logs/captures are `.tools/backend-<suite>-content*` and
+aggregate `.tools/backend-content-regressions.log`. Report final totals in PR #19.
+Current code head `59a84c7fc33721e5161fc60924421003aa007342` passed hosted Quality,
+Android and Windows checks. These native builds do not close installed acceptance.
+
+The initial independent review's P2 is fixed, but re-review could not run: the
+review agent reported a usage limit. Updated-head independent review remains a
+required merge gate. Do not substitute passing tests or the earlier review for
+that review. Final docs/head/check/review results belong in PR #19's timeline.
+
+Updated continuation: refresh Git/GitHub and preserve newer work; reuse PR #19
+and `codex/phase-3-deleted-content-retention`. Preserve all **22 applied migrations**
+and the existing stack; use only the guarded starter if needed. Complete any
+remaining sequential regressions/normalization, obtain final independent review
+when available, check final-head CI and merge with expected-head protection.
+Do not rerun candidate mode or reapply/rewrite 022. Keep account writes disabled,
+all representation/external/native/Phase 4 gates open, and production/release
+execution unauthorized. Next planned increment after this PR is explicit
+version-checked resolution and held-successor choices, then 90-day resolved cleanup.

@@ -1,6 +1,6 @@
 # Preservation and recovery
 
-29 October deleted-content candidate: migration 022 compacts expired canonical
+29 October local deleted-content implementation: migration 022 compacts expired canonical
 task/tag/view/milestone content (including children of expired deleted tasks)
 after 720 elapsed hours. Permanent entity/lifecycle/operation identities, exact
 relationships, retained history and unresolved originals survive. New complete
@@ -16,7 +16,9 @@ uses lock/statement timeouts. Transport failure leaves the current outcome
 unconfirmed; retry safely. No API role can run the private maintenance functions.
 Keep all earlier migrations, containers, volumes and stopped backups; start only
 with `python tool/local_backend.py --start`. See the latest verification handoff
-for actual apply/test status before running candidate migration commands.
+for actual apply/test status. Migration 022 is now locally applied; never rewrite
+it. Pre-apply schema/data dumps are `.tools/backend-before-deleted-content-{schema,data}.sql`;
+rollback-only rehearsal is not backup-restoration acceptance.
 
 28 October retention increment: migration 021 retains compact immutable
 account/device/sequence/operation identities before any detailed receipt expires.
