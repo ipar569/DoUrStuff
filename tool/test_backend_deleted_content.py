@@ -23,7 +23,7 @@ from test_backend_snapshots import begin as legacy_begin, page as legacy_page
 from test_backend_retention import durable, wait_for_sleep
 
 ROOT = Path(__file__).resolve().parents[1]
-MIGRATION = ROOT / 'supabase/migrations/20261029090000_deleted_content_retention.sql'
+MIGRATION = ROOT / 'supabase/migrations/20261029002956_deleted_content_retention.sql'
 
 
 def prune(f, size=200):
@@ -133,6 +133,33 @@ def main():
         check('fixed captures, new revision/reuse, pull continuation and exact history/candidate/watermark preservation')
 
         f = TaskFixture(backend, epoch)
+        ops = []
+        for index in range(205):
+            task_id = uid(); sequence = index * 2 + 1
+            remove = deletion(f, sequence + 1, observed(sequence, True))
+            remove['entity']['key'] = [task_id]
+            ops.extend((f.create(sequence, task=task_id), remove))
+        for start in range(0, len(ops), 32):
+            f.apply(*ops[start:start + 32])
+        age(f); capture = begin(f)
+        frozen = [page(f, capture, n) for n in range(capture['page_count'])]
+        require(len(frozen) > 1, 'Real multipage capture')
+        for expected in (100, 100, 5):
+            require(prune(f, 100)['shadows_compacted'] == expected, 'Bounded multi-page cleanup')
+        require([page(f, capture, n) for n in reversed(range(capture['page_count']))] == list(reversed(frozen)),
+                'Interrupted reverse reads preserve original pages')
+        current = begin(f); cleaned = [page(f, current, n) for n in range(current['page_count'])]
+        records = [r for p in cleaned for r in p['records']]
+        require(len(records) == 205 and all(set(r['fields']) == {'existence'} for r in records), 'All minimal identities captured')
+        require([h for p in cleaned for h in p['history']] == [h for p in frozen for h in p['history']], 'Multipage history unchanged')
+        first = pull(f, capture['at']['revision'])['result']
+        second = pull(f, first['through']['revision'])['result']
+        require(first['has_more'] and not second['has_more'] and
+                sum(len(g['records']) for g in first['groups'] + second['groups']) == 205,
+                'All cleanup revisions resume over multiple pull pages')
+        check('205 deleted entities across bounded batches, frozen reverse-page reads and paginated pull continuation')
+
+        f = TaskFixture(backend, epoch)
         child = milestone(f, 2); label = tag(f, 3); saved = view(f, 5)
         f.apply(f.create(), child, label, membership(f, label, 4), saved,
                 preference(f, 6, saved['entity']['key'][0]))
@@ -143,9 +170,15 @@ def main():
         age(f)
         snapshots = {t: rows(f, t) for t in ('membership_shadow', 'preference_shadow', 'task_status_history', 'device_state')}
         counts = []
+        payload_capture = None
         for _ in range(30):
             result = prune(f, 1); counts.append(result)
             require(result['shadows_compacted'] <= 1 and result['payloads_compacted'] <= 1, 'Shared row budgets')
+            if not result['shadows_compacted'] and result['payloads_compacted']:
+                if payload_capture is None:
+                    payload_capture = begin(f)
+                else:
+                    require(begin(f) == payload_capture, 'Payload-only passes preserve revision and capture reuse')
             if not result['shadows_compacted'] and not result['payloads_compacted']:
                 break
         else:
@@ -192,7 +225,11 @@ def main():
                 require(f.apply(bad)['code'] == 'payloadMismatch' and state(f) == before, 'Compacted identity cannot be reassigned')
         require(f.apply(label)['result']['results'][0]['kind'] == 'already_processed', 'Exact old retry reconciles')
         recreate = deepcopy(label); recreate['operation_id'] = uid(); recreate['sequence'] = 4
-        require(f.apply(recreate)['result']['results'][0]['disposition'] == 'rejected', 'Deleted UUID cannot be recreated')
+        tombstone = rows(f, 'tag_shadow')
+        require(f.apply(recreate)['result']['results'][0]['disposition'] == 'conflict' and
+                rows(f, 'tag_shadow') == tombstone and
+                any(r['record']['operation'] == recreate for r in rows(f, 'recovery_candidates')),
+                'Deleted UUID stays deleted and attempted recreation remains recoverable')
         check('legacy identity backfill, payload/sequence/device mismatch, old retries and permanent entity keys')
 
         f, _ = gone(backend, epoch); age(f)

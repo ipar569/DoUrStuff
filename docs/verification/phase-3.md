@@ -2534,7 +2534,7 @@ independently reviewed head `be5d9d74f97800f23f7459f402a993d83c2952f9` and the
 previously recorded 129 Flutter tests, 166 backend groups and 1,417 validated
 replies. Began clean branch `codex/phase-3-deleted-content-retention`.
 
-Candidate migration `20261029090000_deleted_content_retention.sql` (022) adds
+Candidate migration `20261029002956_deleted_content_retention.sql` (022) adds
 bounded operator-only 720-hour canonical/ledger compaction. Each call changes
 at most 200 shadows and 200 payload rows by default (maximum 1,000 each), under
 one account lock. Permanent entity/deletion/operation identities, history and
@@ -2601,3 +2601,16 @@ open. Production deployment/migrations, releases and distribution remain
 unauthorized. After this increment, the next planned work is version-checked
 explicit resolution/held-successor choices, then 90-day resolved cleanup;
 automatic scheduling and capacity/lock measurements remain open.
+
+PR #19 is open as a draft. Independent review of initial head
+`dac54176599dcf5450cd2191a033c706d5d207f8` found one P2 test assertion: a valid
+create against a deleted tag UUID returns a recoverable conflict, not a rejection.
+The assertion now checks conflict, unchanged tombstone and retained original.
+Additional pending backend coverage exercises 205 deleted entities across
+multiple snapshot/pull pages and payload-only capture reuse. The un-applied
+candidate filename was generated with pinned `supabase migration new
+ deleted_content_retention`; SQL content is unchanged and all 21 applied files
+remain untouched. Review found no other concrete SQL/identity/restore/snapshot
+or authorization defect by inspection; this does not replace backend execution.
+The updated head requires re-review. GitHub connector PR creation returned 403;
+the authorized authenticated CLI successfully created draft PR #19 instead.
