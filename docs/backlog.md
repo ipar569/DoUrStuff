@@ -274,6 +274,17 @@ explicit version-checked resolution/held-successor choices and 90-day resolved
 cleanup. Automatic scheduling/measurement and all native/representation/external
 gates remain open. No account writes, production deployment or release enabled.
 
+29 October deleted-content work in progress: applied local migration 022 adds bounded
+720-hour canonical/ledger compaction with permanent keys and compact operation
+proofs. History/unresolved originals stay intact, restore fails closed and new
+log revisions keep snapshot continuation consistent. The local runner selects
+this policy explicitly. All 21 earlier migrations remain unchanged. After the user started Docker,
+rollback rehearsals, local apply, matching 22 IDs and clean advisors passed. The
+new suite passes 12 groups and 87 production-decoded replies. Finish this
+increment's full regressions/final review/PR before explicit resolution and held-successor choices,
+then 90-day resolved cleanup. See the latest verification handoff. Account writes,
+representation/external/native acceptance and production/release gates stay open.
+
 ## Phase 4: recurrence, calendar and reminders
 
 Bounded deterministic generation/history; immutable future segments and offline

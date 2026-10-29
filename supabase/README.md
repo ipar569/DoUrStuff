@@ -1,5 +1,28 @@
 # Local backend — Phase 3.1 foundation
 
+## Deleted-content cleanup (migration 022)
+
+Preserve all 22 applied migrations and existing containers/volumes. Start only
+with `python tool/local_backend.py --start`. After the user started Docker Desktop,
+rollback rehearsals and local application passed, with matching migration IDs
+and no advisor findings. The new suite passed 12 groups/87 decoded replies;
+consult the latest verification handoff/PR for final regression and review status.
+
+The new real suite is `python tool/test_backend_deleted_content.py --supabase
+.tools/supabase/supabase.exe --wire-output .tools/backend-deleted-content-wire.json`,
+followed by `dart run tool/check_backend_wire.dart .tools/backend-deleted-content-wire.json`.
+Use `--candidate` only before applying 022 for rollback-only retained-data checks.
+Run all seventeen suites sequentially; the foundation schema rehearsal must not
+overlap another suite. Never reset the database to run tests.
+
+Maintenance is explicit: `python tool/run_backend_retention.py --owner <local-uuid>
+--policy deleted-content --batch-size 200 --batches 1`. It compacts current
+720-hour-old deleted shadows and bounded ledger payloads, preserving permanent
+identities, history and unresolved candidates. Old snapshots are immutable;
+new log revisions carry compaction. The policy does not erase separately retained
+logs/receipts/history/captures. No schedule, remote target or native account
+activation is introduced. See the [protocol](../docs/architecture/account-protocol-v2.md).
+
 ## Bounded local retention (migration 021)
 
 All twenty prior migrations are preserved. The app remains guest-only. Run the

@@ -1,5 +1,25 @@
 # Preservation and recovery
 
+29 October local deleted-content implementation: migration 022 compacts expired canonical
+task/tag/view/milestone content (including children of expired deleted tasks)
+after 720 elapsed hours. Permanent entity/lifecycle/operation identities, exact
+relationships, retained history and unresolved originals survive. New complete
+minimal shadows receive new log revisions; frozen snapshots remain valid and
+pull continuation carries cleanup. Logs/receipts and retained historical originals
+are separate policies, so this operation is not account erasure.
+
+Select a synthetic or explicitly intended **local** owner and run:
+`python tool/run_backend_retention.py --owner <uuid> --policy deleted-content
+--batch-size 200 --batches 1`. Defaults remain log/receipt maintenance. Each batch
+has separate shadow and shared payload-row budgets, commits independently and
+uses lock/statement timeouts. Transport failure leaves the current outcome
+unconfirmed; retry safely. No API role can run the private maintenance functions.
+Keep all earlier migrations, containers, volumes and stopped backups; start only
+with `python tool/local_backend.py --start`. See the latest verification handoff
+for actual apply/test status. Migration 022 is now locally applied; never rewrite
+it. Pre-apply schema/data dumps are `.tools/backend-before-deleted-content-{schema,data}.sql`;
+rollback-only rehearsal is not backup-restoration acceptance.
+
 28 October retention increment: migration 021 retains compact immutable
 account/device/sequence/operation identities before any detailed receipt expires.
 Only a contiguous expired log prefix advances the cursor floor, under the same

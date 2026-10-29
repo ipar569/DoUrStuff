@@ -1,6 +1,6 @@
 # Account command and recovery audit — 27 October 2026
 
-Updated 28 October after PR #17 merged at `e4492f707cbd531e01068f7168c048792249fda2`.
+Updated 29 October after PR #18 merged at `b0b7f130109b3126158b587abc148d43b61027fc`.
 This audit compares `task_repository.dart`, the v2 command vocabulary, the
 forward migrations and the Phase 3 delivery plan. It does not authorize
 account writes or close the representation or installed-device gates.
@@ -14,7 +14,7 @@ account writes or close the representation or installed-device gates.
 | Views/preferences | atomic query, independent name, deletion, versioned default reference/clear | Native account projection; view restore is deliberately outside v2 vocabulary |
 | Status history | Migration 020 transports retained events via explicit history extension v1, including known/null original operations | Native history storage/projection and pending-safe installation |
 | Snapshot recovery | Fixed-revision begin/page for six shadow kinds, unresolved recovery and opt-in retained history | Durable client staging/install and pending-work reconciliation |
-| Retention/resolution | Migration 021 provides bounded operator-only 180-day log/receipt cleanup, compact operation identities and atomic cursor floor | Automatic scheduling, 30-day deleted-content and 90-day resolved-conflict cleanup; explicit version-checked resolution RPC and lifecycle |
+| Retention/resolution | 021 provides bounded 180-day log/receipt cleanup; 022 adds bounded 30-day canonical/ledger compaction with permanent identities and new download revisions | Complete 022 final regression/review/PR; automatic scheduling, explicit version-checked resolution/held-successor choices and 90-day resolved cleanup |
 
 All **17** current v2 command names have server handlers. This is command-name
 coverage, not full Phase 2 semantic or representation parity. Guest v1 envelopes
@@ -67,11 +67,14 @@ capacity/lock-duration measurements remain open. Exact cutoff, concurrent
 apply/pull/snapshot and predecessor recovery evidence belongs in the latest
 verification handoff and PR timeline.
 
-Next audit and implement bounded 30-day deleted-content cleanup: distinguish
-minimal permanent identities from purgeable shadow/ledger payloads, preserve
-retained status history and unresolved original candidates, and keep task restore
-fail-closed after expiry. Any changed snapshot representation must advance its
-revision or invalidate capture reuse consistently. Then implement version-checked
+The locally applied 30-day cleanup distinguishes minimal permanent identities from
+purgeable shadow/ledger payloads, preserves retained status history and unresolved
+original candidates, and keeps task restore fail-closed after expiry. Changed
+shadows receive new log revisions; frozen captures survive and pull continuation
+delivers compaction. Logs/receipts, historical originals and immutable captures
+keep their independent retention policies; this is not account erasure. Its 12 new real-backend groups and 87 decoded replies pass; finish all
+regressions, final independent review and the PR workflow before merge.
+Then implement version-checked
 explicit resolution and held-successor choices, followed by the 90-day resolved
 candidate policy. There is no resolved-candidate lifecycle to prune yet. Do not
 prune canonical/history content merely to reduce storage. Keep 3.1 partial and
