@@ -294,6 +294,11 @@ Next: bounded 90-day resolved-content cleanup with permanent identity/retry
 proof; compound create/copy repair and native recovery/export UX remain account
 activation gates. Scheduling/measurement, representation/external/native gates
 and Phase 4 remain open. No account write guard or production/release change.
+31 October independent review identified a retained-resolution response carrying
+an old server epoch after snapshot refresh. Forward migration 024 corrects the
+reply while preserving the original decision; real rollback-only epoch tests
+and production Dart correlation cover it. The earlier 23 migrations remain
+unchanged. See PR20's final timeline for corrected-head review and merge evidence.
 
 ## Phase 4: recurrence, calendar and reminders
 

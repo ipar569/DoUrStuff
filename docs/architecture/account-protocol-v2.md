@@ -32,6 +32,14 @@ decision or previously used operation identity is rejected. An original
 conflicted/held operation still retries as its original outcome, not as the
 resolution. Late successors of it still remain held.
 
+Forward migration 024 corrects retained resolution replies after a server epoch
+change: the response keeps the original closure revision and decision but carries
+the current server epoch, just like retained apply receipts. The stored decision
+remains unchanged. An old-epoch request still returns `serverEpochChanged` before
+any retry lookup; after snapshot refresh, production correlation accepts the
+current-epoch response. The epoch regression changes only synthetic state inside
+a rollback-only transaction.
+
 Downloads opt into both `history_version: 1` and `resolution_version: 1`.
 Pull groups and fixed snapshot pages add compact `resolutions` lists alongside
 unchanged original recovery records. Clients subtract closed IDs when projecting

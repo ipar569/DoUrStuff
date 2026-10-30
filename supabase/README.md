@@ -201,6 +201,10 @@ The suite's `--candidate` is only for rollback rehearsal before applying 023;
 never rerun it on an applied schema. All eighteen backend suites run sequentially
 when the foundation schema rehearsal is included. Preserve the existing stack,
 all applied migrations and original candidates; account writes remain gated.
+Migration 024 fixes retained retry response epochs without rewriting 023. The
+same suite includes the rollback-only epoch-change regression; `--epoch-only`
+runs that focused case. `--epoch-candidate` is only for pre-024 rollback rehearsal,
+never for the already-applied schema. Both migration files must remain unchanged.
 
 ## Migration and test scope
 

@@ -1,6 +1,6 @@
 # Phase 3 verification
 
-## Current handoff — explicit recovery, 30 October 2026
+## Current handoff — explicit recovery, 31 October 2026
 
 Refreshed Git/GitHub from PR19 merge
 `0818f539d6bada38bdbf685e5658ac090c99f1db`, with a clean checkout. Its final
@@ -37,13 +37,46 @@ run passed 41 tests. Initial analysis found missing braces; an initial test
 assertion omitted extension failures; a subsequent format check found the
 updated assertion unformatted. These were corrected before the successful suite.
 
-The new suite's first ten groups passed, including 205 closures across snapshot
+The new suite's final **12 groups and 68 production-decoded replies** passed,
+including 205 closures across snapshot
 pages, whole-revision pull, missing collided-tag/held-membership discard,
 concurrent resolutions, stale field/delete/held previews, exact retries through
 receipt expiry, injected rollback, locks, ownership and legacy token binding.
-Final strict-version cases, production Dart decoding, all seventeen existing
-backend suites/normalization and independent review/CI are pending at this
-checkpoint. See this task's final PR timeline for later exact-head evidence.
+All seventeen previous backend suites also passed sequentially: **178 groups
+and 1,504 decoded replies**, plus 1,399 normalization cases covering all 1,112,063
+PostgreSQL-representable scalars, 23 name cases and 26 whitespace boundaries.
+Combined coverage is **190 backend groups and 1,572 replies** (existing regressions
+on 023; final 12-group recovery suite on 024). Logs are
+`.tools/backend-resolution-regressions.log`, `.tools/backend-resolution-final.log`
+and corresponding wire JSON files. `python tool/test_retention_runner.py` passed
+three tests. No failed or cancelled suite is included in these totals.
+
+PR20 initial head `3821c1a05ceb298b68db284e04160a086e472ba1` passed hosted Quality
+run `40996081797` and Native builds `40996081895`. Its first independent review
+attempt and a local Windows build request hit a usage limit; the user resumed on
+31 October. Independent review then found one P2: a retained resolution replay
+returned an old server epoch after a current-epoch snapshot refresh, so production
+reply correlation rejected it. A synthetic rollback-only reproduction confirmed
+the bug. Forward migration `20261030231250_recovery_retry_epoch.sql` (024) changes
+only the retry reply's epoch, preserving the original decision and revision.
+Applied 023 is unchanged. The corrected rollback-only epoch regression passes
+production Dart correlation. The full 12-group suite then passed on applied 024.
+Pre-024 dumps are `.tools/backend-before-resolution-epoch-{schema,data}.sql`;
+the eight-group foundation retained-data rehearsal including all 24 migrations
+passed before apply. All **24 migration IDs** match and post-apply advisors are
+clean. No earlier migration, container or volume changed.
+
+Local native compilation: `flutter build windows --release` passed in 63.3s.
+`flutter build apk --debug` failed because Flutter selected Android Studio's
+Java 11, including after a process JAVA_HOME override. The documented project-only
+fallback `$env:JAVA_HOME='D:/Projects/DoUrStuff/.tools/jdk/jdk-21.0.12.1+1';
+android/gradlew.bat -p android assembleDebug -Ptarget-platform=android-arm64
+--no-daemon` passed in 56s with existing Gradle deprecation warnings. No global
+Flutter/Java setting changed. Builds do not close installed-device acceptance.
+
+Corrected-head independent re-review and final-head hosted checks remain required
+before the guarded merge. See [PR20's final timeline](https://github.com/ipar569/DoUrStuff/pull/20)
+for the reviewed SHA, finding disposition, check runs and verified merge commit.
 
 The server lifecycle preserves all resolved originals; 90-day cleanup is not
 implemented. Next after this increment: design bounded resolved-candidate and
@@ -55,11 +88,11 @@ stays v1 and account writes remain disabled. Production deployment/migrations,
 releases and distribution remain unauthorized.
 
 Resume by refreshing Git/GitHub and preserving newer work, reusing this branch/PR
-until its review/checks/guarded merge finish. Read AGENTS.md, delivery plan,
+until PR20's review/checks/guarded merge finish. Read AGENTS.md, delivery plan,
 backlog, recovery audit and current PR timeline; follow sync-protocol,
 database-migrations, Supabase and finish-task. Preserve all applied migrations
-and the existing stack; use only the guarded starter. Do not run candidate mode
-against already-applied 023.
+and the existing stack; use only the guarded starter. Do not run candidate modes
+against already-applied 023 or 024.
 
 Status: milestone **3.0 local readiness passed; 3.1 in progress**, reviewed
 26 October 2026. The user accepted

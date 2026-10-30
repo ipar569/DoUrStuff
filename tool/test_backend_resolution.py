@@ -18,6 +18,7 @@ from test_backend_memberships import membership
 
 ROOT = Path(__file__).resolve().parents[1]
 MIGRATION = ROOT / 'supabase/migrations/20261030025201_explicit_conflict_resolution.sql'
+EPOCH_MIGRATION = ROOT / 'supabase/migrations/20261030231250_recovery_retry_epoch.sql'
 
 
 def candidates(f):
@@ -76,11 +77,33 @@ def pull(f, after=0, limit=200):
                               after=dict(server_epoch=f.epoch, revision=after), limit=limit))
 
 
+def epoch_retry(backend, epoch, candidate=False):
+    f, _ = seed(backend, epoch, False)
+    q = request(f, candidates(f)[0], 4)
+    accepted = resolve(f, q); before = state(f)
+    refreshed = deepcopy(q); refreshed['cursor']['server_epoch'] = uid()
+    source = ('begin;\n' + (EPOCH_MIGRATION.read_text(encoding='utf-8') if candidate else '') +
+              f"update sync_private.backend_state set server_epoch='{refreshed['cursor']['server_epoch']}'; "
+              f"set local role authenticated; select set_config('request.jwt.claim.sub','{f.owner}',true) is not null; "
+              f"select public.sync_resolve_recovery({literal(json.dumps(q))}::jsonb); "
+              f"select public.sync_resolve_recovery({literal(json.dumps(refreshed))}::jsonb); rollback;")
+    replies = [json.loads(line) for line in sql(source).splitlines()[1:]]
+    expected = deepcopy(accepted)
+    expected['result']['cursor']['server_epoch'] = refreshed['cursor']['server_epoch']
+    require(replies[0]['code'] == 'serverEpochChanged' and replies[1] == expected,
+            'Retained decision uses current epoch and original revision')
+    require(state(f) == before and sql('select server_epoch from sync_private.backend_state;') == epoch,
+            'Epoch, retained decisions, candidates and every mutation roll back unchanged')
+    backend.wire.append(dict(rpc='resolve_recovery', request=refreshed, reply=replies[1]))
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--supabase', default='supabase')
     parser.add_argument('--wire-output', type=Path)
     parser.add_argument('--candidate', action='store_true')
+    parser.add_argument('--epoch-candidate', action='store_true')
+    parser.add_argument('--epoch-only', action='store_true')
     args = parser.parse_args()
     subprocess.run([sys.executable, str(ROOT / 'tool/local_backend.py')], check=True)
     backend = Backend(args.supabase)
@@ -91,6 +114,10 @@ def main():
         passed += 1
         print('PASS: ' + label, flush=True)
     try:
+        if args.epoch_candidate or args.epoch_only:
+            epoch_retry(backend, epoch, candidate=args.epoch_candidate)
+            check('retained resolution retries correlate after rollback-only server epoch change')
+            return
         if args.candidate:
             f, _ = seed(backend, epoch)
             cs = candidates(f); q = request(f, cs[0], 6, 'chosen', [(c, 'keepHeld') for c in cs[1:]])
@@ -254,6 +281,8 @@ def main():
         require(resolve(f, reused)['code'] == 'payloadMismatch' and state(f) == before, 'Cannot reassign original identity to discard')
         require(resolve(f, q)['status'] == 'success', 'Preflight leaves sequence available')
         check('strict extension versions, malformed choices and immutable original operation identities')
+        epoch_retry(backend, epoch)
+        check('retained resolution retries correlate after rollback-only server epoch change')
         print(f'{passed} recovery integration groups passed.', flush=True)
     finally:
         if args.wire_output:
