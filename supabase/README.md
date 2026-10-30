@@ -189,6 +189,19 @@ the pinned native policy across all scalars and preserve malformed guest strings
 Migration 015 uses this name validator for tag creation/edit/deletion. Memberships
 still require atomic dependency, identity, RLS and transaction tests before enablement.
 
+## Explicit recovery verification
+
+Recovery v1 adds `sync_resolve_recovery` plus opt-in `resolution_version: 1`
+alongside `history_version: 1` downloads. See the protocol contract for exact
+preview/held-choice and immutable retry semantics. Run
+`python tool/test_backend_resolution.py --supabase .tools/supabase/supabase.exe
+--wire-output .tools/backend-resolution-wire.json`, followed by
+`dart run tool/check_backend_wire.dart .tools/backend-resolution-wire.json`.
+The suite's `--candidate` is only for rollback rehearsal before applying 023;
+never rerun it on an applied schema. All eighteen backend suites run sequentially
+when the foundation schema rehearsal is included. Preserve the existing stack,
+all applied migrations and original candidates; account writes remain gated.
+
 ## Migration and test scope
 
 Apply future migrations only with `supabase migration up --local`; never use

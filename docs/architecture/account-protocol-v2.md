@@ -1,5 +1,56 @@
 # Account protocol v2 — milestone 3.0
 
+## Explicit recovery extension v1 — 30 October 2026
+
+`sync_resolve_recovery` is the implemented, negotiated successor to the earlier
+unimplemented `ResolveConflictRequest` sketch. Its `resolution_version: 1`
+request includes the account cursor, a fresh device/sequence/operation identity,
+candidate ID and expected original revision, the complete `observed_fields`
+shadow (null for an absent entity), a `replace` or `discard` choice, and an exact
+preview of all unresolved transitive held descendants. Each descendant must
+explicitly choose `keepHeld` or `discard`; at most 199 descendants accompany the
+selected candidate. Resolve leaves separately when a preview exceeds that bound.
+
+Under the account lock, any changed shadow, candidate closure or held descendant
+set returns `recoveryChanged` without consuming a sequence. `replace` supplies a
+new ordinary operation for exactly the selected entity/group, with an observed
+current base (or true absence), no predecessor base and no dependencies. Existing
+command validation, relationship/deletion/restore policies still apply. An
+unaccepted replacement rolls back entirely and returns `replacementRejected`.
+Choosing the canonical value also requires the exact observed base. `discard`
+closes recovery without changing the entity, consuming one new sequence and log
+revision. A held value can be selected later only through its own fresh request.
+Nothing releases successors or aliases entity identities automatically.
+
+Private append-only `resolution_requests` and `recovery_resolutions` preserve
+the exact decision and closure facts. The original recovery envelope, base,
+canonical alternative and original receipt are never rewritten. One revision
+commits replacement/history/receipt (where applicable), watermarks and all
+closures. Retries bind every decision field except the transport cursor and
+return the original result even after ordinary log/receipt expiry; a changed
+decision or previously used operation identity is rejected. An original
+conflicted/held operation still retries as its original outcome, not as the
+resolution. Late successors of it still remain held.
+
+Downloads opt into both `history_version: 1` and `resolution_version: 1`.
+Pull groups and fixed snapshot pages add compact `resolutions` lists alongside
+unchanged original recovery records. Clients subtract closed IDs when projecting
+pending recovery, while retaining the originals for recovery/export. Resolution
+facts count toward snapshot counts, page sizes and storage limits. Captures bind
+both extension versions; old captures stay frozen, and pull after R transports
+closures atomically. Legacy shapes remain unchanged and conservatively include
+original candidates; account activation requires the negotiated lifecycle.
+
+This is a server/domain increment, not native recovery UI or account activation.
+Copy-as-new, compound create repair/UUID mapping, native staging/projection and
+the 90-day resolved-content cleanup remain later work. Single-group replacement
+cannot recreate an absent multi-field entity; explicit discard is available but
+must not be offered as the only recovery/export UX. No original is pruned here.
+
+Supabase's [database-function guidance](https://supabase.com/docs/guides/database/functions)
+and changelog were checked; existing restricted RPC ownership, fixed search
+paths, private tables and owner RLS are retained.
+
 ## Bounded deleted-content retention — 29 October 2026
 
 Forward migration 022 adds private operator-only

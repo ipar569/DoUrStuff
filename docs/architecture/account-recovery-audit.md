@@ -1,6 +1,6 @@
 # Account command and recovery audit — 27 October 2026
 
-Updated 29 October after PR #18 merged at `b0b7f130109b3126158b587abc148d43b61027fc`.
+Updated 30 October after PR #19 merged at `0818f539d6bada38bdbf685e5658ac090c99f1db`.
 This audit compares `task_repository.dart`, the v2 command vocabulary, the
 forward migrations and the Phase 3 delivery plan. It does not authorize
 account writes or close the representation or installed-device gates.
@@ -14,7 +14,7 @@ account writes or close the representation or installed-device gates.
 | Views/preferences | atomic query, independent name, deletion, versioned default reference/clear | Native account projection; view restore is deliberately outside v2 vocabulary |
 | Status history | Migration 020 transports retained events via explicit history extension v1, including known/null original operations | Native history storage/projection and pending-safe installation |
 | Snapshot recovery | Fixed-revision begin/page for six shadow kinds, unresolved recovery and opt-in retained history | Durable client staging/install and pending-work reconciliation |
-| Retention/resolution | 021 provides bounded 180-day log/receipt cleanup; 022 adds bounded 30-day canonical/ledger compaction with permanent identities and new download revisions | Complete 022 final regression/review/PR; automatic scheduling, explicit version-checked resolution/held-successor choices and 90-day resolved cleanup |
+| Retention/resolution | 021–022 provide bounded log/receipt/deleted-content cleanup; recovery v1 adds version-checked single-group replacement/discard, explicit transitive held choices and snapshot/pull closure facts | Finish current review/checks; compound create/copy repair, native recovery UX, 90-day resolved cleanup and automatic scheduling/measurement |
 
 All **17** current v2 command names have server handlers. This is command-name
 coverage, not full Phase 2 semantic or representation parity. Guest v1 envelopes
@@ -72,10 +72,12 @@ purgeable shadow/ledger payloads, preserves retained status history and unresolv
 original candidates, and keeps task restore fail-closed after expiry. Changed
 shadows receive new log revisions; frozen captures survive and pull continuation
 delivers compaction. Logs/receipts, historical originals and immutable captures
-keep their independent retention policies; this is not account erasure. Its 12 new real-backend groups and 87 decoded replies pass; finish all
-regressions, final independent review and the PR workflow before merge.
-Then implement version-checked
-explicit resolution and held-successor choices, followed by the 90-day resolved
-candidate policy. There is no resolved-candidate lifecycle to prune yet. Do not
+keep their independent retention policies; this is not account erasure. PR19's
+final timeline closes its regression, review and merge work. The current recovery
+increment implements explicit resolution/held choices while preserving originals;
+see the protocol contract and latest verification evidence. Next design the
+90-day resolved-candidate lifecycle cleanup, retaining permanent decision/dedup
+proof and consistent capture/pull behavior. Compound create/copy-as-new repair
+and native recovery/export UX remain activation prerequisites. Do not
 prune canonical/history content merely to reduce storage. Keep 3.1 partial and
 3.2–3.6, all external/native acceptance and Phase 4 open.

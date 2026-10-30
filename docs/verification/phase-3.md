@@ -1,5 +1,66 @@
 # Phase 3 verification
 
+## Current handoff — explicit recovery, 30 October 2026
+
+Refreshed Git/GitHub from PR19 merge
+`0818f539d6bada38bdbf685e5658ac090c99f1db`, with a clean checkout. Its final
+timeline confirms independent review, CI, 129 Flutter tests, 178 backend groups
+and 1,504 replies; earlier pending PR19 notes below are historical. New branch:
+`codex/explicit-conflict-resolution`.
+
+Migration `20261030025201_explicit_conflict_resolution.sql` (023) implements
+recovery v1: version-checked single-group replacement or discard, exact transitive
+held-successor keep/discard choices, immutable original candidates/bases, private
+decision/closure ledgers and negotiated snapshot/pull closure facts. Account
+locks serialize preview checks, canonical changes, history, watermarks and
+closures. Original retries remain original outcomes; replacement rejection rolls
+back completely. See the [contract](../architecture/account-protocol-v2.md).
+
+Docker Desktop initially had no Linux-engine pipe. The user started Docker;
+only `python tool/local_backend.py --start` started/verified the existing nine
+pinned services and eight healthchecks with exact loopback bindings. All
+containers, volumes and stopped backups remain. Pre-023 schema/data dumps are
+ignored `.tools/backend-before-resolution-{schema,data}.sql`. The rollback-only
+candidate replacement/discard/snapshot rehearsal and eight-group retained-data
+foundation rehearsal passed. These are not backup-restoration acceptance.
+Pinned CLI advisors found no issues before apply. `migration up --local
+--network-id dourstuff-local` applied only 023; `migration list --local` matched
+all 23 IDs. All 22 earlier migrations remain unchanged; do not rewrite 023.
+
+Local pinned quality passed: `flutter pub get --enforce-lockfile`,
+`dart run build_runner build`, generated-file diff, `dart format --output=none
+--set-exit-if-changed lib test tool`, `flutter analyze`, `flutter test --reporter
+expanded` (**133 tests**), v1 schema dump/retained snapshot/lockfile diff,
+`python tool/test_backend_http.py` and `python tool/test_local_backend.py`
+(three each). Log: `.tools/resolution-quality.log`. The focused protocol/SQLite
+run passed 41 tests. Initial analysis found missing braces; an initial test
+assertion omitted extension failures; a subsequent format check found the
+updated assertion unformatted. These were corrected before the successful suite.
+
+The new suite's first ten groups passed, including 205 closures across snapshot
+pages, whole-revision pull, missing collided-tag/held-membership discard,
+concurrent resolutions, stale field/delete/held previews, exact retries through
+receipt expiry, injected rollback, locks, ownership and legacy token binding.
+Final strict-version cases, production Dart decoding, all seventeen existing
+backend suites/normalization and independent review/CI are pending at this
+checkpoint. See this task's final PR timeline for later exact-head evidence.
+
+The server lifecycle preserves all resolved originals; 90-day cleanup is not
+implemented. Next after this increment: design bounded resolved-candidate and
+decision-payload retention while preserving permanent retry/identity proofs,
+unresolved descendants and fixed snapshots/pull. Compound create/copy repair,
+native recovery/export UX, staging/projection, scheduling/capacity measurement,
+all representation/external/native acceptance and Phase 4 remain open. SQLite
+stays v1 and account writes remain disabled. Production deployment/migrations,
+releases and distribution remain unauthorized.
+
+Resume by refreshing Git/GitHub and preserving newer work, reusing this branch/PR
+until its review/checks/guarded merge finish. Read AGENTS.md, delivery plan,
+backlog, recovery audit and current PR timeline; follow sync-protocol,
+database-migrations, Supabase and finish-task. Preserve all applied migrations
+and the existing stack; use only the guarded starter. Do not run candidate mode
+against already-applied 023.
+
 Status: milestone **3.0 local readiness passed; 3.1 in progress**, reviewed
 26 October 2026. The user accepted
 the Android emulator offline/restart evidence on 12 October for local Phase 3

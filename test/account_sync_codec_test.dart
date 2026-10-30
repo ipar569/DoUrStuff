@@ -144,10 +144,11 @@ void main() {
   });
 
   test('every failure is typed and sequence/rate hints are constrained', () {
-    expect(
-      SyncFailureCode.values.map((c) => c.name).toList(),
-      fixtures['failure_codes'],
-    );
+    expect(SyncFailureCode.values.map((c) => c.name).toList(), [
+      ...fixtures['failure_codes'],
+      'recoveryChanged',
+      'replacementRejected',
+    ]);
     for (final code in SyncFailureCode.values) {
       final golden = {
         'protocol_version': 2,

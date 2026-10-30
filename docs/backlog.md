@@ -285,6 +285,16 @@ increment's full regressions/final review/PR before explicit resolution and held
 then 90-day resolved cleanup. See the latest verification handoff. Account writes,
 representation/external/native acceptance and production/release gates stay open.
 
+30 October recovery increment: local migration 023 adds version-checked explicit
+single-group replacement/discard, transitive held-successor keep/discard choices,
+immutable original candidates/bases and negotiated snapshot/pull closure facts.
+PR19's final timeline closes its older pending notes above. The current task's
+review/verification is recorded in the [latest handoff](verification/phase-3.md).
+Next: bounded 90-day resolved-content cleanup with permanent identity/retry
+proof; compound create/copy repair and native recovery/export UX remain account
+activation gates. Scheduling/measurement, representation/external/native gates
+and Phase 4 remain open. No account write guard or production/release change.
+
 ## Phase 4: recurrence, calendar and reminders
 
 Bounded deterministic generation/history; immutable future segments and offline

@@ -1,5 +1,18 @@
 # Preservation and recovery
 
+30 October: recovery extension v1 records explicit replacement/discard and held
+choices in private append-only ledgers. Originals and original transport outcomes
+are immutable. Retry the same decision after an uncertain response; only its
+transport cursor may refresh. A stale preview consumes nothing and requires a
+new observed shadow and held-descendant review. Rejected replacements roll back
+entirely. Never relabel an original held operation as applied or rewrite its base.
+Closure-aware downloads require both history v1 and resolution v1; frozen older
+captures stay intact and pull after R supplies new closures. Retain originals
+alongside closure facts for recovery/export. No 90-day pruning or native recovery
+UI is enabled. Pre-023 dumps are `.tools/backend-before-resolution-{schema,data}.sql`;
+the rollback rehearsal is not a restore rehearsal. Preserve all 23 applied
+migrations and existing containers/volumes; only use the guarded starter.
+
 29 October local deleted-content implementation: migration 022 compacts expired canonical
 task/tag/view/milestone content (including children of expired deleted tasks)
 after 720 elapsed hours. Permanent entity/lifecycle/operation identities, exact
