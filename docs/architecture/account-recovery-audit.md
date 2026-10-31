@@ -1,6 +1,6 @@
 # Account command and recovery audit — 27 October 2026
 
-Updated 30 October after PR #19 merged at `0818f539d6bada38bdbf685e5658ac090c99f1db`.
+Updated 31 October after PR #20 merged at `ec64ac7d7d6e67bc7afe7db2b1a9ef2435b654e1`.
 This audit compares `task_repository.dart`, the v2 command vocabulary, the
 forward migrations and the Phase 3 delivery plan. It does not authorize
 account writes or close the representation or installed-device gates.
@@ -14,7 +14,7 @@ account writes or close the representation or installed-device gates.
 | Views/preferences | atomic query, independent name, deletion, versioned default reference/clear | Native account projection; view restore is deliberately outside v2 vocabulary |
 | Status history | Migration 020 transports retained events via explicit history extension v1, including known/null original operations | Native history storage/projection and pending-safe installation |
 | Snapshot recovery | Fixed-revision begin/page for six shadow kinds, unresolved recovery and opt-in retained history | Durable client staging/install and pending-work reconciliation |
-| Retention/resolution | 021–022 provide bounded log/receipt/deleted-content cleanup; recovery v1 adds version-checked single-group replacement/discard, explicit transitive held choices and snapshot/pull closure facts | Finish current review/checks; compound create/copy repair, native recovery UX, 90-day resolved cleanup and automatic scheduling/measurement |
+| Retention/resolution | 021–022 provide bounded log/receipt/deleted-content cleanup; recovery v1 adds version-checked single-group replacement/discard, explicit transitive held choices and snapshot/pull closure facts | 025 adds bounded 90-day resolved payload cleanup; current verification tracks review/checks; compound create/copy repair, native recovery UX and automatic scheduling/measurement remain |
 
 All **17** current v2 command names have server handlers. This is command-name
 coverage, not full Phase 2 semantic or representation parity. Guest v1 envelopes
@@ -75,9 +75,13 @@ delivers compaction. Logs/receipts, historical originals and immutable captures
 keep their independent retention policies; this is not account erasure. PR19's
 final timeline closes its regression, review and merge work. The current recovery
 increment implements explicit resolution/held choices while preserving originals;
-see the protocol contract and latest verification evidence. Next design the
-90-day resolved-candidate lifecycle cleanup, retaining permanent decision/dedup
-proof and consistent capture/pull behavior. Compound create/copy-as-new repair
+see the protocol contract and latest verification evidence. Migration 025
+implements bounded 90-day resolved-candidate and decision-payload
+cleanup with permanent hashes, closure replies and dependency links. Unresolved
+originals remain complete; compacted intermediates cannot hide held descendants.
+One empty revision prevents stale capture reuse while frozen pages and older log
+content retain their independent lifetimes. See current verification for actual
+apply/test/review status. Compound create/copy-as-new repair
 and native recovery/export UX remain activation prerequisites. Do not
 prune canonical/history content merely to reduce storage. Keep 3.1 partial and
 3.2–3.6, all external/native acceptance and Phase 4 open.

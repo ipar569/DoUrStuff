@@ -764,3 +764,43 @@ Plan v2 SQLite as an explicit retained-data upgrade, not a new guest database:
    intents, including rollback/downgrade fixtures. Schema v2 implementation is 3.2.
 
 No local schema version or retained schema snapshot changed in this milestone.
+
+## Resolved-content retention — migration 025
+
+The private operator function `prune_resolved_content(owner, batch_size)` compacts
+at most `batch_size` resolved candidate records and independently at most that
+many decision request payloads (1–1,000 each). Expiry includes the exact 2,160-hour
+boundary, using trusted server time sampled after the account row lock. Candidate
+age starts at its explicit closure, not its original conflict; request age starts
+at the committed decision. No scheduler or public maintenance RPC is enabled.
+
+Unresolved originals, including held successors, retain all original values and
+bases. Resolved rows retain candidate/operation/group identity, same-device
+predecessor/dependency links and held status. These content-free links keep exact
+transitive preview validation working through compacted intermediate candidates,
+including later held arrivals. The original operation's SHA-256 identity must
+match the permanent device/sequence/operation proof before content can disappear.
+No operation is rebased, implicitly released or changed to an applied outcome.
+
+Decision requests retain SHA-256 of the accepted JSONB request excluding only its
+transport cursor, identity columns, trusted time and the content-free original
+closure reply. Exact retries return that reply at its original revision with the
+current server epoch, even after detailed receipts/logs expire. Changed previews,
+choices, operation IDs, device epochs or sequences fail `payloadMismatch`.
+This uses the existing JSONB identity semantics; representation gates remain open.
+
+Compacting any candidates emits one empty whole change-log revision and advances
+the account revision atomically. New snapshot begins cannot reuse pre-compaction
+captures; they omit null candidate payloads but include every permanent closure
+when recovery v1 is negotiated. Existing immutable pages keep their original
+content until token expiry. Pull resumes through the empty revision; closures
+already carry resolved state and retained earlier logs keep their independent
+180-day lifetime. Request-only cleanup changes no download state or revision.
+There is no wire shape/version change and no native local-content purge yet.
+
+The operator does not remove receipts, logs, canonical shadows, history, deletion
+identities, snapshots or unresolved candidates. Copies in those stores retain
+their independent policies; 90 days is eligibility for these two payload stores,
+not a guarantee of account-wide erasure. Corrupt proofs or any failed write abort
+the whole batch. Native recovery/export, automatic scheduling and capacity/lock
+measurements remain unfinished, with account writes still disabled.
