@@ -21,7 +21,15 @@ void main(List<String> args) {
   final manifests = <String, SnapshotManifest>{};
   for (final entry in entries) {
     final withHistory = entry['request']['history_version'] == 1;
+    final withRecovery = entry['request']['resolution_version'] == 1;
     switch (entry['rpc']) {
+      case 'resolve_recovery':
+        validateRecoveryResolutionReply(
+          resolveRecoveryCodec.decodeRequest(entry['request']),
+          (resolveRecoveryCodec.decodeReply(
+            entry['reply'],
+          ) as SyncSuccess<ResolveRecoveryResult>).value,
+        );
       case 'apply':
         final request = applyCodec.decodeRequest(entry['request']);
         final result = (applyCodec.decodeReply(
@@ -139,6 +147,15 @@ void main(List<String> args) {
           ) as SyncSuccess<RegisteredDevice>).value,
         );
       case 'pull':
+        if (withRecovery) {
+          validateRecoveryPullReply(
+            recoveryPullCodec.decodeRequest(entry['request']),
+            (recoveryPullCodec.decodeReply(
+              entry['reply'],
+            ) as SyncSuccess<RecoveryPullResult>).value,
+          );
+          break;
+        }
         if (withHistory) {
           validateHistoryPullReply(
             historyPullCodec.decodeRequest(entry['request']),
@@ -155,7 +172,9 @@ void main(List<String> args) {
           ) as SyncSuccess<PullResult>).value,
         );
       case 'snapshot_begin':
-        final codec = withHistory
+        final codec = withRecovery
+            ? recoveryBeginSnapshotCodec
+            : withHistory
             ? historyBeginSnapshotCodec
             : beginSnapshotCodec;
         final manifest = (codec.decodeReply(
@@ -168,6 +187,20 @@ void main(List<String> args) {
         );
         manifests[manifest.token] = manifest;
       case 'snapshot_page':
+        if (withRecovery) {
+          final request = recoverySnapshotPageCodec.decodeRequest(
+            entry['request'],
+          );
+          validateRecoverySnapshotPage(
+            manifests[request.token]!,
+            request,
+            (recoverySnapshotPageCodec.decodeReply(
+              entry['reply'],
+            ) as SyncSuccess<RecoverySnapshotPage>).value,
+            DateTime.parse(entry['checked_at_utc'] as String),
+          );
+          break;
+        }
         if (withHistory) {
           final request = historySnapshotPageCodec.decodeRequest(
             entry['request'],

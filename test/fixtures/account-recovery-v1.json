@@ -1,0 +1,151 @@
+{
+  "request": {
+    "protocol_version": 2,
+    "resolution_version": 1,
+    "cursor": {
+      "server_epoch": "00000000-0000-0000-0000-000000000099",
+      "revision": 5
+    },
+    "operation_id": "00000000-0000-0000-0000-000000000010",
+    "device_epoch": "00000000-0000-0000-0000-000000000001",
+    "sequence": 6,
+    "conflict_id": "00000000-0000-0000-0000-000000000003",
+    "expected_conflict_revision": 3,
+    "observed_fields": {
+      "title": {
+        "revision": 2,
+        "value": "canonical"
+      },
+      "existence": {
+        "revision": 1,
+        "value": true
+      }
+    },
+    "choice": "replace",
+    "replacement": {
+      "protocol_version": 2,
+      "operation_id": "00000000-0000-0000-0000-000000000010",
+      "device_epoch": "00000000-0000-0000-0000-000000000001",
+      "sequence": 6,
+      "entity": {
+        "kind": "task",
+        "key": [
+          "00000000-0000-0000-0000-000000000002"
+        ]
+      },
+      "command": "task.edit",
+      "patches": {
+        "title": {
+          "base": {
+            "kind": "observed",
+            "revision": 2,
+            "value": "canonical"
+          },
+          "value": "chosen"
+        }
+      },
+      "dependencies": [],
+      "provenance": {}
+    },
+    "held_choices": [
+      {
+        "id": "00000000-0000-0000-0000-000000000004",
+        "revision": 4,
+        "choice": "keepHeld"
+      },
+      {
+        "id": "00000000-0000-0000-0000-000000000005",
+        "revision": 5,
+        "choice": "discard"
+      }
+    ]
+  },
+  "reply": {
+    "protocol_version": 2,
+    "status": "success",
+    "result": {
+      "resolution_version": 1,
+      "cursor": {
+        "server_epoch": "00000000-0000-0000-0000-000000000099",
+        "revision": 6
+      },
+      "device_high_water": 6,
+      "resolutions": [
+        {
+          "version": 1,
+          "conflict_id": "00000000-0000-0000-0000-000000000003",
+          "expected_conflict_revision": 3,
+          "revision": 6,
+          "operation_id": "00000000-0000-0000-0000-000000000010",
+          "device_epoch": "00000000-0000-0000-0000-000000000001",
+          "sequence": 6,
+          "choice": "replace"
+        },
+        {
+          "version": 1,
+          "conflict_id": "00000000-0000-0000-0000-000000000005",
+          "expected_conflict_revision": 5,
+          "revision": 6,
+          "operation_id": "00000000-0000-0000-0000-000000000010",
+          "device_epoch": "00000000-0000-0000-0000-000000000001",
+          "sequence": 6,
+          "choice": "discard"
+        }
+      ]
+    }
+  },
+  "pull_request": {
+    "protocol_version": 2,
+    "history_version": 1,
+    "resolution_version": 1,
+    "after": {
+      "server_epoch": "00000000-0000-0000-0000-000000000099",
+      "revision": 5
+    },
+    "limit": 200
+  },
+  "pull_reply": {
+    "protocol_version": 2,
+    "status": "success",
+    "result": {
+      "history_version": 1,
+      "resolution_version": 1,
+      "through": {
+        "server_epoch": "00000000-0000-0000-0000-000000000099",
+        "revision": 6
+      },
+      "committed_high_water": 6,
+      "has_more": false,
+      "groups": [
+        {
+          "revision": 6,
+          "records": [],
+          "recovery": [],
+          "history": [],
+          "resolutions": [
+            {
+              "version": 1,
+              "conflict_id": "00000000-0000-0000-0000-000000000003",
+              "expected_conflict_revision": 3,
+              "revision": 6,
+              "operation_id": "00000000-0000-0000-0000-000000000010",
+              "device_epoch": "00000000-0000-0000-0000-000000000001",
+              "sequence": 6,
+              "choice": "replace"
+            },
+            {
+              "version": 1,
+              "conflict_id": "00000000-0000-0000-0000-000000000005",
+              "expected_conflict_revision": 5,
+              "revision": 6,
+              "operation_id": "00000000-0000-0000-0000-000000000010",
+              "device_epoch": "00000000-0000-0000-0000-000000000001",
+              "sequence": 6,
+              "choice": "discard"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

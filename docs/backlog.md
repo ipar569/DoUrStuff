@@ -285,6 +285,21 @@ increment's full regressions/final review/PR before explicit resolution and held
 then 90-day resolved cleanup. See the latest verification handoff. Account writes,
 representation/external/native acceptance and production/release gates stay open.
 
+30 October recovery increment: local migration 023 adds version-checked explicit
+single-group replacement/discard, transitive held-successor keep/discard choices,
+immutable original candidates/bases and negotiated snapshot/pull closure facts.
+PR19's final timeline closes its older pending notes above. The current task's
+review/verification is recorded in the [latest handoff](verification/phase-3.md).
+Next: bounded 90-day resolved-content cleanup with permanent identity/retry
+proof; compound create/copy repair and native recovery/export UX remain account
+activation gates. Scheduling/measurement, representation/external/native gates
+and Phase 4 remain open. No account write guard or production/release change.
+31 October independent review identified a retained-resolution response carrying
+an old server epoch after snapshot refresh. Forward migration 024 corrects the
+reply while preserving the original decision; real rollback-only epoch tests
+and production Dart correlation cover it. The earlier 23 migrations remain
+unchanged. See PR20's final timeline for corrected-head review and merge evidence.
+
 ## Phase 4: recurrence, calendar and reminders
 
 Bounded deterministic generation/history; immutable future segments and offline

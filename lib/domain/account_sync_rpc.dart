@@ -16,6 +16,83 @@ enum SyncFailureCode {
   payloadMismatch,
   rateLimited,
   unavailable,
+  recoveryChanged,
+  replacementRejected,
+}
+
+enum RecoveryChoice { replace, discard }
+
+enum HeldChoice { keepHeld, discard }
+
+final class HeldRecoveryChoice {
+  const HeldRecoveryChoice(this.id, this.revision, this.choice);
+  final String id;
+  final int revision;
+  final HeldChoice choice;
+}
+
+/// Explicit recovery v1. The full observed shadow and held descendant set are
+/// a preview precondition; the preserved original operation is never rebased.
+final class ResolveRecoveryRequest {
+  const ResolveRecoveryRequest({
+    required this.cursor,
+    required this.operationId,
+    required this.deviceEpoch,
+    required this.sequence,
+    required this.conflictId,
+    required this.expectedConflictRevision,
+    required this.observedFields,
+    required this.choice,
+    this.replacement,
+    this.heldChoices = const [],
+  });
+  final AccountCursor cursor;
+  final String operationId, deviceEpoch, conflictId;
+  final int sequence, expectedConflictRevision;
+  final Map<String, AcceptedField>? observedFields;
+  final RecoveryChoice choice;
+  final AccountOperation? replacement;
+  final List<HeldRecoveryChoice> heldChoices;
+}
+
+final class RecoveryResolution {
+  const RecoveryResolution({
+    required this.conflictId,
+    required this.expectedConflictRevision,
+    required this.revision,
+    required this.operationId,
+    required this.deviceEpoch,
+    required this.sequence,
+    required this.choice,
+  });
+  final String conflictId, operationId, deviceEpoch;
+  final int expectedConflictRevision, revision, sequence;
+  final RecoveryChoice choice;
+}
+
+final class ResolveRecoveryResult {
+  const ResolveRecoveryResult(
+    this.cursor,
+    this.deviceHighWater,
+    this.resolutions,
+  );
+  final AccountCursor cursor;
+  final int deviceHighWater;
+  final List<RecoveryResolution> resolutions;
+}
+
+final class RecoveryPullResult {
+  const RecoveryPullResult(this.changes, this.resolutions);
+  final HistoryPullResult changes;
+
+  /// One resolution list for each whole revision group.
+  final List<List<RecoveryResolution>> resolutions;
+}
+
+final class RecoverySnapshotPage {
+  const RecoverySnapshotPage(this.changes, this.resolutions);
+  final HistorySnapshotPage changes;
+  final List<RecoveryResolution> resolutions;
 }
 
 sealed class SyncReply<T> {

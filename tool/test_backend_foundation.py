@@ -169,6 +169,7 @@ def main():
                             for path in sorted(migration_dir.glob("*.sql"))
                             if path.name != "20261016000100_account_foundation.sql")
         migration_result = sql("begin; drop function if exists public.sync_apply(jsonb); "
+            "drop function if exists public.sync_resolve_recovery(jsonb); "
             "drop function if exists public.sync_snapshot_begin(jsonb); "
             "drop function if exists public.sync_snapshot_page(jsonb); "
             "drop function public.sync_register_device(jsonb); "

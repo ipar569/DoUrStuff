@@ -940,3 +940,286 @@ void validateHistorySnapshotPage(
   historySnapshotPageCodec.encodeReply(SyncSuccess(page));
   validateSnapshotPage(manifest, request, page.changes, nowUtc);
 }
+
+_Json _withoutResolutionVersion(_Json j) {
+  if (j['resolution_version'] is! int || j['resolution_version'] != 1) _bad();
+  return {...j}..remove('resolution_version');
+}
+
+_Json _resolutionJson(RecoveryResolution r) => {
+  'version': 1,
+  'conflict_id': r.conflictId,
+  'expected_conflict_revision': r.expectedConflictRevision,
+  'revision': r.revision,
+  'operation_id': r.operationId,
+  'device_epoch': r.deviceEpoch,
+  'sequence': r.sequence,
+  'choice': r.choice.name,
+};
+
+RecoveryResolution _resolution(Object? value) {
+  final j = _map(
+    value,
+    'version conflict_id expected_conflict_revision revision operation_id device_epoch sequence choice',
+  );
+  if (j['version'] is! int || j['version'] != 1) _bad();
+  final expected = _int(j['expected_conflict_revision'], min: 1);
+  final revision = _int(j['revision'], min: 1);
+  if (expected >= revision) _bad();
+  return RecoveryResolution(
+    conflictId: _id(j['conflict_id']),
+    expectedConflictRevision: expected,
+    revision: revision,
+    operationId: _id(j['operation_id']),
+    deviceEpoch: _id(j['device_epoch']),
+    sequence: _int(j['sequence'], min: 1),
+    choice: _enum(RecoveryChoice.values, j['choice']),
+  );
+}
+
+List<RecoveryResolution> _resolutions(
+  Object? value,
+  int revision, {
+  bool exact = false,
+}) {
+  final result = _list(value, _resolution);
+  _unique(result.map((r) => r.conflictId));
+  if (result.any(
+    (r) => exact ? r.revision != revision : r.revision > revision,
+  )) {
+    _bad();
+  }
+  return result;
+}
+
+final resolveRecoveryCodec =
+    AccountRpcCodec<ResolveRecoveryRequest, ResolveRecoveryResult>._(
+      (q) => {
+        'resolution_version': 1,
+        'cursor': _cursorJson(q.cursor),
+        'operation_id': q.operationId,
+        'device_epoch': q.deviceEpoch,
+        'sequence': q.sequence,
+        'conflict_id': q.conflictId,
+        'expected_conflict_revision': q.expectedConflictRevision,
+        'observed_fields': q.observedFields == null
+            ? null
+            : {
+                for (final f in q.observedFields!.entries)
+                  f.key: _acceptedJson(f.value),
+              },
+        'choice': q.choice.name,
+        'replacement': q.replacement?.toJson(),
+        'held_choices': q.heldChoices
+            .map(
+              (c) => {
+                'id': c.id,
+                'revision': c.revision,
+                'choice': c.choice.name,
+              },
+            )
+            .toList(),
+      },
+      (j) {
+        _map(
+          j,
+          'protocol_version resolution_version cursor operation_id device_epoch sequence conflict_id expected_conflict_revision observed_fields choice replacement held_choices',
+        );
+        _withoutResolutionVersion(j);
+        final cursor = _cursor(j['cursor']);
+        final id = _id(j['operation_id']), device = _id(j['device_epoch']);
+        final conflict = _id(j['conflict_id']);
+        final sequence = _int(j['sequence'], min: 1);
+        final expected = _int(j['expected_conflict_revision'], min: 1);
+        final fields = j['observed_fields'] == null
+            ? null
+            : {
+                for (final f in _map(j['observed_fields']).entries)
+                  f.key: _accepted(f.value),
+              };
+        final choice = _enum(RecoveryChoice.values, j['choice']);
+        final op = j['replacement'] == null
+            ? null
+            : decodeAccountOperation(j['replacement']);
+        final held = _list(j['held_choices'], (v) {
+          final c = _map(v, 'id revision choice');
+          return HeldRecoveryChoice(
+            _id(c['id']),
+            _int(c['revision'], min: 1),
+            _enum(HeldChoice.values, c['choice']),
+          );
+        }, max: 199);
+        _unique(held.map((h) => h.id));
+        if (expected > cursor.revision ||
+            held.any((h) => h.id == conflict || h.revision > cursor.revision) ||
+            (fields?.values.any((f) => f.revision > cursor.revision) ??
+                false) ||
+            (choice == RecoveryChoice.replace) != (op != null) ||
+            (op != null &&
+                (op.operationId != id ||
+                    op.deviceEpoch != device ||
+                    op.sequence != sequence ||
+                    op.patches.length != 1 ||
+                    op.dependencies.isNotEmpty ||
+                    op.patches.values.single.base is PredecessorBase))) {
+          _bad();
+        }
+        return ResolveRecoveryRequest(
+          cursor: cursor,
+          operationId: id,
+          deviceEpoch: device,
+          sequence: sequence,
+          conflictId: conflict,
+          expectedConflictRevision: expected,
+          observedFields: fields,
+          choice: choice,
+          replacement: op,
+          heldChoices: held,
+        );
+      },
+      (r) => {
+        'resolution_version': 1,
+        'cursor': _cursorJson(r.cursor),
+        'device_high_water': r.deviceHighWater,
+        'resolutions': r.resolutions.map(_resolutionJson).toList(),
+      },
+      (j) {
+        final plain = _withoutResolutionVersion(j);
+        _map(plain, 'cursor device_high_water resolutions');
+        final cursor = _cursor(plain['cursor']);
+        final water = _int(plain['device_high_water'], min: 1);
+        final resolutions = _resolutions(
+          plain['resolutions'],
+          cursor.revision,
+          exact: true,
+        );
+        if (resolutions.isEmpty ||
+            resolutions.any(
+              (r) =>
+                  r.sequence != water ||
+                  r.operationId != resolutions.first.operationId ||
+                  r.deviceEpoch != resolutions.first.deviceEpoch,
+            )) {
+          _bad();
+        }
+        return ResolveRecoveryResult(cursor, water, resolutions);
+      },
+    );
+
+void validateRecoveryResolutionReply(
+  ResolveRecoveryRequest request,
+  ResolveRecoveryResult result,
+) {
+  resolveRecoveryCodec.encodeRequest(request);
+  resolveRecoveryCodec.encodeReply(SyncSuccess(result));
+  final expected = {
+    request.conflictId: (request.expectedConflictRevision, request.choice),
+    for (final h in request.heldChoices.where(
+      (h) => h.choice == HeldChoice.discard,
+    ))
+      h.id: (h.revision, RecoveryChoice.discard),
+  };
+  if (result.cursor.serverEpoch != request.cursor.serverEpoch ||
+      result.deviceHighWater != request.sequence ||
+      result.resolutions.length != expected.length ||
+      result.resolutions.any(
+        (r) =>
+            r.operationId != request.operationId ||
+            r.deviceEpoch != request.deviceEpoch ||
+            expected[r.conflictId] != (r.expectedConflictRevision, r.choice),
+      )) {
+    _bad();
+  }
+  // A retry after a new snapshot may return the original earlier receipt.
+}
+
+final recoveryPullCodec = AccountRpcCodec<PullRequest, RecoveryPullResult>._(
+  (q) => {...historyPullCodec.encodeRequest(q), 'resolution_version': 1},
+  (j) => historyPullCodec.decodeRequest(_withoutResolutionVersion(j)),
+  (r) {
+    if (r.changes.groups.length != r.resolutions.length) _bad();
+    final j = historyPullCodec._writeResult(r.changes);
+    j['groups'] = [
+      for (var i = 0; i < r.resolutions.length; i++)
+        {
+          ..._map((j['groups'] as List)[i]),
+          'resolutions': r.resolutions[i].map(_resolutionJson).toList(),
+        },
+    ];
+    return {...j, 'resolution_version': 1};
+  },
+  (j) {
+    final plain = _withoutResolutionVersion(j);
+    final groups = _list(
+      plain['groups'],
+      (g) => _map(g, 'revision records recovery history resolutions'),
+    );
+    final resolutions = groups
+        .map(
+          (g) => _resolutions(
+            g['resolutions'],
+            _int(g['revision'], min: 1),
+            exact: true,
+          ),
+        )
+        .toList();
+    _unique(resolutions.expand((r) => r).map((r) => r.conflictId));
+    plain['groups'] = groups.map((g) => {...g}..remove('resolutions')).toList();
+    return RecoveryPullResult(historyPullCodec._readResult(plain), resolutions);
+  },
+);
+
+final recoveryBeginSnapshotCodec =
+    AccountRpcCodec<BeginSnapshotRequest, SnapshotManifest>._(
+      (q) => {
+        ...historyBeginSnapshotCodec.encodeRequest(q),
+        'resolution_version': 1,
+      },
+      (j) =>
+          historyBeginSnapshotCodec.decodeRequest(_withoutResolutionVersion(j)),
+      (r) => {
+        ...historyBeginSnapshotCodec._writeResult(r),
+        'resolution_version': 1,
+      },
+      (j) =>
+          historyBeginSnapshotCodec._readResult(_withoutResolutionVersion(j)),
+    );
+
+final recoverySnapshotPageCodec =
+    AccountRpcCodec<SnapshotPageRequest, RecoverySnapshotPage>._(
+      (q) => {
+        ...historySnapshotPageCodec.encodeRequest(q),
+        'resolution_version': 1,
+      },
+      (j) =>
+          historySnapshotPageCodec.decodeRequest(_withoutResolutionVersion(j)),
+      (r) => {
+        ...historySnapshotPageCodec._writeResult(r.changes),
+        'resolution_version': 1,
+        'resolutions': r.resolutions.map(_resolutionJson).toList(),
+      },
+      (j) {
+        final plain = _withoutResolutionVersion(j);
+        final resolutions = plain.remove('resolutions');
+        final changes = historySnapshotPageCodec._readResult(plain);
+        return RecoverySnapshotPage(
+          changes,
+          _resolutions(resolutions, changes.changes.at.revision),
+        );
+      },
+    );
+
+void validateRecoveryPullReply(PullRequest request, RecoveryPullResult result) {
+  recoveryPullCodec.encodeReply(SyncSuccess(result));
+  validateHistoryPullReply(request, result.changes);
+}
+
+void validateRecoverySnapshotPage(
+  SnapshotManifest manifest,
+  SnapshotPageRequest request,
+  RecoverySnapshotPage page,
+  DateTime nowUtc,
+) {
+  recoverySnapshotPageCodec.encodeReply(SyncSuccess(page));
+  validateHistorySnapshotPage(manifest, request, page.changes, nowUtc);
+}
