@@ -347,3 +347,14 @@ Its `--candidate` mode is only for the pre-020 rollback-only rehearsal. All fift
 backend suites run sequentially when using the foundation schema rehearsal.
 Keep all twenty applied migrations, volumes and stopped backups. No retention
 schedule or account/native integration is activated by this change.
+
+31 October: migration 025 adds private bounded resolved-content retention. Run
+`python tool/test_backend_resolved_content.py --supabase .tools/supabase/supabase.exe
+--wire-output .tools/backend-resolved-content-wire.json`, then
+`dart run tool/check_backend_wire.dart .tools/backend-resolved-content-wire.json`.
+Use `--candidate` only for rollback-only rehearsal before 025 is applied. All
+nineteen backend suites must run sequentially when the foundation schema rehearsal
+is included. Preserve all 24 earlier migrations and the existing stack. See the
+[recovery runbook](../docs/runbooks/recovery.md) for the explicit `resolved-content`
+operator policy and independent content lifetimes. Scheduling and native account
+activation are not enabled; production/release actions remain unauthorized.

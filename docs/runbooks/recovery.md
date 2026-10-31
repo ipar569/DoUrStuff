@@ -1,5 +1,23 @@
 # Preservation and recovery
 
+31 October resolved-content increment (025): select the intended **local** owner
+and run `python tool/run_backend_retention.py --owner <uuid> --policy
+resolved-content --batch-size 200 --batches 1`. The two independent per-batch
+budgets cover expired candidate records and decision requests. Each batch commits
+separately with lock/statement timeouts; a lost acknowledgement remains uncertain
+and may be retried. The default policy is still log/receipt cleanup.
+
+Cleanup requires 2,160 elapsed hours after explicit closure/decision and retains
+unresolved originals, permanent retry hashes, content-free closure replies and
+transitive dependency links. It advances one revision when candidates change,
+preserves frozen pages and regenerates new captures. Other stores retain their
+own lifetimes; this is not account erasure. See the [protocol](../architecture/account-protocol-v2.md#resolved-content-retention--migration-025)
+and [current verification](../verification/phase-3.md) for apply/test status.
+Never rerun candidate mode after applying 025. Preserve all earlier migrations,
+containers, volumes and stopped backups; start only with
+`python tool/local_backend.py --start`. No production migration, scheduler,
+account activation, native acceptance or release is authorized by this work.
+
 30 October: recovery extension v1 records explicit replacement/discard and held
 choices in private append-only ledgers. Originals and original transport outcomes
 are immutable. Retry the same decision after an uncertain response; only its

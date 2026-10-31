@@ -10,6 +10,18 @@ from run_backend_retention import main
 
 
 class RetentionRunnerTests(unittest.TestCase):
+    def test_resolved_content_selects_bounded_policy(self):
+        counts = dict(candidates_compacted=0, requests_compacted=0, revision=42)
+        with patch('sys.argv', ['retention', '--owner', '11111111-1111-4111-8111-111111111111',
+                               '--policy', 'resolved-content', '--batch-size', '7', '--batches', '3']), \
+                patch('run_backend_retention.subprocess.run', return_value=
+                      subprocess.CompletedProcess([], 0, json.dumps(counts), '')) as run, \
+                redirect_stdout(io.StringIO()):
+            main()
+        self.assertEqual(run.call_count, 2)
+        self.assertIn("prune_resolved_content('11111111-1111-4111-8111-111111111111',7)",
+                      run.call_args.kwargs['input'])
+
     def test_deleted_content_selects_policy_and_stops_on_empty_pass(self):
         counts = dict(shadows_compacted=0, payloads_compacted=0, revision=42)
         calls = []

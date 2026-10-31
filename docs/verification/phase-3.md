@@ -1,6 +1,78 @@
 # Phase 3 verification
 
-## Current handoff — explicit recovery, 31 October 2026
+## Current handoff — resolved-content retention, 31 October 2026
+
+Refreshed Git/GitHub with a clean checkout at PR20 merge
+`ec64ac7d7d6e67bc7afe7db2b1a9ef2435b654e1`. PR20's final timeline confirms reviewed
+head `6a21e8b4f448dd99f091d877962c96b2e4a3fc9d`, successful final checks and verified
+merge; its earlier pending notes below are historical. Current branch:
+`codex/resolved-content-retention`.
+
+Forward migration `20261031074053_resolved_content_retention.sql` (025) adds
+operator-only, per-account bounded 90-day resolved candidate/decision payload
+compaction. Permanent operation/request hashes, content-free closure replies and
+same-device dependency links survive. Unresolved originals remain complete;
+held-preview traversal crosses compacted intermediates and includes later held
+arrivals. One empty revision prevents stale snapshot reuse when candidates are
+compacted; old pages and independent log/receipt/history lifetimes remain intact.
+See the [contract](../architecture/account-protocol-v2.md#resolved-content-retention--migration-025)
+and [recovery audit](../architecture/account-recovery-audit.md).
+
+Docker's Linux-engine pipe was initially absent. After the user started Desktop,
+only `python tool/local_backend.py --start` started/verified the existing nine
+pinned services/eight healthchecks and exact loopback bindings. No container,
+volume or stopped backup was removed/recreated. Pre-025 application schema/data
+dumps are ignored `.tools/backend-before-resolved-content-{schema,data}.sql`.
+The new rollback-only candidate/backfill/compaction/retry rehearsal and eight-group
+foundation retained-data rehearsal passed. These are not backup-restoration
+acceptance. Pinned CLI 2.120.0 advisors were clean before and after apply.
+`migration up --local --network-id dourstuff-local` applied only 025;
+`migration list --local` matched all 25 IDs. All 24 earlier files are unchanged;
+do not rewrite applied 025 or rerun its candidate mode.
+
+The new real PostgreSQL/HTTP suite passed **9 groups and 277 production-decoded
+replies**, including exact 2,160-hour microsecond boundaries across three zones,
+205 candidates/decisions across frozen pages and bounded batches, unresolved
+originals, transitive/late held successors, discard/replacement retries beyond
+log/receipt expiry, current-epoch replay, mismatches, rollback, both lock orders,
+X/Y ownership, forced RLS and private maintenance grants. Commands:
+`python tool/test_backend_resolved_content.py --supabase .tools/supabase/supabase.exe
+--wire-output .tools/backend-resolved-content-wire.json`, then
+`dart run tool/check_backend_wire.dart .tools/backend-resolved-content-wire.json`.
+Log: `.tools/backend-resolved-content.log`. Existing 18-suite regressions plus
+normalization are running sequentially in `.tools/backend-resolved-regressions.log`;
+consult this task's final PR timeline for their completed results and exact head.
+
+Pinned local quality passed: `flutter pub get --enforce-lockfile`,
+`dart run build_runner build`, generated diff, `dart format --output=none
+--set-exit-if-changed lib test tool`, `flutter analyze`, `flutter test --reporter
+expanded` (**133 tests**), v1 schema dump/retained snapshot/lockfile diff, three
+HTTP-isolation tests, three guarded-start tests and four retention-runner tests.
+Log: `.tools/resolved-quality.log`. `flutter test test/domain_test.dart
+test/local_database_test.dart test/schema_test.dart` passed **14 tests**.
+
+`flutter build windows --release` passed in 39.4 seconds. `flutter build apk
+--debug` failed because Flutter selected Java 11.0.15 against Gradle 9.3.1.
+The documented process-only fallback `$env:JAVA_HOME='D:/Projects/DoUrStuff/.tools/jdk/jdk-21.0.12.1+1';
+android/gradlew.bat -p android assembleDebug -Ptarget-platform=android-arm64
+--no-daemon` passed in 65 seconds with existing Gradle deprecation warnings.
+No global setting changed. Compilation does not close installed-device gates.
+
+Independent review, final hosted checks and guarded merge remain required;
+consult this branch's PR timeline for their final disposition. SQLite remains v1
+and account writes remain disabled. Compound create/copy-as-new recovery, native
+recovery/export and account staging/projection are next unfinished work under the
+delivery plan. Scheduling/capacity measurements, all representation/external/native
+acceptance and Phase 4 remain open. Production deployment/migrations, releases
+and distribution remain unauthorized.
+
+Resume by refreshing Git/GitHub and preserving newer work; reuse this branch/PR
+until its review/checks/merge finish. Read AGENTS.md, delivery plan/backlog, this
+handoff, recovery audit and final PR timeline; follow sync-protocol,
+database-migrations, Supabase and finish-task. Preserve all 25 applied migrations
+and existing services/volumes; start only with the guarded starter.
+
+## Previous handoff — explicit recovery, 31 October 2026
 
 Refreshed Git/GitHub from PR19 merge
 `0818f539d6bada38bdbf685e5658ac090c99f1db`, with a clean checkout. Its final
