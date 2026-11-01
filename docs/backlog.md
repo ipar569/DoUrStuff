@@ -300,6 +300,17 @@ reply while preserving the original decision; real rollback-only epoch tests
 and production Dart correlation cover it. The earlier 23 migrations remain
 unchanged. See PR20's final timeline for corrected-head review and merge evidence.
 
+31 October resolved-content increment: forward migration 025 and a guarded local
+runner policy implement bounded 90-day candidate/decision payload compaction.
+Permanent hashes, content-free closures and dependency links preserve retries
+and exact held previews; unresolved originals and frozen captures survive.
+PR20 is complete at `ec64ac7d7d6e67bc7afe7db2b1a9ef2435b654e1`; its final timeline
+supersedes earlier pending notes. See current verification for this increment's
+actual tests/review/merge status. Next: compound create/copy-as-new recovery and
+native recovery/export, followed by account staging/projection under the delivery
+plan. Automatic scheduling/capacity, representation/external/native gates and
+Phase 4 remain open. Account writes stay disabled; no production/release action.
+
 ## Phase 4: recurrence, calendar and reminders
 
 Bounded deterministic generation/history; immutable future segments and offline
