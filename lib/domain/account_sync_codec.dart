@@ -1133,6 +1133,175 @@ void validateRecoveryResolutionReply(
   // A retry after a new snapshot may return the original earlier receipt.
 }
 
+bool _creatableEntity(SyncEntity entity) => const {
+  SyncEntityKind.task,
+  SyncEntityKind.tag,
+  SyncEntityKind.milestone,
+  SyncEntityKind.view,
+}.contains(entity.kind);
+
+final resolveCreateRecoveryCodec =
+    AccountRpcCodec<
+      ResolveCreateRecoveryRequest,
+      ResolveCreateRecoveryResult
+    >._(
+      (q) => {
+        'resolution_version': 2,
+        'cursor': _cursorJson(q.cursor),
+        'operation_id': q.replacement.operationId,
+        'device_epoch': q.replacement.deviceEpoch,
+        'sequence': q.replacement.sequence,
+        'source_operation_id': q.sourceOperationId,
+        'source_entity': q.sourceEntity.toJson(),
+        'conflicts': [
+          for (final c in q.conflicts) {'id': c.id, 'revision': c.revision},
+        ],
+        'observed_fields': q.observedFields == null
+            ? null
+            : {
+                for (final f in q.observedFields!.entries)
+                  f.key: _acceptedJson(f.value),
+              },
+        'choice': q.choice.name,
+        'replacement': q.replacement.toJson(),
+        'held_choices': [
+          for (final h in q.heldChoices)
+            {'id': h.id, 'revision': h.revision, 'choice': h.choice.name},
+        ],
+      },
+      (j) {
+        _map(
+          j,
+          'protocol_version resolution_version cursor operation_id device_epoch sequence source_operation_id source_entity conflicts observed_fields choice replacement held_choices',
+        );
+        if (j['resolution_version'] is! int || j['resolution_version'] != 2) {
+          _bad();
+        }
+        final cursor = _cursor(j['cursor']);
+        final source = _entity(j['source_entity']);
+        final sourceId = _id(j['source_operation_id']);
+        final choice = _enum(CreateRecoveryChoice.values, j['choice']);
+        final op = decodeAccountOperation(j['replacement']);
+        final fields = j['observed_fields'] == null
+            ? null
+            : {
+                for (final f in _map(j['observed_fields']).entries)
+                  f.key: _accepted(f.value),
+              };
+        final conflicts = _list(j['conflicts'], (v) {
+          final c = _map(v, 'id revision');
+          return RecoveryCandidateVersion(
+            _id(c['id']),
+            _int(c['revision'], min: 1),
+          );
+        });
+        final held = _list(j['held_choices'], (v) {
+          final h = _map(v, 'id revision choice');
+          return HeldRecoveryChoice(
+            _id(h['id']),
+            _int(h['revision'], min: 1),
+            _enum(HeldChoice.values, h['choice']),
+          );
+        });
+        _unique([...conflicts.map((c) => c.id), ...held.map((h) => h.id)]);
+        if (!_creatableEntity(source) ||
+            op.entity.kind != source.kind ||
+            op.command != '${source.kind.name}.create' ||
+            op.operationId != _id(j['operation_id']) ||
+            op.deviceEpoch != _id(j['device_epoch']) ||
+            op.sequence != _int(j['sequence'], min: 1) ||
+            op.operationId == sourceId ||
+            op.dependencies.isNotEmpty ||
+            op.patches.values.any((p) => p.base is! AbsentBase) ||
+            conflicts.isEmpty ||
+            conflicts.length + held.length > 200 ||
+            conflicts.any((c) => c.revision > cursor.revision) ||
+            held.any((h) => h.revision > cursor.revision) ||
+            (fields?.values.any((f) => f.revision > cursor.revision) ??
+                false) ||
+            (choice == CreateRecoveryChoice.create &&
+                (fields != null || source.identity != op.entity.identity)) ||
+            (choice == CreateRecoveryChoice.copyAsNew &&
+                source.identity == op.entity.identity)) {
+          _bad();
+        }
+        return ResolveCreateRecoveryRequest(
+          cursor: cursor,
+          sourceOperationId: sourceId,
+          sourceEntity: source,
+          conflicts: conflicts,
+          observedFields: fields,
+          choice: choice,
+          replacement: op,
+          heldChoices: held,
+        );
+      },
+      (r) => {
+        ...resolveRecoveryCodec._writeResult(r.resolution),
+        'resolution_version': 2,
+        'mapping': {
+          'source_operation_id': r.sourceOperationId,
+          'source_entity': r.sourceEntity.toJson(),
+          'created_entity': r.createdEntity.toJson(),
+        },
+      },
+      (j) {
+        _map(
+          j,
+          'resolution_version cursor device_high_water resolutions mapping',
+        );
+        if (j['resolution_version'] is! int || j['resolution_version'] != 2) {
+          _bad();
+        }
+        final plain = {...j, 'resolution_version': 1}..remove('mapping');
+        final resolution = resolveRecoveryCodec._readResult(plain);
+        final mapping = _map(
+          j['mapping'],
+          'source_operation_id source_entity created_entity',
+        );
+        final source = _entity(mapping['source_entity']);
+        final created = _entity(mapping['created_entity']);
+        if (!_creatableEntity(source) || source.kind != created.kind) _bad();
+        return ResolveCreateRecoveryResult(
+          resolution,
+          _id(mapping['source_operation_id']),
+          source,
+          created,
+        );
+      },
+    );
+
+void validateCreateRecoveryReply(
+  ResolveCreateRecoveryRequest request,
+  ResolveCreateRecoveryResult result,
+) {
+  resolveCreateRecoveryCodec.encodeRequest(request);
+  resolveCreateRecoveryCodec.encodeReply(SyncSuccess(result));
+  final expected = {
+    for (final c in request.conflicts)
+      c.id: (c.revision, RecoveryChoice.replace),
+    for (final h in request.heldChoices.where(
+      (h) => h.choice == HeldChoice.discard,
+    ))
+      h.id: (h.revision, RecoveryChoice.discard),
+  };
+  final resolution = result.resolution;
+  if (result.sourceOperationId != request.sourceOperationId ||
+      result.sourceEntity.identity != request.sourceEntity.identity ||
+      result.createdEntity.identity != request.replacement.entity.identity ||
+      resolution.cursor.serverEpoch != request.cursor.serverEpoch ||
+      resolution.deviceHighWater != request.replacement.sequence ||
+      resolution.resolutions.length != expected.length ||
+      resolution.resolutions.any(
+        (r) =>
+            r.operationId != request.replacement.operationId ||
+            r.deviceEpoch != request.replacement.deviceEpoch ||
+            expected[r.conflictId] != (r.expectedConflictRevision, r.choice),
+      )) {
+    _bad();
+  }
+}
+
 final recoveryPullCodec = AccountRpcCodec<PullRequest, RecoveryPullResult>._(
   (q) => {...historyPullCodec.encodeRequest(q), 'resolution_version': 1},
   (j) => historyPullCodec.decodeRequest(_withoutResolutionVersion(j)),

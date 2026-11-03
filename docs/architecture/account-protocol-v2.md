@@ -1,5 +1,57 @@
 # Account protocol v2 — milestone 3.0
 
+## Compound create recovery v2 — 3 November 2026
+
+`sync_resolve_create` negotiates `resolution_version: 2` independently of the
+unchanged single-group v1 endpoint. It accepts one original operation ID and
+entity, the exact ID/revision set of every still-unresolved candidate from that
+operation, the complete current source shadow (or null), a fresh ordinary create
+operation, and explicit `keepHeld`/`discard` choices for every unresolved transitive
+held descendant. Roots plus held choices are bounded to 200 records per request.
+The ordinary 64-KiB operation and 1-MiB request limits still apply.
+
+`create` repairs a failed/held task, tag, milestone or saved-view create at its
+original UUID only when that canonical identity is absent. `copyAsNew` creates
+a complete entity of the same kind at a distinct, unoccupied canonical UUID;
+its source may be an edit, a collision or a deleted entity. Existing/compacted
+tombstones are occupied, so copying never restores or overwrites them. The user
+supplies all required create fields, optionally correcting values; this is not
+an implicit reconstruction from a partial candidate. Every base is absent and
+no predecessor/dependency is silently rebound. A milestone's chosen parent must
+pass the normal same-account visibility checks. Name collisions and invalid or
+incomplete creates reject the entire decision without consuming its sequence.
+
+The account lock binds source/candidate/held previews, destination absence,
+ordinary create validation, canonical/history/receipt/identity writes and all
+chosen closures in one revision. Changed source shadows, closed roots, missing
+root groups or new held descendants invalidate the preview. Retained dependency
+metadata permits traversal through compacted intermediates. Earlier closures
+stay immutable; roots already closed by an earlier decision are not reopened.
+
+The reply contains v1 closure facts and a permanent content-free mapping:
+`source_operation_id`, `source_entity`, `created_entity`. That mapping is stored
+in the immutable decision receipt and replayed to the initiating request; it is
+not a UUID alias or an instruction to rewrite relationships. Other devices receive
+the new canonical entity and v1 closure facts atomically through existing pull
+and snapshot negotiation. Download shapes do not change or add mapping metadata.
+Native recovery UI and mapping presentation remain unimplemented.
+
+Original operations, bases, receipts and unchosen held candidates stay unchanged.
+Kept and later-arriving successors still reference their original identities;
+repairing another entity requires another explicit preview and fresh operation.
+There is no automatic subtree copy, relationship redirection or release of held
+work. All unresolved source groups close as `replace`; explicitly discarded held
+candidates close as `discard`. Existing v1 readers can therefore subtract closed
+IDs without interpreting new mapping fields.
+
+Retries hash the entire decision except its transport cursor. A changed mapping,
+payload, choice or identity fails; an exact retry preserves the original revision
+and mapping while returning the current server epoch. The 90-day maintenance
+function recognizes both new create choices and preserves their ordinary
+operation proof before removing request payloads. Retry and mapping proof survive
+candidate/request compaction and 180-day receipt/log expiry. SQLite stays v1;
+account writes and representation/external/native acceptance remain gated.
+
 ## Explicit recovery extension v1 — 30 October 2026
 
 `sync_resolve_recovery` is the implemented, negotiated successor to the earlier
@@ -50,10 +102,10 @@ closures atomically. Legacy shapes remain unchanged and conservatively include
 original candidates; account activation requires the negotiated lifecycle.
 
 This is a server/domain increment, not native recovery UI or account activation.
-Copy-as-new, compound create repair/UUID mapping, native staging/projection and
-the 90-day resolved-content cleanup remain later work. Single-group replacement
-cannot recreate an absent multi-field entity; explicit discard is available but
-must not be offered as the only recovery/export UX. No original is pruned here.
+Single-group replacement cannot recreate an absent multi-field entity. The v2
+create endpoint above now handles explicit complete create/copy repair; migration
+025 supplies independent resolved-content retention. Native staging/projection,
+recovery/export UI and account activation remain unfinished.
 
 Supabase's [database-function guidance](https://supabase.com/docs/guides/database/functions)
 and changelog were checked; existing restricted RPC ownership, fixed search

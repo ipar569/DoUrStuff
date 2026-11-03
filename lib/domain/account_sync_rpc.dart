@@ -55,6 +55,49 @@ final class ResolveRecoveryRequest {
   final List<HeldRecoveryChoice> heldChoices;
 }
 
+enum CreateRecoveryChoice { create, copyAsNew }
+
+final class RecoveryCandidateVersion {
+  const RecoveryCandidateVersion(this.id, this.revision);
+  final String id;
+  final int revision;
+}
+
+/// Recovery v2 creates one complete entity from an explicit original-operation
+/// preview. A copied identity never redirects original references or held work.
+final class ResolveCreateRecoveryRequest {
+  const ResolveCreateRecoveryRequest({
+    required this.cursor,
+    required this.sourceOperationId,
+    required this.sourceEntity,
+    required this.conflicts,
+    required this.observedFields,
+    required this.choice,
+    required this.replacement,
+    this.heldChoices = const [],
+  });
+  final AccountCursor cursor;
+  final String sourceOperationId;
+  final SyncEntity sourceEntity;
+  final List<RecoveryCandidateVersion> conflicts;
+  final Map<String, AcceptedField>? observedFields;
+  final CreateRecoveryChoice choice;
+  final AccountOperation replacement;
+  final List<HeldRecoveryChoice> heldChoices;
+}
+
+final class ResolveCreateRecoveryResult {
+  const ResolveCreateRecoveryResult(
+    this.resolution,
+    this.sourceOperationId,
+    this.sourceEntity,
+    this.createdEntity,
+  );
+  final ResolveRecoveryResult resolution;
+  final String sourceOperationId;
+  final SyncEntity sourceEntity, createdEntity;
+}
+
 final class RecoveryResolution {
   const RecoveryResolution({
     required this.conflictId,
