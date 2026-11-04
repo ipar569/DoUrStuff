@@ -1,6 +1,88 @@
 # Phase 3 verification
 
-## Current handoff — resolved-content retention, 31 October 2026
+## Current handoff — compound create/copy recovery, 3 November 2026
+
+Refreshed Git/GitHub from PR21 merge
+`ff4116ff7a26de1c12fd39ff4ecee1c0facf406b`, with a clean checkout, then created
+`codex/compound-recovery`. PR21's final timeline closes its retained pending
+regression/review/merge notes. Work began on 1 November; an automatic approval
+review usage-limit failure prevented the first database rehearsal from executing.
+The user resumed on 3 November. Refreshed origin/main was unchanged and all
+in-progress task files were preserved.
+
+Forward migration `20261101020241_compound_recovery.sql` (026) adds the restricted
+`sync_resolve_create` RPC with recovery v2 negotiation. One exact original-operation
+candidate set and complete source/held preview authorize a complete task, tag,
+milestone or view create at an absent original identity or a distinct unoccupied
+copy UUID. Canonical/history/receipt/identity changes and chosen closures commit
+in one revision. Source content, original receipts/bases, kept held work and
+prior closures remain immutable. The permanent reply mapping is not a UUID alias;
+no relationships or late successors are redirected. Existing v1 download closure
+shapes remain valid; mappings are retained in initiating decision receipts.
+See the [contract](../architecture/account-protocol-v2.md#compound-create-recovery-v2--3-november-2026)
+and [recovery audit](../architecture/account-recovery-audit.md).
+
+Only `python tool/local_backend.py --start` started/verified the existing nine
+pinned services, eight healthchecks and loopback-only bindings. All containers,
+volumes and stopped backups remain. Pre-026 application schema/data dumps are
+ignored `.tools/backend-before-compound-recovery-{schema,data}.sql`. The candidate
+compound-create rollback rehearsal and eight-group foundation retained-data
+rehearsal passed; six candidate replies passed production Dart decoding. These
+are not backup-restoration acceptance. Pinned CLI 2.120.0 advisors were clean
+before and after apply. `migration up --local --network-id dourstuff-local`
+applied only 026, and `migration list --local` matched all 26 IDs. All 25 earlier
+migrations are unchanged. Never rewrite applied 026 or rerun its candidate mode.
+
+The new real PostgreSQL/HTTP suite passed **11 groups and 59 production-decoded
+replies**: full task repair/copy, tag collision repair, held milestone and saved-view
+create, deleted-source copy, immutable originals, explicit held choices and new
+arrival invalidation, stale/occupied destination rejection, 90/180-day retry proof,
+current epochs/mappings, injected late failure, concurrent duplicate requests,
+late commit/download ordering, ownership and malformed/version preflight.
+Commands: `python tool/test_backend_compound_recovery.py --supabase
+.tools/supabase/supabase.exe --wire-output .tools/backend-compound-wire.json`, then
+`dart run tool/check_backend_wire.dart .tools/backend-compound-wire.json`.
+Log: `.tools/backend-compound.log`. All nineteen prior backend suites plus full
+normalization parity are running sequentially in `.tools/backend-compound-regressions.log`;
+consult the task PR's final timeline for their completed evidence and reviewed head.
+
+Local pinned quality passed: `flutter pub get --enforce-lockfile`,
+`dart run build_runner build`, generated-file diff, `dart format --output=none
+--set-exit-if-changed lib test tool`, `flutter analyze`, `flutter test --reporter
+expanded` (**137 tests**), v1 schema dump/retained snapshot/lockfile diff,
+HTTP/startup helper tests (three each) and retention runner (four).
+Log: `.tools/compound-quality.log`. The two recovery codec files pass eight tests;
+`flutter test test/domain_test.dart test/local_database_test.dart test/schema_test.dart`
+passes 14. Initial codec helper-name compile errors and analyzer missing braces
+were corrected. The first executed migration rehearsal lacked the temporary
+schema grant needed for restricted RPC ownership; it rolled back, and the
+repository's grant/transfer/revoke pattern fixed it before apply. An initial
+integration assertion compared the advancing account cursor rather than the
+stable original receipt; the corrected receipt/candidate check passes.
+
+`flutter build windows --release` passed in 12.7 seconds. `flutter build apk
+--debug` failed because Flutter selected Java 11.0.15 against Gradle 9.3.1.
+The documented process-only fallback `$env:JAVA_HOME='D:/Projects/DoUrStuff/.tools/jdk/jdk-21.0.12.1+1';
+android/gradlew.bat -p android assembleDebug -Ptarget-platform=android-arm64
+--no-daemon` passed in 50 seconds with existing Gradle deprecation warnings.
+No global settings changed. Compilation does not close native acceptance.
+
+Independent review, final hosted checks and guarded merge remain required; the
+final PR timeline will supersede these pending notes. SQLite stays v1 and account
+writes remain disabled. Next native increment under the delivery plan is 3.2:
+retained-data account SQLite storage/staging and projection foundations. Native
+auth, recovery/export UI, mapping presentation and full worker/lifecycle remain
+unfinished. Representation parity, scheduling/capacity measurement, all external/
+native acceptance and Phase 4 remain open. Production deployment/migrations,
+releases and distribution remain unauthorized.
+
+Resume by refreshing Git/GitHub and preserving newer work. Reuse this branch/PR
+until review/checks/merge finish; read AGENTS.md, delivery plan/backlog, this
+handoff, audit and final PR timeline. Follow sync-protocol, database-migrations,
+Supabase and finish-task. Preserve all 26 applied migrations and existing stack;
+start only with the guarded starter.
+
+## Previous handoff — resolved-content retention, 31 October 2026
 
 Refreshed Git/GitHub with a clean checkout at PR20 merge
 `ec64ac7d7d6e67bc7afe7db2b1a9ef2435b654e1`. PR20's final timeline confirms reviewed

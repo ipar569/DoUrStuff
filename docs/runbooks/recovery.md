@@ -1,5 +1,24 @@
 # Preservation and recovery
 
+3 November compound recovery (026) adds `sync_resolve_create` with explicit
+recovery v2 negotiation. Capture all unresolved groups of the selected original
+operation, the complete source shadow and every transitive held successor before
+choosing a complete create or distinct-UUID copy. On `recoveryChanged`, refresh
+the preview without consuming or rewriting the old operation. Invalid creates,
+name collisions and occupied/deleted destinations roll back entirely. Never
+silently reparent or alias a retained reference to the copy; kept held work still
+needs a separate explicit repair. The immutable decision reply retains the chosen
+mapping through 90/180-day cleanup and current-epoch retry.
+
+Pre-026 application dumps are `.tools/backend-before-compound-recovery-{schema,data}.sql`.
+The candidate and retained-data checks are rollback rehearsals, not backup-restore
+acceptance. Preserve all 26 locally applied migrations and existing containers,
+volumes and stopped backups. Never run 026 candidate mode after application;
+start only with `python tool/local_backend.py --start`. See the
+[contract](../architecture/account-protocol-v2.md#compound-create-recovery-v2--3-november-2026)
+and [verification](../verification/phase-3.md). Native recovery/export, mapping
+presentation and account writes remain disabled/unimplemented as documented.
+
 31 October resolved-content increment (025): select the intended **local** owner
 and run `python tool/run_backend_retention.py --owner <uuid> --policy
 resolved-content --batch-size 200 --batches 1`. The two independent per-batch

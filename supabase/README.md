@@ -358,3 +358,14 @@ is included. Preserve all 24 earlier migrations and the existing stack. See the
 [recovery runbook](../docs/runbooks/recovery.md) for the explicit `resolved-content`
 operator policy and independent content lifetimes. Scheduling and native account
 activation are not enabled; production/release actions remain unauthorized.
+
+3 November: migration 026 adds compound create/copy recovery. Run
+`python tool/test_backend_compound_recovery.py --supabase .tools/supabase/supabase.exe
+--wire-output .tools/backend-compound-wire.json`, then
+`dart run tool/check_backend_wire.dart .tools/backend-compound-wire.json`.
+`--candidate` is rollback-only and must never run after 026 is applied. Run all
+twenty suites sequentially when the foundation schema rehearsal is included,
+plus normalization parity. Preserve all 25 earlier migrations and existing stack.
+The complete create request is separate from legacy single-group recovery;
+existing download contracts remain unchanged. Native account activation,
+production migrations/deployment and releases are not authorized by this change.

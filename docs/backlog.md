@@ -311,6 +311,18 @@ native recovery/export, followed by account staging/projection under the deliver
 plan. Automatic scheduling/capacity, representation/external/native gates and
 Phase 4 remain open. Account writes stay disabled; no production/release action.
 
+3 November compound recovery increment: migration 026 and provider-free recovery
+v2 codecs support complete task/tag/milestone/view create repair at an absent
+original identity, or copy to a distinct unoccupied UUID. Exact all-group and held
+previews, atomic rollback and immutable mappings preserve originals and retry
+proofs through retention. PR21 is complete at
+`ff4116ff7a26de1c12fd39ff4ecee1c0facf406b`; its final timeline supersedes prior pending
+notes. See current verification for this task's tests/review/merge. Next native
+increment is 3.2 retained-data account SQLite storage and staging/projection
+foundations; native auth, recovery/export UI and full worker/lifecycle follow.
+Representation parity, scheduling/capacity, external/native gates and Phase 4
+remain open. Account writes stay disabled; no production/release action.
+
 ## Phase 4: recurrence, calendar and reminders
 
 Bounded deterministic generation/history; immutable future segments and offline

@@ -23,6 +23,13 @@ void main(List<String> args) {
     final withHistory = entry['request']['history_version'] == 1;
     final withRecovery = entry['request']['resolution_version'] == 1;
     switch (entry['rpc']) {
+      case 'resolve_create':
+        validateCreateRecoveryReply(
+          resolveCreateRecoveryCodec.decodeRequest(entry['request']),
+          (resolveCreateRecoveryCodec.decodeReply(
+            entry['reply'],
+          ) as SyncSuccess<ResolveCreateRecoveryResult>).value,
+        );
       case 'resolve_recovery':
         validateRecoveryResolutionReply(
           resolveRecoveryCodec.decodeRequest(entry['request']),

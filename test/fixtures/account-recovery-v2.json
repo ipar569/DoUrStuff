@@ -1,0 +1,175 @@
+{
+  "request": {
+    "protocol_version": 2,
+    "resolution_version": 2,
+    "cursor": {
+      "server_epoch": "00000000-0000-0000-0000-000000000099",
+      "revision": 4
+    },
+    "operation_id": "00000000-0000-0000-0000-000000000010",
+    "device_epoch": "00000000-0000-0000-0000-000000000001",
+    "sequence": 5,
+    "source_operation_id": "00000000-0000-0000-0000-000000000003",
+    "source_entity": {
+      "kind": "task",
+      "key": [
+        "00000000-0000-0000-0000-000000000002"
+      ]
+    },
+    "conflicts": [
+      {
+        "id": "00000000-0000-0000-0000-000000000020",
+        "revision": 2
+      },
+      {
+        "id": "00000000-0000-0000-0000-000000000021",
+        "revision": 2
+      },
+      {
+        "id": "00000000-0000-0000-0000-000000000022",
+        "revision": 2
+      },
+      {
+        "id": "00000000-0000-0000-0000-000000000023",
+        "revision": 2
+      }
+    ],
+    "observed_fields": null,
+    "choice": "create",
+    "replacement": {
+      "protocol_version": 2,
+      "operation_id": "00000000-0000-0000-0000-000000000010",
+      "device_epoch": "00000000-0000-0000-0000-000000000001",
+      "sequence": 5,
+      "entity": {
+        "kind": "task",
+        "key": [
+          "00000000-0000-0000-0000-000000000002"
+        ]
+      },
+      "command": "task.create",
+      "patches": {
+        "title": {
+          "base": {
+            "kind": "absent"
+          },
+          "value": "Repaired"
+        },
+        "priority": {
+          "base": {
+            "kind": "absent"
+          },
+          "value": "none"
+        },
+        "existence": {
+          "base": {
+            "kind": "absent"
+          },
+          "value": true
+        },
+        "status_group": {
+          "base": {
+            "kind": "absent"
+          },
+          "value": {
+            "status": "todo",
+            "completed_at": null
+          }
+        }
+      },
+      "dependencies": [],
+      "provenance": {}
+    },
+    "held_choices": [
+      {
+        "id": "00000000-0000-0000-0000-000000000030",
+        "revision": 3,
+        "choice": "keepHeld"
+      },
+      {
+        "id": "00000000-0000-0000-0000-000000000031",
+        "revision": 4,
+        "choice": "discard"
+      }
+    ]
+  },
+  "reply": {
+    "protocol_version": 2,
+    "status": "success",
+    "result": {
+      "resolution_version": 2,
+      "cursor": {
+        "server_epoch": "00000000-0000-0000-0000-000000000099",
+        "revision": 5
+      },
+      "device_high_water": 5,
+      "resolutions": [
+        {
+          "version": 1,
+          "conflict_id": "00000000-0000-0000-0000-000000000020",
+          "expected_conflict_revision": 2,
+          "revision": 5,
+          "operation_id": "00000000-0000-0000-0000-000000000010",
+          "device_epoch": "00000000-0000-0000-0000-000000000001",
+          "sequence": 5,
+          "choice": "replace"
+        },
+        {
+          "version": 1,
+          "conflict_id": "00000000-0000-0000-0000-000000000021",
+          "expected_conflict_revision": 2,
+          "revision": 5,
+          "operation_id": "00000000-0000-0000-0000-000000000010",
+          "device_epoch": "00000000-0000-0000-0000-000000000001",
+          "sequence": 5,
+          "choice": "replace"
+        },
+        {
+          "version": 1,
+          "conflict_id": "00000000-0000-0000-0000-000000000022",
+          "expected_conflict_revision": 2,
+          "revision": 5,
+          "operation_id": "00000000-0000-0000-0000-000000000010",
+          "device_epoch": "00000000-0000-0000-0000-000000000001",
+          "sequence": 5,
+          "choice": "replace"
+        },
+        {
+          "version": 1,
+          "conflict_id": "00000000-0000-0000-0000-000000000023",
+          "expected_conflict_revision": 2,
+          "revision": 5,
+          "operation_id": "00000000-0000-0000-0000-000000000010",
+          "device_epoch": "00000000-0000-0000-0000-000000000001",
+          "sequence": 5,
+          "choice": "replace"
+        },
+        {
+          "version": 1,
+          "conflict_id": "00000000-0000-0000-0000-000000000031",
+          "expected_conflict_revision": 4,
+          "revision": 5,
+          "operation_id": "00000000-0000-0000-0000-000000000010",
+          "device_epoch": "00000000-0000-0000-0000-000000000001",
+          "sequence": 5,
+          "choice": "discard"
+        }
+      ],
+      "mapping": {
+        "source_operation_id": "00000000-0000-0000-0000-000000000003",
+        "source_entity": {
+          "kind": "task",
+          "key": [
+            "00000000-0000-0000-0000-000000000002"
+          ]
+        },
+        "created_entity": {
+          "kind": "task",
+          "key": [
+            "00000000-0000-0000-0000-000000000002"
+          ]
+        }
+      }
+    }
+  }
+}
