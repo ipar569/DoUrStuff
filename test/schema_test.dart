@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:drift/native.dart';
+import 'package:drift/drift.dart' show MigrationStrategy;
 import 'package:drift_dev/api/migrations_native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:dourstuff/data/local/database.dart';
@@ -116,6 +117,66 @@ void main() {
     },
   );
 
+  test(
+    'failure after migration commit leaves version and schema reopenable',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'account-version-',
+      );
+      addTearDown(() => directory.delete(recursive: true));
+      final fixture = await SchemaVerifier(GeneratedHelper()).schemaAt(1);
+      final file = File('${directory.path}/retained.sqlite');
+      fixture.rawDatabase.execute('VACUUM INTO ?', [file.path]);
+      fixture.rawDatabase.close();
+      final raw = sqlite.sqlite3.open(file.path);
+      seedLegacy(raw);
+      final before = legacyRows(raw);
+      raw.close();
+      final backup = '${file.path}.backup';
+      final interrupted = FailAfterUpgradeDatabase(
+        NativeDatabase(
+          file,
+          setup: (database) => prepareSqlite(database, backup),
+        ),
+      );
+      try {
+        await expectLater(
+          interrupted.initializeProfile('guest'),
+          throwsStateError,
+        );
+      } finally {
+        await interrupted.close();
+      }
+      final check = sqlite.sqlite3.open(file.path);
+      try {
+        expect(check.userVersion, 2);
+        expect(legacyRows(check), before);
+        expect(
+          check.select(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name LIKE 'account_%'",
+          ),
+          hasLength(9),
+        );
+      } finally {
+        check.close();
+      }
+      final reopened = AppDatabase.file(file);
+      try {
+        await reopened.initializeProfile('guest');
+        await reopened.validateDatabaseSchema();
+      } finally {
+        await reopened.close();
+      }
+      final retained = sqlite.sqlite3.open(backup);
+      try {
+        expect(retained.userVersion, 1);
+        expect(legacyRows(retained), before);
+      } finally {
+        retained.close();
+      }
+    },
+  );
+
   test('backup failure prevents any upgrade or source alteration', () async {
     final directory = await Directory.systemTemp.createTemp('account-backup-');
     addTearDown(() => directory.delete(recursive: true));
@@ -131,6 +192,27 @@ void main() {
     expect(occupied.readAsStringSync(), 'existing backup');
     raw.close();
   });
+}
+
+/// Pinned Drift writes user_version only after this callback returns. Throwing
+/// here reproduces interruption after migration COMMIT but before that write.
+class FailAfterUpgradeDatabase extends AppDatabase {
+  FailAfterUpgradeDatabase(super.executor);
+
+  @override
+  MigrationStrategy get migration {
+    final original = super.migration;
+    return MigrationStrategy(
+      onCreate: original.onCreate,
+      onUpgrade: original.onUpgrade,
+      beforeOpen: (details) async {
+        if (details.hadUpgrade) {
+          throw StateError('Injected post-commit failure');
+        }
+        await original.beforeOpen?.call(details);
+      },
+    );
+  }
 }
 
 Map<String, String> legacyRows(sqlite.Database db) => {

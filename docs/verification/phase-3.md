@@ -18,6 +18,20 @@ proofs and recovery archives. Snapshot staging/install is resumable, bounded and
 atomic; the projection read model keeps accepted state separate from proposals.
 Epoch replacement and lost local sequence history latch explicit recovery.
 
+5 November independent review of PR23 head `8512839f60501e7031ce46e683700d0d23c21aff`
+found one migration boundary issue: pinned Drift writes `user_version` after the
+upgrade callback, outside the DDL transaction. A new injected post-commit failure
+test reproduced v1 beside committed v2 tables. The fix writes `user_version = 2`
+inside the same transaction; Drift's subsequent write is idempotent. The fixture
+checks reopening, all legacy rows, all nine tables and the retained v1 backup.
+The corrected focused suite passed **32 tests**; the reproduction failed before
+the fix with version 1 instead of 2. Logs are
+`.tools/account-storage-version-before.log` and
+`.tools/account-storage-review-focused.log`.
+Updated-head review/check results belong in PR23's final timeline. The earlier
+review attempt and schema reproducibility command were blocked by a usage limit;
+on resume, schema/helper regeneration was reproducible and the review completed.
+
 Focused real SQLite/domain tests: **31 passed**. Full pinned quality:
 `flutter pub get --enforce-lockfile`, `dart run build_runner build`,
 `dart format --output=none --set-exit-if-changed lib test tool`, `flutter analyze`

@@ -6,7 +6,9 @@ transport, adoption and the worker remain disabled/unimplemented.
 
 ## Upgrade and ownership
 
-The explicit v1→v2 migration creates nine tables in one transaction. Before it,
+The explicit v1→v2 migration creates nine tables and writes `user_version = 2`
+in the same transaction, so a failure after commit remains safely reopenable.
+Before it,
 `prepareSqlite` uses `VACUUM INTO` to include committed WAL contents. Backup
 failure, unexpected account schema or upgrade failure stops opening without
 recreating the database. The retained v1 snapshot/helper remain unchanged. Every

@@ -71,6 +71,10 @@ class AppDatabase extends _$AppDatabase {
           }
           await migrator.createTable(table);
         }
+        // Drift's later user_version write is outside this transaction. Commit
+        // the marker with the DDL so interruption before beforeOpen completes
+        // cannot leave v1 pointing at already-committed v2 tables.
+        await customStatement('PRAGMA user_version = 2');
       });
     },
     beforeOpen: (_) async {
