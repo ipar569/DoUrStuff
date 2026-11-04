@@ -1,5 +1,11 @@
 # Account protocol v2 — milestone 3.0
 
+4 November 2026: the first bounded SQLite v2 storage/staging increment is described
+in [account local storage](account-local-storage-v2.md). It supersedes historical
+schema-v1 status below, retaining every guest table and adding account identity,
+original proofs, receipt outcomes, staging and a projection read model. Account
+writes remain disabled; protocol versions and shapes are unchanged.
+
 ## Compound create recovery v2 — 3 November 2026
 
 `sync_resolve_create` negotiates `resolution_version: 2` independently of the

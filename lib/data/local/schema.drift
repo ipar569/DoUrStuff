@@ -165,3 +165,74 @@ CREATE TABLE import_journal (
   state TEXT NOT NULL,
   PRIMARY KEY (source_lineage, source_id)
 );
+
+-- Account v2 storage is deliberately separate from retained guest v1 journals.
+CREATE TABLE account_state (
+  singleton INTEGER NOT NULL PRIMARY KEY CHECK (singleton = 1),
+  owner_id TEXT NOT NULL,
+  generation INTEGER NOT NULL CHECK (generation > 0),
+  server_epoch TEXT,
+  cursor INTEGER NOT NULL DEFAULT 0 CHECK (cursor >= 0),
+  device_high_waters_json TEXT NOT NULL DEFAULT '{}',
+  requires_recovery INTEGER NOT NULL DEFAULT 0 CHECK (requires_recovery IN (0,1))
+);
+CREATE TABLE account_operations (
+  operation_id TEXT NOT NULL PRIMARY KEY,
+  device_epoch TEXT NOT NULL,
+  sequence INTEGER NOT NULL CHECK (sequence > 0),
+  entity_key TEXT NOT NULL,
+  envelope_json TEXT NOT NULL,
+  payload_identity TEXT NOT NULL,
+  origin_server_epoch TEXT NOT NULL,
+  transport_state TEXT NOT NULL DEFAULT 'pending' CHECK (transport_state IN ('pending','acknowledged','reconcile')),
+  receipt_json TEXT,
+  receipt_epoch TEXT,
+  UNIQUE (device_epoch, sequence)
+);
+CREATE TABLE account_field_outcomes (
+  operation_id TEXT NOT NULL REFERENCES account_operations(operation_id),
+  field_group TEXT NOT NULL,
+  disposition TEXT NOT NULL CHECK (disposition IN ('applied','equivalent','conflict','held','recovery')),
+  accepted_json TEXT,
+  recovery_id TEXT,
+  PRIMARY KEY (operation_id, field_group)
+);
+CREATE TABLE account_originals (
+  operation_id TEXT NOT NULL PRIMARY KEY,
+  device_epoch TEXT NOT NULL,
+  sequence INTEGER NOT NULL CHECK (sequence > 0),
+  payload_identity TEXT NOT NULL,
+  UNIQUE (device_epoch, sequence)
+);
+CREATE TABLE account_recovery_archive (
+  candidate_id TEXT NOT NULL PRIMARY KEY,
+  operation_id TEXT NOT NULL REFERENCES account_originals(operation_id),
+  field_group TEXT NOT NULL,
+  original_record_json TEXT NOT NULL,
+  UNIQUE (operation_id, field_group)
+);
+-- record_key is kind-qualified canonical entity JSON for shadows; other kinds
+-- use the protocol's immutable candidate/event/closure ID. Deleted shadows stay.
+CREATE TABLE account_records (
+  record_kind TEXT NOT NULL CHECK (record_kind IN ('records','recovery','history','resolutions')),
+  record_key TEXT NOT NULL,
+  record_json TEXT NOT NULL,
+  PRIMARY KEY (record_kind, record_key)
+);
+CREATE TABLE account_snapshot (
+  singleton INTEGER NOT NULL PRIMARY KEY CHECK (singleton = 1),
+  manifest_json TEXT NOT NULL,
+  next_page INTEGER NOT NULL DEFAULT 0 CHECK (next_page >= 0),
+  record_count INTEGER NOT NULL DEFAULT 0 CHECK (record_count >= 0),
+  byte_count INTEGER NOT NULL DEFAULT 0 CHECK (byte_count >= 0)
+);
+CREATE TABLE account_snapshot_pages (
+  page INTEGER NOT NULL PRIMARY KEY CHECK (page >= 0),
+  reply_json TEXT NOT NULL
+);
+CREATE TABLE account_snapshot_records (
+  record_kind TEXT NOT NULL CHECK (record_kind IN ('records','recovery','history','resolutions')),
+  record_key TEXT NOT NULL,
+  record_json TEXT NOT NULL,
+  PRIMARY KEY (record_kind, record_key)
+);

@@ -323,6 +323,15 @@ foundations; native auth, recovery/export UI and full worker/lifecycle follow.
 Representation parity, scheduling/capacity, external/native gates and Phase 4
 remain open. Account writes stay disabled; no production/release action.
 
+4 November 3.2 increment (before Phase 4): SQLite v2 retains all guest v1 data and
+adds account identity/original archives, per-field receipt outcomes, resumable
+snapshot staging/atomic installation and a typed accepted/proposal read model.
+See [storage contract](architecture/account-local-storage-v2.md) and current
+verification. Next bounded work: incremental pull transactions and native
+shadow/pending projection/command foundations. Auth/secure persistence, adoption,
+recovery/export UI and worker/lifecycle remain unfinished. Account writes stay
+disabled; all representation/external/native gates and Phase 4 remain open.
+
 ## Phase 4: recurrence, calendar and reminders
 
 Bounded deterministic generation/history; immutable future segments and offline

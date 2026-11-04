@@ -89,7 +89,7 @@ Schema tooling uses an explicit filename because this Drift CLI cannot infer
 the schema version from the top-level constant:
 
 ```sh
-dart run drift_dev schema dump lib/data/local/database.dart drift_schemas/drift_schema_v1.json
+dart run drift_dev schema dump lib/data/local/database.dart drift_schemas/drift_schema_v2.json
 dart run drift_dev schema generate drift_schemas test/generated
 ```
 
