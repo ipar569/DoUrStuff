@@ -10,10 +10,23 @@ import 'database.dart' hide AccountOperation;
 /// A read model for recovery/projection work, not a native task or an upload.
 /// Original operations remain separate from accepted state; no implicit rebase.
 final class AccountProjection {
-  AccountProjection(this.accepted, this.proposals, this.unresolvedRecovery);
+  AccountProjection(
+    this.accepted,
+    this.proposals,
+    this.unresolvedRecovery,
+    this.values,
+    this.pendingSources,
+    this.visible,
+  );
   final ShadowRecord? accepted;
   final List<AccountProposal> proposals;
   final List<RecoveryRecord> unresolvedRecovery;
+
+  /// Effective values have no fabricated server revision. A pending source is
+  /// explicit; accepted revisions remain available only through [accepted].
+  final Map<String, Object?> values;
+  final Map<String, String> pendingSources;
+  final bool visible;
 }
 
 final class AccountProposal {
@@ -23,12 +36,20 @@ final class AccountProposal {
     this.needsReconciliation,
     this.outcomes,
     this.closedGroups,
-  );
+    this.acceptedFields,
+    Map<String, FieldDisposition> projectedOutcomes,
+  ) : _projectedOutcomes = projectedOutcomes;
   final AccountOperation operation;
   final String transportState;
   final bool needsReconciliation;
   final Map<String, String> outcomes;
   final Set<String> closedGroups;
+  final Map<String, AcceptedField> acceptedFields;
+
+  /// Local preview decisions, never server outcomes or rewritten bases.
+  final Map<String, FieldDisposition> _projectedOutcomes;
+  Map<String, FieldDisposition> get projectedOutcomes =>
+      Map.unmodifiable(_projectedOutcomes);
 }
 
 /// Local-only foundation. No transport, auth or guest command path calls this.
@@ -296,6 +317,180 @@ final class AccountStore {
         );
       });
 
+  /// Applies one bounded, negotiated history/resolution page atomically. The
+  /// caller fetches outside SQLite and must refetch from checkpoint after a
+  /// stale response (including a retry whose first commit already succeeded).
+  /// No upload acknowledgement or device watermark is inferred from a pull.
+  Future<void> applyPull(PullRequest request, RecoveryPullResult result) =>
+      db.transaction(() async {
+        final state = await _guard();
+        validateRecoveryPullReply(request, result);
+        if (state.readNullable<String>('server_epoch') !=
+                request.after.serverEpoch ||
+            state.read<int>('cursor') != request.after.revision) {
+          throw StateError('Pull does not start at the installed checkpoint.');
+        }
+        // Encoding also validates directly constructed values and the 4 MiB
+        // wire bound. Work only from this detached representation after awaits.
+        final reply = recoveryPullCodec.encodeReply(SyncSuccess(result));
+        final groups = (reply['result'] as Map)['groups'] as List;
+        var revision = request.after.revision;
+        var count = 0;
+        for (final raw in groups) {
+          final group = (raw as Map).cast<String, Object?>();
+          if (group['revision'] != ++revision) {
+            throw StateError('Pull revision gap.');
+          }
+          final records = _records(group);
+          count += records.length;
+          if (count > 10000) throw StateError('Pull record bound exceeded.');
+          for (final record in records) {
+            await _applyRecord(record);
+          }
+        }
+        await db.customStatement(
+          'UPDATE account_state SET cursor=? WHERE singleton=1',
+          [revision],
+        );
+      });
+
+  Future<void> _applyRecord(List<Object?> record) async {
+    final kind = record[0] as String;
+    final key = record[1] as String;
+    final encoded = record[2] as String;
+    final value = jsonDecode(encoded) as Map;
+    if (kind == 'resolutions') {
+      await _checkDecisionIdentity(
+        value['operation_id'] as String,
+        value['device_epoch'] as String,
+        value['sequence'] as int,
+      );
+    }
+    final old = await db
+        .customSelect(
+          'SELECT record_json FROM account_records WHERE record_kind=? AND record_key=?',
+          variables: [Variable(kind), Variable(key)],
+        )
+        .get();
+    if (old.isNotEmpty) {
+      final previousJson = old.single.read<String>('record_json');
+      final previous = jsonDecode(previousJson) as Map;
+      if (kind == 'history' || kind == 'resolutions') {
+        if (previousJson != encoded) {
+          throw StateError('Immutable downloaded record mismatch.');
+        }
+      } else if (kind == 'recovery') {
+        if ((value['revision'] as int) < (previous['revision'] as int) ||
+            (value['revision'] == previous['revision'] &&
+                encoded != previousJson)) {
+          throw StateError('Recovery revision mismatch.');
+        }
+      } else {
+        final fields = value['fields'] as Map;
+        final previousFields = previous['fields'] as Map;
+        for (final entry in previousFields.entries) {
+          final next = fields[entry.key] as Map?;
+          final before = entry.value as Map;
+          // Deleted-content compaction may drop payload fields, but never
+          // identity/existence/parent or fields of a visible entity.
+          if (next == null) {
+            if ((fields['existence'] as Map?)?['value'] != false ||
+                entry.key == 'existence' ||
+                entry.key == 'parent') {
+              throw StateError('Shadow lost a retained field.');
+            }
+          } else if ((next['revision'] as int) < (before['revision'] as int) ||
+              (next['revision'] == before['revision'] &&
+                  _json(next) != _json(before))) {
+            throw StateError('Shadow field revision mismatch.');
+          }
+        }
+        if (previous['delete_operation_id'] != null &&
+            value['delete_operation_id'] != previous['delete_operation_id']) {
+          if (value['delete_operation_id'] == null ||
+              (fields['existence'] as Map?)?['value'] != false ||
+              ((fields['existence'] as Map)['revision'] as int) <=
+                  ((previousFields['existence'] as Map)['revision'] as int)) {
+            throw StateError('Deletion identity mismatch.');
+          }
+        }
+      }
+    }
+    if (kind == 'recovery' || kind == 'history') {
+      if (kind == 'history') {
+        final original = await db
+            .customSelect(
+              'SELECT payload_identity FROM account_originals WHERE operation_id=?',
+              variables: [Variable(key)],
+            )
+            .get();
+        if (original.isNotEmpty) {
+          _checkHistoryOriginal(
+            value,
+            decodeAccountOperation(
+              jsonDecode(original.single.read<String>('payload_identity')),
+            ),
+          );
+        }
+      }
+      if (value['operation'] != null) {
+        final operation = decodeAccountOperation(value['operation']);
+        await _retainOriginal(operation);
+        if (kind == 'recovery') {
+          await _archiveRecovery(value, encoded, operation);
+        }
+      }
+    }
+    if (kind == 'recovery' || kind == 'resolutions') {
+      final other = await db
+          .customSelect(
+            'SELECT record_json FROM account_records WHERE record_kind=? AND record_key=?',
+            variables: [
+              Variable(kind == 'recovery' ? 'resolutions' : 'recovery'),
+              Variable(key),
+            ],
+          )
+          .get();
+      if (other.isNotEmpty) {
+        final paired =
+            jsonDecode(other.single.read<String>('record_json')) as Map;
+        if ((kind == 'recovery' ? value['revision'] : paired['revision']) !=
+            (kind == 'recovery'
+                ? paired['expected_conflict_revision']
+                : value['expected_conflict_revision'])) {
+          throw StateError('Pull closure version mismatch.');
+        }
+      }
+    }
+    await db.customStatement(
+      'INSERT OR REPLACE INTO account_records VALUES(?,?,?)',
+      record,
+    );
+  }
+
+  Future<void> _archiveRecovery(
+    Map value,
+    String encoded,
+    AccountOperation operation,
+  ) async {
+    final previous = await db
+        .customSelect(
+          'SELECT * FROM account_recovery_archive WHERE candidate_id=?',
+          variables: [Variable(value['id'] as String)],
+        )
+        .get();
+    if (previous.isEmpty) {
+      await db.customStatement(
+        'INSERT INTO account_recovery_archive VALUES(?,?,?,?)',
+        [value['id'], operation.operationId, value['group'], encoded],
+      );
+    } else if (previous.single.read<String>('operation_id') !=
+            operation.operationId ||
+        previous.single.read<String>('field_group') != value['group']) {
+      throw StateError('Recovery original identity mismatch.');
+    }
+  }
+
   Future<SnapshotManifest?> stagedManifest() => db.transaction(() async {
     await _guard();
     final rows = await db
@@ -479,9 +674,10 @@ final class AccountStore {
     await _clearStaging();
   });
 
-  Future<AccountProjection> projection(
-    SyncEntity entity,
-  ) => db.transaction(() async {
+  Future<AccountProjection> projection(SyncEntity entity) =>
+      db.transaction(() => _projection(entity));
+
+  Future<AccountProjection> _projection(SyncEntity entity) async {
     final state = await _guard();
     final rows = await db
         .customSelect(
@@ -536,6 +732,16 @@ final class AccountStore {
               ),
           }),
           Set.unmodifiable(closed.map((r) => r.read<String>('field_group'))),
+          Map.unmodifiable({
+            for (final outcome in outcomes)
+              if (outcome.readNullable<String>('accepted_json')
+                  case final String json)
+                outcome.read<String>('field_group'): AcceptedField(
+                  (jsonDecode(json) as Map)['revision'] as int,
+                  (jsonDecode(json) as Map)['value'],
+                ),
+          }),
+          {},
         ),
       );
     }
@@ -545,17 +751,139 @@ final class AccountStore {
           variables: [Variable(entity.identity)],
         )
         .get();
+    final unresolved = recovery
+        .map(
+          (r) =>
+              decodeAccountRecovery(jsonDecode(r.read<String>('record_json'))),
+        )
+        .toList();
+    final values = <String, Object?>{
+      for (final entry
+          in shadow?.fields.entries ?? <MapEntry<String, AcceptedField>>[])
+        entry.key: entry.value.value,
+    };
+    final sources = <String, String>{};
+    final seen = <String, AccountProposal>{};
+    for (final proposal in proposals) {
+      final operation = proposal.operation;
+      for (final entry in operation.patches.entries) {
+        final group = entry.key;
+        final patch = entry.value;
+        if (proposal.closedGroups.contains(group)) continue;
+        FieldDisposition decision;
+        final candidate = unresolved.where(
+          (r) =>
+              r.operation.operationId == operation.operationId &&
+              r.group == group,
+        );
+        final outcome = proposal.outcomes[group];
+        final accepted = proposal.acceptedFields[group];
+        if (proposal.needsReconciliation) {
+          decision = FieldDisposition.recovery;
+        } else if (candidate.isNotEmpty) {
+          decision = candidate.single.disposition;
+        } else if (outcome != null &&
+            outcome != 'applied' &&
+            outcome != 'equivalent') {
+          decision = FieldDisposition.values.byName(outcome);
+        } else if (accepted != null) {
+          // Keep acknowledged values visible until pull reaches their revision,
+          // but never overlay them over a later downloaded accepted value.
+          if (accepted.revision > (shadow?.fields[group]?.revision ?? 0)) {
+            values[group] = accepted.value;
+            sources[group] = operation.operationId;
+          }
+          decision = FieldDisposition.values.byName(outcome!);
+          proposal._projectedOutcomes[group] = decision;
+          seen[operation.operationId] = proposal;
+          continue;
+        } else if (operation.dependencies.isNotEmpty) {
+          // Parent receipt/dependency binding belongs to account commands.
+          // Preserve and hold rather than infer acceptance from visible parents.
+          decision = FieldDisposition.held;
+        } else if (operation.command.endsWith('.create') ||
+            operation.command == 'task.restore') {
+          // Complete creates and exact-deletion restore need command-level
+          // validation; individual field equivalence cannot authorize them.
+          decision = FieldDisposition.held;
+        } else if (shadow?.fields['existence']?.value == false &&
+            operation.command != 'task.delete' &&
+            operation.command != 'milestone.delete' &&
+            operation.command != 'tag.delete' &&
+            operation.command != 'view.delete') {
+          decision = FieldDisposition.recovery;
+        } else if (patch.base case PredecessorBase base) {
+          final predecessor = seen[base.operationId];
+          if (predecessor == null ||
+              predecessor.operation.sequence != base.sequence ||
+              predecessor.operation.deviceEpoch != operation.deviceEpoch ||
+              !predecessor.operation.patches.containsKey(group) ||
+              predecessor.closedGroups.contains(group)) {
+            decision = FieldDisposition.held;
+          } else if (sources[group] == base.operationId &&
+              _json(values[group]) == _json(base.value) &&
+              [
+                FieldDisposition.applied,
+                FieldDisposition.equivalent,
+              ].contains(predecessor.projectedOutcomes[group])) {
+            decision = FieldDisposition.applied;
+          } else {
+            decision = compareField(
+              patch,
+              shadow?.fields[group],
+              acceptedPredecessor: predecessor.acceptedFields[group],
+              predecessorNeedsRecovery:
+                  predecessor.needsReconciliation ||
+                  ![
+                    FieldDisposition.applied,
+                    FieldDisposition.equivalent,
+                  ].contains(predecessor.projectedOutcomes[group]),
+            );
+          }
+        } else {
+          decision = compareField(patch, shadow?.fields[group]);
+        }
+        proposal._projectedOutcomes[group] = decision;
+        if (decision == FieldDisposition.applied ||
+            decision == FieldDisposition.equivalent) {
+          values[group] = patch.value;
+          sources[group] = operation.operationId;
+        }
+      }
+      seen[operation.operationId] = proposal;
+    }
+    var visible = values['existence'] == true;
+    if (entity.kind == SyncEntityKind.membership) {
+      visible =
+          values['membership'] == true &&
+          (await _projection(SyncEntity(SyncEntityKind.task, [entity.key[0]])))
+              .visible &&
+          (await _projection(SyncEntity(SyncEntityKind.tag, [entity.key[1]])))
+              .visible;
+    } else if (entity.kind == SyncEntityKind.milestone) {
+      final parent = values['parent'];
+      visible =
+          visible &&
+          parent is String &&
+          (await _projection(SyncEntity(SyncEntityKind.task, [parent])))
+              .visible;
+    } else if (entity.kind == SyncEntityKind.preference) {
+      final view = values['value'];
+      visible =
+          view == null ||
+          (view is String &&
+              (await _projection(SyncEntity(SyncEntityKind.view, [view])))
+                  .visible);
+    }
     return AccountProjection(
       shadow,
       List.unmodifiable(proposals),
-      List.unmodifiable(
-        recovery.map(
-          (r) =>
-              decodeAccountRecovery(jsonDecode(r.read<String>('record_json'))),
-        ),
-      ),
+      List.unmodifiable(unresolved),
+      Map.unmodifiable(values),
+      Map.unmodifiable(sources),
+      visible,
     );
-  });
+  }
 
   Future<void> _clearStaging() async {
     await db.customStatement('DELETE FROM account_snapshot_records');
@@ -564,6 +892,23 @@ final class AccountStore {
   }
 
   Future<void> _retainOriginal(AccountOperation operation) async {
+    await _checkDecisionIdentity(
+      operation.operationId,
+      operation.deviceEpoch,
+      operation.sequence,
+    );
+    final history = await db
+        .customSelect(
+          "SELECT record_json FROM account_records WHERE record_kind='history' AND record_key=?",
+          variables: [Variable(operation.operationId)],
+        )
+        .get();
+    if (history.isNotEmpty) {
+      _checkHistoryOriginal(
+        jsonDecode(history.single.read<String>('record_json')) as Map,
+        operation,
+      );
+    }
     final rows = await db
         .customSelect(
           'SELECT payload_identity FROM account_originals WHERE operation_id=?',
@@ -583,6 +928,48 @@ final class AccountStore {
       operation.sequence,
       operation.payloadIdentity,
     ]);
+  }
+
+  static void _checkHistoryOriginal(Map history, AccountOperation operation) {
+    if (operation.entity.kind != SyncEntityKind.task ||
+        operation.entity.key.single != history['task_id'] ||
+        !['task.create', 'task.status'].contains(operation.command) ||
+        !operation.patches.containsKey('status_group') ||
+        _json(operation.patches['status_group']!.value) !=
+            _json((history['status'] as Map)['value'])) {
+      throw StateError('History original identity mismatch.');
+    }
+  }
+
+  /// Closure decisions have no original payload to put in account_originals,
+  /// but their operation/device/sequence proof still cannot be reassigned.
+  Future<void> _checkDecisionIdentity(
+    String operationId,
+    String deviceEpoch,
+    int sequence,
+  ) async {
+    final identities = await db
+        .customSelect(
+          'SELECT operation_id,device_epoch,sequence FROM account_originals WHERE operation_id=? OR (device_epoch=? AND sequence=?) '
+          "UNION ALL SELECT json_extract(record_json,'\$.operation_id'),json_extract(record_json,'\$.device_epoch'),json_extract(record_json,'\$.sequence') FROM account_records WHERE record_kind='resolutions' AND (json_extract(record_json,'\$.operation_id')=? OR (json_extract(record_json,'\$.device_epoch')=? AND json_extract(record_json,'\$.sequence')=?))",
+          variables: [
+            Variable(operationId),
+            Variable(deviceEpoch),
+            Variable(sequence),
+            Variable(operationId),
+            Variable(deviceEpoch),
+            Variable(sequence),
+          ],
+        )
+        .get();
+    if (identities.any(
+      (row) =>
+          row.read<String>('operation_id') != operationId ||
+          row.read<String>('device_epoch') != deviceEpoch ||
+          row.read<int>('sequence') != sequence,
+    )) {
+      throw StateError('Downloaded operation identity mismatch.');
+    }
   }
 
   static String _json(Object? value) =>

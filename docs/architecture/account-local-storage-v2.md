@@ -1,4 +1,4 @@
-# Account SQLite foundation — 4 November 2026
+# Account SQLite storage — updated 6 November 2026
 
 This is the first bounded delivery-plan 3.2 increment. SQLite v2 adds separate
 account tables alongside every unchanged guest v1 table. Account commands, auth,
@@ -39,11 +39,24 @@ watermarks cannot invent accepted fields. Original payload proofs and the first
 recovery record are archived independently of current accepted state, without
 local pruning. Snapshots cannot substitute payloads under existing identities.
 
-The projection read model returns an accepted shadow and ordered original local
-proposals with outcome/transport/reconciliation state. It does not flatten them
-into native task rows or blindly overlay acknowledged/conflicting patches. Full
-pending replay, relationship visibility, native resolved-group presentation, command
-binding, recovery/export and copy-mapping presentation remain later work.
+The projection read model returns an accepted shadow, ordered original local
+proposals with outcome/transport/reconciliation state, and effective values with
+explicit pending operation sources. It does not fabricate server revisions or
+flatten account values into guest/native task rows. Independent original-base
+patches and proven same-field local predecessor chains can project; downloaded
+conflicts/held/recovery, uncertain receipts and closed groups cannot. Accepted
+receipt values bridge download lag only until a shadow reaches their revision.
+Later accepted values supersede them without changing the original receipt.
+Unacknowledged complete creates, restores and parent-operation dependencies stay
+held pending command-level validation/binding. This is deliberately partial
+pending replay, not full account command or representation parity.
+
+Visibility combines effective existence with a milestone's exact parent or both
+exact membership parents. A default-view reference is usable only while its view
+is visible (or the reference is null); the original reference is retained.
+Independent child deletion/removal survives parent restoration. Native resolved-
+group presentation, command binding, recovery/export and copy-mapping presentation
+remain later work.
 History and closure records are stored but have no native presentation yet.
 
 ## Durable snapshots
@@ -74,7 +87,30 @@ It has no automatic clear path. Restored-profile/new-device recovery and export
 decisions require later lifecycle work; restoring an entire backup cannot be
 detected merely by the generation counter.
 
-Incremental pull apply, native materialized projection, account-aware commands,
+## Incremental downloads
+
+`applyPull` accepts negotiated history v1 + resolution v1 pages, requiring the
+installed epoch/cursor and current profile generation. A page contains at most
+200 whole contiguous revisions, 10,000 total records and the codec's 4 MiB reply
+bound. Empty committed revisions advance normally; an empty terminal reply does
+not advance. The advertised committed high-water is not the applied cursor.
+
+All shadow/history/recovery/closure writes, original identity proofs, first
+recovery archives and cursor advancement share one SQLite transaction. No network
+call, receipt acknowledgement or device watermark is inferred inside it. Shadow
+field revisions cannot regress or substitute values at the same revision. Deleted
+content can compact to identity fields; deletion identities survive restoration.
+History and closure facts are immutable; candidate closure versions and operation/
+device/sequence proofs are checked. Original envelopes and receipts stay untouched.
+
+A rolled-back page can retry; an already committed or otherwise stale request is
+rejected without writes, and the caller must refetch from `checkpoint()`. There
+is no durable last-page retry ledger or automatic worker. In-progress snapshot
+staging survives pull; an older capture cannot install over a newer checkpoint.
+Projection reads accepted state and current proposals in one guarded transaction.
+Neither SQLite v1/v2 snapshots nor backend migrations change in this increment.
+
+Native materialized projection, account-aware commands,
 auth/secure storage, adoption and the worker remain unfinished. Representation,
 external/native acceptance and Phase 4 gates stay open. No backend migration or
 production action is introduced. See the verification handoff for actual results.

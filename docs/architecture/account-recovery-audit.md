@@ -1,10 +1,13 @@
 # Account command and recovery audit — 27 October 2026
 
-Updated 4 November after PR #22 merged at `ebb3641714bfa2571dfe4d1aa74541ca74dbc020`.
+Updated 6 November after PR #23 merged at `1fd12bfe1e7a4be6f80e8067028bb39b6aba25e5`.
 The first bounded [SQLite v2 foundation](account-local-storage-v2.md) now preserves
 v1 data and adds account originals/outcomes, durable snapshot staging/install and
-an accepted-state/proposal read model. Full native projection, incremental pull,
-account command binding, lifecycle/auth/adoption and recovery/export remain open.
+an accepted-state/proposal read model. The next bounded increment adds atomic
+incremental pull and pending-safe effective values/relationship visibility, with
+immutable identity/closure checks. Unacknowledged creates/restores and parent
+dependencies remain held; full native materialization, account command binding,
+lifecycle/auth/adoption and recovery/export remain open.
 The server/native boundary rows below describe these remaining integration gaps.
 This audit compares `task_repository.dart`, the v2 command vocabulary, the
 forward migrations and the Phase 3 delivery plan. It does not authorize

@@ -1,6 +1,70 @@
 # Phase 3 verification
 
-## Current handoff — account SQLite foundation, 4 November 2026
+## Current handoff — bounded incremental pull, 6 November 2026
+
+Refreshed clean Git/GitHub at PR23 merge
+`1fd12bfe1e7a4be6f80e8067028bb39b6aba25e5` and created
+`codex/account-incremental-pull`. [PR23's final timeline](https://github.com/ipar569/DoUrStuff/pull/23#issuecomment-6670176876)
+supersedes its older pending review/check/merge notes below.
+
+This bounded 3.2 increment applies negotiated incremental pages atomically to
+the existing SQLite v2 tables. Exact profile generation/epoch/cursor, contiguous
+whole revisions, codec 4 MiB and local 10,000-record bounds prevent partial or
+stale application. Shadows, histories, original identity/recovery archives,
+closures and cursor commit together. Rejected stale responses require refetch
+from the durable checkpoint; rolled-back pages retry safely. Snapshot staging
+survives and an older capture cannot overwrite a newer pull checkpoint.
+
+The [storage contract](../architecture/account-local-storage-v2.md) describes
+pending-safe effective values, explicit pending sources, receipt lag handling,
+same-field predecessor chains, conflict/held/reconciliation/closure suppression
+and exact parent visibility. Unacknowledged whole creates/restores and parent
+dependencies remain held pending account command validation/binding. No guest
+row is repurposed and no account task UI or account write path is enabled.
+
+Initial full pinned quality passed **172 Flutter tests**, locked dependencies,
+codegen, unchanged generated/schema files, format, analysis and HTTP/startup/
+retention-runner helpers. The focused SQLite/store/schema/domain/durability suite
+passed **49 tests**. One new history substitution fixture initially failed at
+codec validation rather than its intended storage boundary; its valid revised
+event reaches that boundary and passes. The first sandboxed SDK invocation hit
+an existing telemetry-cache permission error; approved SDK execution succeeded.
+The deletion/history identity checks passed the final focused **49-test** and
+full **172-test** quality reruns. Consult this task PR's final timeline for
+exact-head review, hosted checks and final native build results.
+
+`python tool/test_backend_local_pull.py --supabase .tools/supabase/supabase.exe
+--output .tools/account-pull-real.json` and
+`dart run tool/check_backend_pull.dart .tools/account-pull-real.json` passed:
+**three real pages / seven records** match a fresh authoritative snapshot, with
+original pending bytes and conflict preserved. Synthetic captures explicitly
+correlate one owner; a shared epoch/revision is never used to guess ownership.
+The six existing foundation/apply/snapshot/history/resolution/compound suites
+and their production decoding/snapshot-install checks are running sequentially.
+Only `python tool/local_backend.py --start` started/verified the existing nine
+services/eight healthchecks with loopback bindings. No reset, migration, container
+or volume replacement occurred. Local Windows release compiled in 26.9 seconds;
+the documented process-only Java21 Gradle APK build passed in 1m54s.
+Ignored logs use `.tools/account-pull-*`; actual final evidence belongs in the PR.
+
+SQLite v1/v2 snapshots/helpers, generated schema, lockfile and all **26** backend
+migrations remain unchanged. App account writes remain disabled. Next bounded
+3.2 work is account-aware command transactions and whole-command/dependency
+projection, including original-base and receipt binding. Keep native auth/secure
+persistence feasibility on the plan. Native materialization, recovery/export,
+adoption and worker/lifecycle remain unfinished; representation, capacity/
+scheduling, external/native acceptance and Phase 4 stay open. Production
+deployment/migrations and releases remain unauthorized.
+
+Resume by refreshing Git/GitHub and preserving newer work; reuse this branch/PR
+until review/checks/merge finish. Read AGENTS.md, delivery plan/backlog, this
+handoff, storage contract, recovery audit and this PR's final timeline. Follow
+sync-protocol, database-migrations, Supabase and finish-task. Preserve both SQLite
+snapshots, all backend migrations and existing containers/volumes; start only
+with the guarded helper. Compilation/tests are not installed-device or physical
+crash/backup-restoration acceptance.
+
+## Previous handoff — account SQLite foundation, 4 November 2026
 
 Refreshed clean Git/GitHub at PR22 merge
 `ebb3641714bfa2571dfe4d1aa74541ca74dbc020`, read its final timeline and created

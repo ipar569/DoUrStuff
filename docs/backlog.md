@@ -332,6 +332,18 @@ shadow/pending projection/command foundations. Auth/secure persistence, adoption
 recovery/export UI and worker/lifecycle remain unfinished. Account writes stay
 disabled; all representation/external/native gates and Phase 4 remain open.
 
+6 November bounded 3.2 increment: atomic negotiated incremental pages update
+accepted records, retained proofs/archives and cursor together; pending-safe
+effective values keep original bases, receipt lag, conflicts and closures distinct.
+Exact parent visibility is derived without UUID aliasing. PR23 merged at
+`1fd12bfe1e7a4be6f80e8067028bb39b6aba25e5`; its final timeline closes prior pending
+notes. See the current verification handoff for this increment's evidence.
+Next: account-aware command transactions and complete create/restore/dependency
+projection, with native auth/secure persistence feasibility in parallel planning;
+native read-model integration, recovery/export, adoption and worker/lifecycle follow.
+Both SQLite snapshots and all 26 backend migrations stay unchanged. Account app
+writes, representation/external/native acceptance and Phase 4 remain gated.
+
 ## Phase 4: recurrence, calendar and reminders
 
 Bounded deterministic generation/history; immutable future segments and offline
