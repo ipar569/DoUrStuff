@@ -1,6 +1,94 @@
 # Phase 3 verification
 
-## Current handoff — compound create/copy recovery, 3 November 2026
+## Current handoff — account SQLite foundation, 4 November 2026
+
+Refreshed clean Git/GitHub at PR22 merge
+`ebb3641714bfa2571dfe4d1aa74541ca74dbc020`, read its final timeline and created
+`codex/account-storage-foundation`. PR22's final review/check/merge timeline
+supersedes its older pending notes. This is the first bounded 3.2 increment,
+described in [account local storage v2](../architecture/account-local-storage-v2.md).
+
+SQLite v2 adds nine account tables without rebuilding or interpreting any guest
+v1 table. The v1 snapshot/helper and every backend migration remain unchanged.
+Explicit transactional migration and pre-migration WAL-consistent backup preserve
+legacy envelopes, IDs, sequences, metadata, histories, tombstones and journals.
+Account binding refuses ambiguous legacy rows. Guarded local storage preserves
+operation bytes and canonical identities, separate per-field outcomes, original
+proofs and recovery archives. Snapshot staging/install is resumable, bounded and
+atomic; the projection read model keeps accepted state separate from proposals.
+Epoch replacement and lost local sequence history latch explicit recovery.
+
+5 November independent review of PR23 head `8512839f60501e7031ce46e683700d0d23c21aff`
+found one migration boundary issue: pinned Drift writes `user_version` after the
+upgrade callback, outside the DDL transaction. A new injected post-commit failure
+test reproduced v1 beside committed v2 tables. The fix writes `user_version = 2`
+inside the same transaction; Drift's subsequent write is idempotent. The fixture
+checks reopening, all legacy rows, all nine tables and the retained v1 backup.
+The corrected focused suite passed **32 tests**; the reproduction failed before
+the fix with version 1 instead of 2. Logs are
+`.tools/account-storage-version-before.log` and
+`.tools/account-storage-review-focused.log`.
+Updated-head review/check results belong in PR23's final timeline. The earlier
+review attempt and schema reproducibility command were blocked by a usage limit;
+on resume, schema/helper regeneration was reproducible and the review completed.
+
+Focused real SQLite/domain tests: **31 passed**. Full pinned quality:
+`flutter pub get --enforce-lockfile`, `dart run build_runner build`,
+`dart format --output=none --set-exit-if-changed lib test tool`, `flutter analyze`
+and `flutter test --reporter expanded` passed (**154 tests**). HTTP/startup helper
+tests (three each) and retention-runner tests (four) passed. V2 snapshot/helper
+generation used the pinned CLI's inspected help; v1 snapshot/helper, lockfile and
+all 26 backend migrations are unchanged. Logs are ignored
+`.tools/account-storage-{focused,quality-final,analyze,codegen}.log`.
+
+Initial implementation verification exposed a generated-name import collision,
+a heterogeneous migration-table list type, and misplaced test imports; these
+were corrected. The injected migration collision also showed that Drift's
+`CREATE TABLE IF NOT EXISTS` could silently retain an unexpected table. Explicit
+name checks now reject it inside the migration transaction; the late failure
+fixture proves earlier DDL and schema version roll back with the source and
+pre-migration backup preserved. These tests are not physical-crash acceptance.
+The first real snapshot install correctly exposed an incorrect assumption that
+an original candidate could not coexist with a closure. The protocol intentionally
+retains both. Installation now validates their version pairing; projection
+subtracts closed IDs and retains originals. A regression fixture and real captured
+snapshots verify this correction, including closure-only compacted captures.
+The subsequent compound backend run timed out in a read-only `docker exec psql`
+state check after six groups. Read-only session diagnostics found no blocking
+transactions and the guarded starter reported healthy services; a separate retry
+log preserves its disposition. No stack/container/volume reset was used.
+
+Only `python tool/local_backend.py --start` starts/verifies the preserved nine
+services/eight healthchecks/loopback bindings. No backend migration is added or
+applied. Targeted real PostgreSQL foundation/apply/snapshot/history/resolution/
+compound suites and production wire decoding run sequentially in
+`.tools/account-storage-backend.log`. `tool/check_backend_storage.dart` installs
+complete negotiated captures from those real replies into isolated SQLite stores.
+Consult the task PR's final timeline for completed totals and final native build,
+review, hosted-check and merge evidence; those checks remain pending at this note.
+Local Windows release compilation passed in 35.8 seconds. Direct Flutter Android
+selected incompatible Java 11 and failed; the documented process-only Java 21
+Gradle fallback passed in 45 seconds. Logs are
+`.tools/account-storage-android*.log` and `.tools/account-storage-windows.log`.
+Compilation does not close native gates.
+
+App account writes remain disabled. This read model does not implement native
+materialized projection, pending replay, incremental pull, account command binding,
+auth/secure persistence, adoption, recovery/export or worker/lifecycle behavior.
+The next bounded 3.2 work is incremental pull transactions and native shadow/pending
+projection foundations, with originals/closure proofs preserved. Keep native auth
+feasibility on the plan; do not claim 3.2 complete. Representation parity,
+capacity/scheduling, external/native acceptance and Phase 4 remain open.
+Production deployment/migrations and releases remain unauthorized.
+
+Resume by refreshing Git/GitHub and preserving newer work. Reuse this branch/PR
+until review/checks/merge finish. Read AGENTS.md, delivery plan/backlog, this
+handoff, storage contract, recovery audit and final PR timeline. Follow
+sync-protocol, database-migrations, Supabase and finish-task. Preserve both SQLite
+snapshots, all 26 backend migrations and existing containers/volumes; start only
+with the guarded helper.
+
+## Previous handoff — compound create/copy recovery, 3 November 2026
 
 Refreshed Git/GitHub from PR21 merge
 `ff4116ff7a26de1c12fd39ff4ecee1c0facf406b`, with a clean checkout, then created

@@ -1,5 +1,17 @@
 # Preservation and recovery
 
+4 November SQLite v2: an explicit additive v1→v2 upgrade backs up committed WAL
+with `VACUUM INTO` before creating account tables transactionally. Every legacy
+table and row remains; ambiguous legacy account data prevents store binding.
+Never overwrite the retained v1 snapshot or use v1's dump filename for v2.
+Staging replacement affects only the incomplete capture. Installation preserves
+local envelopes, original payload proofs and recovery archives. Epoch replacement
+or missing local sequence history latches recovery; there is no automatic clear
+or retry under a new epoch. The account app path remains disabled. See the
+[storage contract](../architecture/account-local-storage-v2.md) and latest
+verification; file/migration tests do not establish physical-crash or native
+restored-account acceptance. Historical schema-v1 notes below remain dated evidence.
+
 3 November compound recovery (026) adds `sync_resolve_create` with explicit
 recovery v2 negotiation. Capture all unresolved groups of the selected original
 operation, the complete source shadow and every transitive held successor before

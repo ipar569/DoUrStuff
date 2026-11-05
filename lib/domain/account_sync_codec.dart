@@ -409,6 +409,17 @@ ApplyResult _applyResult(_Json j) {
   return ApplyResult(cursor: cursor, deviceHighWater: high, results: results);
 }
 
+/// Strict standalone record decoding for durable local projection reads.
+ShadowRecord decodeAccountShadow(Object? value) {
+  _bounded(value, 4194304, maxDepth: maxSyncReplyDepth);
+  return _shadow(value);
+}
+
+RecoveryRecord decodeAccountRecovery(Object? value) {
+  _bounded(value, 4194304, maxDepth: maxSyncReplyDepth);
+  return _recovery(value);
+}
+
 _Json _shadowJson(ShadowRecord r) => {
   'entity': r.entity.toJson(),
   'fields': {for (final f in r.fields.entries) f.key: _acceptedJson(f.value)},

@@ -8456,6 +8456,3393 @@ class ImportJournalCompanion extends UpdateCompanion<ImportJournalData> {
   }
 }
 
+class AccountState extends Table
+    with TableInfo<AccountState, AccountStateData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  AccountState(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _singletonMeta = const VerificationMeta(
+    'singleton',
+  );
+  late final GeneratedColumn<int> singleton = GeneratedColumn<int>(
+    'singleton',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    $customConstraints: 'NOT NULL PRIMARY KEY CHECK (singleton = 1)',
+  );
+  static const VerificationMeta _ownerIdMeta = const VerificationMeta(
+    'ownerId',
+  );
+  late final GeneratedColumn<String> ownerId = GeneratedColumn<String>(
+    'owner_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _generationMeta = const VerificationMeta(
+    'generation',
+  );
+  late final GeneratedColumn<int> generation = GeneratedColumn<int>(
+    'generation',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL CHECK (generation > 0)',
+  );
+  static const VerificationMeta _serverEpochMeta = const VerificationMeta(
+    'serverEpoch',
+  );
+  late final GeneratedColumn<String> serverEpoch = GeneratedColumn<String>(
+    'server_epoch',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
+  static const VerificationMeta _cursorMeta = const VerificationMeta('cursor');
+  late final GeneratedColumn<int> cursor = GeneratedColumn<int>(
+    'cursor',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    $customConstraints: 'NOT NULL DEFAULT 0 CHECK (cursor >= 0)',
+    defaultValue: const CustomExpression('0'),
+  );
+  static const VerificationMeta _deviceHighWatersJsonMeta =
+      const VerificationMeta('deviceHighWatersJson');
+  late final GeneratedColumn<String> deviceHighWatersJson =
+      GeneratedColumn<String>(
+        'device_high_waters_json',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        $customConstraints: 'NOT NULL DEFAULT \'{}\'',
+        defaultValue: const CustomExpression('\'{}\''),
+      );
+  static const VerificationMeta _requiresRecoveryMeta = const VerificationMeta(
+    'requiresRecovery',
+  );
+  late final GeneratedColumn<int> requiresRecovery = GeneratedColumn<int>(
+    'requires_recovery',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    $customConstraints:
+        'NOT NULL DEFAULT 0 CHECK (requires_recovery IN (0, 1))',
+    defaultValue: const CustomExpression('0'),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    singleton,
+    ownerId,
+    generation,
+    serverEpoch,
+    cursor,
+    deviceHighWatersJson,
+    requiresRecovery,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'account_state';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<AccountStateData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('singleton')) {
+      context.handle(
+        _singletonMeta,
+        singleton.isAcceptableOrUnknown(data['singleton']!, _singletonMeta),
+      );
+    }
+    if (data.containsKey('owner_id')) {
+      context.handle(
+        _ownerIdMeta,
+        ownerId.isAcceptableOrUnknown(data['owner_id']!, _ownerIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_ownerIdMeta);
+    }
+    if (data.containsKey('generation')) {
+      context.handle(
+        _generationMeta,
+        generation.isAcceptableOrUnknown(data['generation']!, _generationMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_generationMeta);
+    }
+    if (data.containsKey('server_epoch')) {
+      context.handle(
+        _serverEpochMeta,
+        serverEpoch.isAcceptableOrUnknown(
+          data['server_epoch']!,
+          _serverEpochMeta,
+        ),
+      );
+    }
+    if (data.containsKey('cursor')) {
+      context.handle(
+        _cursorMeta,
+        cursor.isAcceptableOrUnknown(data['cursor']!, _cursorMeta),
+      );
+    }
+    if (data.containsKey('device_high_waters_json')) {
+      context.handle(
+        _deviceHighWatersJsonMeta,
+        deviceHighWatersJson.isAcceptableOrUnknown(
+          data['device_high_waters_json']!,
+          _deviceHighWatersJsonMeta,
+        ),
+      );
+    }
+    if (data.containsKey('requires_recovery')) {
+      context.handle(
+        _requiresRecoveryMeta,
+        requiresRecovery.isAcceptableOrUnknown(
+          data['requires_recovery']!,
+          _requiresRecoveryMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {singleton};
+  @override
+  AccountStateData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return AccountStateData(
+      singleton: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}singleton'],
+      )!,
+      ownerId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}owner_id'],
+      )!,
+      generation: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}generation'],
+      )!,
+      serverEpoch: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}server_epoch'],
+      ),
+      cursor: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}cursor'],
+      )!,
+      deviceHighWatersJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}device_high_waters_json'],
+      )!,
+      requiresRecovery: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}requires_recovery'],
+      )!,
+    );
+  }
+
+  @override
+  AccountState createAlias(String alias) {
+    return AccountState(attachedDatabase, alias);
+  }
+
+  @override
+  bool get dontWriteConstraints => true;
+}
+
+class AccountStateData extends DataClass
+    implements Insertable<AccountStateData> {
+  final int singleton;
+  final String ownerId;
+  final int generation;
+  final String? serverEpoch;
+  final int cursor;
+  final String deviceHighWatersJson;
+  final int requiresRecovery;
+  const AccountStateData({
+    required this.singleton,
+    required this.ownerId,
+    required this.generation,
+    this.serverEpoch,
+    required this.cursor,
+    required this.deviceHighWatersJson,
+    required this.requiresRecovery,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['singleton'] = Variable<int>(singleton);
+    map['owner_id'] = Variable<String>(ownerId);
+    map['generation'] = Variable<int>(generation);
+    if (!nullToAbsent || serverEpoch != null) {
+      map['server_epoch'] = Variable<String>(serverEpoch);
+    }
+    map['cursor'] = Variable<int>(cursor);
+    map['device_high_waters_json'] = Variable<String>(deviceHighWatersJson);
+    map['requires_recovery'] = Variable<int>(requiresRecovery);
+    return map;
+  }
+
+  AccountStateCompanion toCompanion(bool nullToAbsent) {
+    return AccountStateCompanion(
+      singleton: Value(singleton),
+      ownerId: Value(ownerId),
+      generation: Value(generation),
+      serverEpoch: serverEpoch == null && nullToAbsent
+          ? const Value.absent()
+          : Value(serverEpoch),
+      cursor: Value(cursor),
+      deviceHighWatersJson: Value(deviceHighWatersJson),
+      requiresRecovery: Value(requiresRecovery),
+    );
+  }
+
+  factory AccountStateData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return AccountStateData(
+      singleton: serializer.fromJson<int>(json['singleton']),
+      ownerId: serializer.fromJson<String>(json['owner_id']),
+      generation: serializer.fromJson<int>(json['generation']),
+      serverEpoch: serializer.fromJson<String?>(json['server_epoch']),
+      cursor: serializer.fromJson<int>(json['cursor']),
+      deviceHighWatersJson: serializer.fromJson<String>(
+        json['device_high_waters_json'],
+      ),
+      requiresRecovery: serializer.fromJson<int>(json['requires_recovery']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'singleton': serializer.toJson<int>(singleton),
+      'owner_id': serializer.toJson<String>(ownerId),
+      'generation': serializer.toJson<int>(generation),
+      'server_epoch': serializer.toJson<String?>(serverEpoch),
+      'cursor': serializer.toJson<int>(cursor),
+      'device_high_waters_json': serializer.toJson<String>(
+        deviceHighWatersJson,
+      ),
+      'requires_recovery': serializer.toJson<int>(requiresRecovery),
+    };
+  }
+
+  AccountStateData copyWith({
+    int? singleton,
+    String? ownerId,
+    int? generation,
+    Value<String?> serverEpoch = const Value.absent(),
+    int? cursor,
+    String? deviceHighWatersJson,
+    int? requiresRecovery,
+  }) => AccountStateData(
+    singleton: singleton ?? this.singleton,
+    ownerId: ownerId ?? this.ownerId,
+    generation: generation ?? this.generation,
+    serverEpoch: serverEpoch.present ? serverEpoch.value : this.serverEpoch,
+    cursor: cursor ?? this.cursor,
+    deviceHighWatersJson: deviceHighWatersJson ?? this.deviceHighWatersJson,
+    requiresRecovery: requiresRecovery ?? this.requiresRecovery,
+  );
+  AccountStateData copyWithCompanion(AccountStateCompanion data) {
+    return AccountStateData(
+      singleton: data.singleton.present ? data.singleton.value : this.singleton,
+      ownerId: data.ownerId.present ? data.ownerId.value : this.ownerId,
+      generation: data.generation.present
+          ? data.generation.value
+          : this.generation,
+      serverEpoch: data.serverEpoch.present
+          ? data.serverEpoch.value
+          : this.serverEpoch,
+      cursor: data.cursor.present ? data.cursor.value : this.cursor,
+      deviceHighWatersJson: data.deviceHighWatersJson.present
+          ? data.deviceHighWatersJson.value
+          : this.deviceHighWatersJson,
+      requiresRecovery: data.requiresRecovery.present
+          ? data.requiresRecovery.value
+          : this.requiresRecovery,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AccountStateData(')
+          ..write('singleton: $singleton, ')
+          ..write('ownerId: $ownerId, ')
+          ..write('generation: $generation, ')
+          ..write('serverEpoch: $serverEpoch, ')
+          ..write('cursor: $cursor, ')
+          ..write('deviceHighWatersJson: $deviceHighWatersJson, ')
+          ..write('requiresRecovery: $requiresRecovery')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    singleton,
+    ownerId,
+    generation,
+    serverEpoch,
+    cursor,
+    deviceHighWatersJson,
+    requiresRecovery,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is AccountStateData &&
+          other.singleton == this.singleton &&
+          other.ownerId == this.ownerId &&
+          other.generation == this.generation &&
+          other.serverEpoch == this.serverEpoch &&
+          other.cursor == this.cursor &&
+          other.deviceHighWatersJson == this.deviceHighWatersJson &&
+          other.requiresRecovery == this.requiresRecovery);
+}
+
+class AccountStateCompanion extends UpdateCompanion<AccountStateData> {
+  final Value<int> singleton;
+  final Value<String> ownerId;
+  final Value<int> generation;
+  final Value<String?> serverEpoch;
+  final Value<int> cursor;
+  final Value<String> deviceHighWatersJson;
+  final Value<int> requiresRecovery;
+  const AccountStateCompanion({
+    this.singleton = const Value.absent(),
+    this.ownerId = const Value.absent(),
+    this.generation = const Value.absent(),
+    this.serverEpoch = const Value.absent(),
+    this.cursor = const Value.absent(),
+    this.deviceHighWatersJson = const Value.absent(),
+    this.requiresRecovery = const Value.absent(),
+  });
+  AccountStateCompanion.insert({
+    this.singleton = const Value.absent(),
+    required String ownerId,
+    required int generation,
+    this.serverEpoch = const Value.absent(),
+    this.cursor = const Value.absent(),
+    this.deviceHighWatersJson = const Value.absent(),
+    this.requiresRecovery = const Value.absent(),
+  }) : ownerId = Value(ownerId),
+       generation = Value(generation);
+  static Insertable<AccountStateData> custom({
+    Expression<int>? singleton,
+    Expression<String>? ownerId,
+    Expression<int>? generation,
+    Expression<String>? serverEpoch,
+    Expression<int>? cursor,
+    Expression<String>? deviceHighWatersJson,
+    Expression<int>? requiresRecovery,
+  }) {
+    return RawValuesInsertable({
+      if (singleton != null) 'singleton': singleton,
+      if (ownerId != null) 'owner_id': ownerId,
+      if (generation != null) 'generation': generation,
+      if (serverEpoch != null) 'server_epoch': serverEpoch,
+      if (cursor != null) 'cursor': cursor,
+      if (deviceHighWatersJson != null)
+        'device_high_waters_json': deviceHighWatersJson,
+      if (requiresRecovery != null) 'requires_recovery': requiresRecovery,
+    });
+  }
+
+  AccountStateCompanion copyWith({
+    Value<int>? singleton,
+    Value<String>? ownerId,
+    Value<int>? generation,
+    Value<String?>? serverEpoch,
+    Value<int>? cursor,
+    Value<String>? deviceHighWatersJson,
+    Value<int>? requiresRecovery,
+  }) {
+    return AccountStateCompanion(
+      singleton: singleton ?? this.singleton,
+      ownerId: ownerId ?? this.ownerId,
+      generation: generation ?? this.generation,
+      serverEpoch: serverEpoch ?? this.serverEpoch,
+      cursor: cursor ?? this.cursor,
+      deviceHighWatersJson: deviceHighWatersJson ?? this.deviceHighWatersJson,
+      requiresRecovery: requiresRecovery ?? this.requiresRecovery,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (singleton.present) {
+      map['singleton'] = Variable<int>(singleton.value);
+    }
+    if (ownerId.present) {
+      map['owner_id'] = Variable<String>(ownerId.value);
+    }
+    if (generation.present) {
+      map['generation'] = Variable<int>(generation.value);
+    }
+    if (serverEpoch.present) {
+      map['server_epoch'] = Variable<String>(serverEpoch.value);
+    }
+    if (cursor.present) {
+      map['cursor'] = Variable<int>(cursor.value);
+    }
+    if (deviceHighWatersJson.present) {
+      map['device_high_waters_json'] = Variable<String>(
+        deviceHighWatersJson.value,
+      );
+    }
+    if (requiresRecovery.present) {
+      map['requires_recovery'] = Variable<int>(requiresRecovery.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AccountStateCompanion(')
+          ..write('singleton: $singleton, ')
+          ..write('ownerId: $ownerId, ')
+          ..write('generation: $generation, ')
+          ..write('serverEpoch: $serverEpoch, ')
+          ..write('cursor: $cursor, ')
+          ..write('deviceHighWatersJson: $deviceHighWatersJson, ')
+          ..write('requiresRecovery: $requiresRecovery')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class AccountOperations extends Table
+    with TableInfo<AccountOperations, AccountOperation> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  AccountOperations(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _operationIdMeta = const VerificationMeta(
+    'operationId',
+  );
+  late final GeneratedColumn<String> operationId = GeneratedColumn<String>(
+    'operation_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL PRIMARY KEY',
+  );
+  static const VerificationMeta _deviceEpochMeta = const VerificationMeta(
+    'deviceEpoch',
+  );
+  late final GeneratedColumn<String> deviceEpoch = GeneratedColumn<String>(
+    'device_epoch',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _sequenceMeta = const VerificationMeta(
+    'sequence',
+  );
+  late final GeneratedColumn<int> sequence = GeneratedColumn<int>(
+    'sequence',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL CHECK (sequence > 0)',
+  );
+  static const VerificationMeta _entityKeyMeta = const VerificationMeta(
+    'entityKey',
+  );
+  late final GeneratedColumn<String> entityKey = GeneratedColumn<String>(
+    'entity_key',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _envelopeJsonMeta = const VerificationMeta(
+    'envelopeJson',
+  );
+  late final GeneratedColumn<String> envelopeJson = GeneratedColumn<String>(
+    'envelope_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _payloadIdentityMeta = const VerificationMeta(
+    'payloadIdentity',
+  );
+  late final GeneratedColumn<String> payloadIdentity = GeneratedColumn<String>(
+    'payload_identity',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _originServerEpochMeta = const VerificationMeta(
+    'originServerEpoch',
+  );
+  late final GeneratedColumn<String> originServerEpoch =
+      GeneratedColumn<String>(
+        'origin_server_epoch',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+        $customConstraints: 'NOT NULL',
+      );
+  static const VerificationMeta _transportStateMeta = const VerificationMeta(
+    'transportState',
+  );
+  late final GeneratedColumn<String> transportState = GeneratedColumn<String>(
+    'transport_state',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints: 'NOT NULL DEFAULT \'pending\' CHECK (transport_state IN (\'pending\', \'acknowledged\', \'reconcile\'))',
+    defaultValue: const CustomExpression('\'pending\''),
+  );
+  static const VerificationMeta _receiptJsonMeta = const VerificationMeta(
+    'receiptJson',
+  );
+  late final GeneratedColumn<String> receiptJson = GeneratedColumn<String>(
+    'receipt_json',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
+  static const VerificationMeta _receiptEpochMeta = const VerificationMeta(
+    'receiptEpoch',
+  );
+  late final GeneratedColumn<String> receiptEpoch = GeneratedColumn<String>(
+    'receipt_epoch',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    operationId,
+    deviceEpoch,
+    sequence,
+    entityKey,
+    envelopeJson,
+    payloadIdentity,
+    originServerEpoch,
+    transportState,
+    receiptJson,
+    receiptEpoch,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'account_operations';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<AccountOperation> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('operation_id')) {
+      context.handle(
+        _operationIdMeta,
+        operationId.isAcceptableOrUnknown(
+          data['operation_id']!,
+          _operationIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_operationIdMeta);
+    }
+    if (data.containsKey('device_epoch')) {
+      context.handle(
+        _deviceEpochMeta,
+        deviceEpoch.isAcceptableOrUnknown(
+          data['device_epoch']!,
+          _deviceEpochMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_deviceEpochMeta);
+    }
+    if (data.containsKey('sequence')) {
+      context.handle(
+        _sequenceMeta,
+        sequence.isAcceptableOrUnknown(data['sequence']!, _sequenceMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sequenceMeta);
+    }
+    if (data.containsKey('entity_key')) {
+      context.handle(
+        _entityKeyMeta,
+        entityKey.isAcceptableOrUnknown(data['entity_key']!, _entityKeyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_entityKeyMeta);
+    }
+    if (data.containsKey('envelope_json')) {
+      context.handle(
+        _envelopeJsonMeta,
+        envelopeJson.isAcceptableOrUnknown(
+          data['envelope_json']!,
+          _envelopeJsonMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_envelopeJsonMeta);
+    }
+    if (data.containsKey('payload_identity')) {
+      context.handle(
+        _payloadIdentityMeta,
+        payloadIdentity.isAcceptableOrUnknown(
+          data['payload_identity']!,
+          _payloadIdentityMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_payloadIdentityMeta);
+    }
+    if (data.containsKey('origin_server_epoch')) {
+      context.handle(
+        _originServerEpochMeta,
+        originServerEpoch.isAcceptableOrUnknown(
+          data['origin_server_epoch']!,
+          _originServerEpochMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_originServerEpochMeta);
+    }
+    if (data.containsKey('transport_state')) {
+      context.handle(
+        _transportStateMeta,
+        transportState.isAcceptableOrUnknown(
+          data['transport_state']!,
+          _transportStateMeta,
+        ),
+      );
+    }
+    if (data.containsKey('receipt_json')) {
+      context.handle(
+        _receiptJsonMeta,
+        receiptJson.isAcceptableOrUnknown(
+          data['receipt_json']!,
+          _receiptJsonMeta,
+        ),
+      );
+    }
+    if (data.containsKey('receipt_epoch')) {
+      context.handle(
+        _receiptEpochMeta,
+        receiptEpoch.isAcceptableOrUnknown(
+          data['receipt_epoch']!,
+          _receiptEpochMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {operationId};
+  @override
+  List<Set<GeneratedColumn>> get uniqueKeys => [
+    {deviceEpoch, sequence},
+  ];
+  @override
+  AccountOperation map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return AccountOperation(
+      operationId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}operation_id'],
+      )!,
+      deviceEpoch: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}device_epoch'],
+      )!,
+      sequence: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}sequence'],
+      )!,
+      entityKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}entity_key'],
+      )!,
+      envelopeJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}envelope_json'],
+      )!,
+      payloadIdentity: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}payload_identity'],
+      )!,
+      originServerEpoch: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}origin_server_epoch'],
+      )!,
+      transportState: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}transport_state'],
+      )!,
+      receiptJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}receipt_json'],
+      ),
+      receiptEpoch: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}receipt_epoch'],
+      ),
+    );
+  }
+
+  @override
+  AccountOperations createAlias(String alias) {
+    return AccountOperations(attachedDatabase, alias);
+  }
+
+  @override
+  List<String> get customConstraints => const [
+    'UNIQUE(device_epoch, sequence)',
+  ];
+  @override
+  bool get dontWriteConstraints => true;
+}
+
+class AccountOperation extends DataClass
+    implements Insertable<AccountOperation> {
+  final String operationId;
+  final String deviceEpoch;
+  final int sequence;
+  final String entityKey;
+  final String envelopeJson;
+  final String payloadIdentity;
+  final String originServerEpoch;
+  final String transportState;
+  final String? receiptJson;
+  final String? receiptEpoch;
+  const AccountOperation({
+    required this.operationId,
+    required this.deviceEpoch,
+    required this.sequence,
+    required this.entityKey,
+    required this.envelopeJson,
+    required this.payloadIdentity,
+    required this.originServerEpoch,
+    required this.transportState,
+    this.receiptJson,
+    this.receiptEpoch,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['operation_id'] = Variable<String>(operationId);
+    map['device_epoch'] = Variable<String>(deviceEpoch);
+    map['sequence'] = Variable<int>(sequence);
+    map['entity_key'] = Variable<String>(entityKey);
+    map['envelope_json'] = Variable<String>(envelopeJson);
+    map['payload_identity'] = Variable<String>(payloadIdentity);
+    map['origin_server_epoch'] = Variable<String>(originServerEpoch);
+    map['transport_state'] = Variable<String>(transportState);
+    if (!nullToAbsent || receiptJson != null) {
+      map['receipt_json'] = Variable<String>(receiptJson);
+    }
+    if (!nullToAbsent || receiptEpoch != null) {
+      map['receipt_epoch'] = Variable<String>(receiptEpoch);
+    }
+    return map;
+  }
+
+  AccountOperationsCompanion toCompanion(bool nullToAbsent) {
+    return AccountOperationsCompanion(
+      operationId: Value(operationId),
+      deviceEpoch: Value(deviceEpoch),
+      sequence: Value(sequence),
+      entityKey: Value(entityKey),
+      envelopeJson: Value(envelopeJson),
+      payloadIdentity: Value(payloadIdentity),
+      originServerEpoch: Value(originServerEpoch),
+      transportState: Value(transportState),
+      receiptJson: receiptJson == null && nullToAbsent
+          ? const Value.absent()
+          : Value(receiptJson),
+      receiptEpoch: receiptEpoch == null && nullToAbsent
+          ? const Value.absent()
+          : Value(receiptEpoch),
+    );
+  }
+
+  factory AccountOperation.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return AccountOperation(
+      operationId: serializer.fromJson<String>(json['operation_id']),
+      deviceEpoch: serializer.fromJson<String>(json['device_epoch']),
+      sequence: serializer.fromJson<int>(json['sequence']),
+      entityKey: serializer.fromJson<String>(json['entity_key']),
+      envelopeJson: serializer.fromJson<String>(json['envelope_json']),
+      payloadIdentity: serializer.fromJson<String>(json['payload_identity']),
+      originServerEpoch: serializer.fromJson<String>(
+        json['origin_server_epoch'],
+      ),
+      transportState: serializer.fromJson<String>(json['transport_state']),
+      receiptJson: serializer.fromJson<String?>(json['receipt_json']),
+      receiptEpoch: serializer.fromJson<String?>(json['receipt_epoch']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'operation_id': serializer.toJson<String>(operationId),
+      'device_epoch': serializer.toJson<String>(deviceEpoch),
+      'sequence': serializer.toJson<int>(sequence),
+      'entity_key': serializer.toJson<String>(entityKey),
+      'envelope_json': serializer.toJson<String>(envelopeJson),
+      'payload_identity': serializer.toJson<String>(payloadIdentity),
+      'origin_server_epoch': serializer.toJson<String>(originServerEpoch),
+      'transport_state': serializer.toJson<String>(transportState),
+      'receipt_json': serializer.toJson<String?>(receiptJson),
+      'receipt_epoch': serializer.toJson<String?>(receiptEpoch),
+    };
+  }
+
+  AccountOperation copyWith({
+    String? operationId,
+    String? deviceEpoch,
+    int? sequence,
+    String? entityKey,
+    String? envelopeJson,
+    String? payloadIdentity,
+    String? originServerEpoch,
+    String? transportState,
+    Value<String?> receiptJson = const Value.absent(),
+    Value<String?> receiptEpoch = const Value.absent(),
+  }) => AccountOperation(
+    operationId: operationId ?? this.operationId,
+    deviceEpoch: deviceEpoch ?? this.deviceEpoch,
+    sequence: sequence ?? this.sequence,
+    entityKey: entityKey ?? this.entityKey,
+    envelopeJson: envelopeJson ?? this.envelopeJson,
+    payloadIdentity: payloadIdentity ?? this.payloadIdentity,
+    originServerEpoch: originServerEpoch ?? this.originServerEpoch,
+    transportState: transportState ?? this.transportState,
+    receiptJson: receiptJson.present ? receiptJson.value : this.receiptJson,
+    receiptEpoch: receiptEpoch.present ? receiptEpoch.value : this.receiptEpoch,
+  );
+  AccountOperation copyWithCompanion(AccountOperationsCompanion data) {
+    return AccountOperation(
+      operationId: data.operationId.present
+          ? data.operationId.value
+          : this.operationId,
+      deviceEpoch: data.deviceEpoch.present
+          ? data.deviceEpoch.value
+          : this.deviceEpoch,
+      sequence: data.sequence.present ? data.sequence.value : this.sequence,
+      entityKey: data.entityKey.present ? data.entityKey.value : this.entityKey,
+      envelopeJson: data.envelopeJson.present
+          ? data.envelopeJson.value
+          : this.envelopeJson,
+      payloadIdentity: data.payloadIdentity.present
+          ? data.payloadIdentity.value
+          : this.payloadIdentity,
+      originServerEpoch: data.originServerEpoch.present
+          ? data.originServerEpoch.value
+          : this.originServerEpoch,
+      transportState: data.transportState.present
+          ? data.transportState.value
+          : this.transportState,
+      receiptJson: data.receiptJson.present
+          ? data.receiptJson.value
+          : this.receiptJson,
+      receiptEpoch: data.receiptEpoch.present
+          ? data.receiptEpoch.value
+          : this.receiptEpoch,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AccountOperation(')
+          ..write('operationId: $operationId, ')
+          ..write('deviceEpoch: $deviceEpoch, ')
+          ..write('sequence: $sequence, ')
+          ..write('entityKey: $entityKey, ')
+          ..write('envelopeJson: $envelopeJson, ')
+          ..write('payloadIdentity: $payloadIdentity, ')
+          ..write('originServerEpoch: $originServerEpoch, ')
+          ..write('transportState: $transportState, ')
+          ..write('receiptJson: $receiptJson, ')
+          ..write('receiptEpoch: $receiptEpoch')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    operationId,
+    deviceEpoch,
+    sequence,
+    entityKey,
+    envelopeJson,
+    payloadIdentity,
+    originServerEpoch,
+    transportState,
+    receiptJson,
+    receiptEpoch,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is AccountOperation &&
+          other.operationId == this.operationId &&
+          other.deviceEpoch == this.deviceEpoch &&
+          other.sequence == this.sequence &&
+          other.entityKey == this.entityKey &&
+          other.envelopeJson == this.envelopeJson &&
+          other.payloadIdentity == this.payloadIdentity &&
+          other.originServerEpoch == this.originServerEpoch &&
+          other.transportState == this.transportState &&
+          other.receiptJson == this.receiptJson &&
+          other.receiptEpoch == this.receiptEpoch);
+}
+
+class AccountOperationsCompanion extends UpdateCompanion<AccountOperation> {
+  final Value<String> operationId;
+  final Value<String> deviceEpoch;
+  final Value<int> sequence;
+  final Value<String> entityKey;
+  final Value<String> envelopeJson;
+  final Value<String> payloadIdentity;
+  final Value<String> originServerEpoch;
+  final Value<String> transportState;
+  final Value<String?> receiptJson;
+  final Value<String?> receiptEpoch;
+  final Value<int> rowid;
+  const AccountOperationsCompanion({
+    this.operationId = const Value.absent(),
+    this.deviceEpoch = const Value.absent(),
+    this.sequence = const Value.absent(),
+    this.entityKey = const Value.absent(),
+    this.envelopeJson = const Value.absent(),
+    this.payloadIdentity = const Value.absent(),
+    this.originServerEpoch = const Value.absent(),
+    this.transportState = const Value.absent(),
+    this.receiptJson = const Value.absent(),
+    this.receiptEpoch = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  AccountOperationsCompanion.insert({
+    required String operationId,
+    required String deviceEpoch,
+    required int sequence,
+    required String entityKey,
+    required String envelopeJson,
+    required String payloadIdentity,
+    required String originServerEpoch,
+    this.transportState = const Value.absent(),
+    this.receiptJson = const Value.absent(),
+    this.receiptEpoch = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : operationId = Value(operationId),
+       deviceEpoch = Value(deviceEpoch),
+       sequence = Value(sequence),
+       entityKey = Value(entityKey),
+       envelopeJson = Value(envelopeJson),
+       payloadIdentity = Value(payloadIdentity),
+       originServerEpoch = Value(originServerEpoch);
+  static Insertable<AccountOperation> custom({
+    Expression<String>? operationId,
+    Expression<String>? deviceEpoch,
+    Expression<int>? sequence,
+    Expression<String>? entityKey,
+    Expression<String>? envelopeJson,
+    Expression<String>? payloadIdentity,
+    Expression<String>? originServerEpoch,
+    Expression<String>? transportState,
+    Expression<String>? receiptJson,
+    Expression<String>? receiptEpoch,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (operationId != null) 'operation_id': operationId,
+      if (deviceEpoch != null) 'device_epoch': deviceEpoch,
+      if (sequence != null) 'sequence': sequence,
+      if (entityKey != null) 'entity_key': entityKey,
+      if (envelopeJson != null) 'envelope_json': envelopeJson,
+      if (payloadIdentity != null) 'payload_identity': payloadIdentity,
+      if (originServerEpoch != null) 'origin_server_epoch': originServerEpoch,
+      if (transportState != null) 'transport_state': transportState,
+      if (receiptJson != null) 'receipt_json': receiptJson,
+      if (receiptEpoch != null) 'receipt_epoch': receiptEpoch,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  AccountOperationsCompanion copyWith({
+    Value<String>? operationId,
+    Value<String>? deviceEpoch,
+    Value<int>? sequence,
+    Value<String>? entityKey,
+    Value<String>? envelopeJson,
+    Value<String>? payloadIdentity,
+    Value<String>? originServerEpoch,
+    Value<String>? transportState,
+    Value<String?>? receiptJson,
+    Value<String?>? receiptEpoch,
+    Value<int>? rowid,
+  }) {
+    return AccountOperationsCompanion(
+      operationId: operationId ?? this.operationId,
+      deviceEpoch: deviceEpoch ?? this.deviceEpoch,
+      sequence: sequence ?? this.sequence,
+      entityKey: entityKey ?? this.entityKey,
+      envelopeJson: envelopeJson ?? this.envelopeJson,
+      payloadIdentity: payloadIdentity ?? this.payloadIdentity,
+      originServerEpoch: originServerEpoch ?? this.originServerEpoch,
+      transportState: transportState ?? this.transportState,
+      receiptJson: receiptJson ?? this.receiptJson,
+      receiptEpoch: receiptEpoch ?? this.receiptEpoch,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (operationId.present) {
+      map['operation_id'] = Variable<String>(operationId.value);
+    }
+    if (deviceEpoch.present) {
+      map['device_epoch'] = Variable<String>(deviceEpoch.value);
+    }
+    if (sequence.present) {
+      map['sequence'] = Variable<int>(sequence.value);
+    }
+    if (entityKey.present) {
+      map['entity_key'] = Variable<String>(entityKey.value);
+    }
+    if (envelopeJson.present) {
+      map['envelope_json'] = Variable<String>(envelopeJson.value);
+    }
+    if (payloadIdentity.present) {
+      map['payload_identity'] = Variable<String>(payloadIdentity.value);
+    }
+    if (originServerEpoch.present) {
+      map['origin_server_epoch'] = Variable<String>(originServerEpoch.value);
+    }
+    if (transportState.present) {
+      map['transport_state'] = Variable<String>(transportState.value);
+    }
+    if (receiptJson.present) {
+      map['receipt_json'] = Variable<String>(receiptJson.value);
+    }
+    if (receiptEpoch.present) {
+      map['receipt_epoch'] = Variable<String>(receiptEpoch.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AccountOperationsCompanion(')
+          ..write('operationId: $operationId, ')
+          ..write('deviceEpoch: $deviceEpoch, ')
+          ..write('sequence: $sequence, ')
+          ..write('entityKey: $entityKey, ')
+          ..write('envelopeJson: $envelopeJson, ')
+          ..write('payloadIdentity: $payloadIdentity, ')
+          ..write('originServerEpoch: $originServerEpoch, ')
+          ..write('transportState: $transportState, ')
+          ..write('receiptJson: $receiptJson, ')
+          ..write('receiptEpoch: $receiptEpoch, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class AccountFieldOutcomes extends Table
+    with TableInfo<AccountFieldOutcomes, AccountFieldOutcome> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  AccountFieldOutcomes(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _operationIdMeta = const VerificationMeta(
+    'operationId',
+  );
+  late final GeneratedColumn<String> operationId = GeneratedColumn<String>(
+    'operation_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL REFERENCES account_operations(operation_id)',
+  );
+  static const VerificationMeta _fieldGroupMeta = const VerificationMeta(
+    'fieldGroup',
+  );
+  late final GeneratedColumn<String> fieldGroup = GeneratedColumn<String>(
+    'field_group',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _dispositionMeta = const VerificationMeta(
+    'disposition',
+  );
+  late final GeneratedColumn<String> disposition = GeneratedColumn<String>(
+    'disposition',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL CHECK (disposition IN (\'applied\', \'equivalent\', \'conflict\', \'held\', \'recovery\'))',
+  );
+  static const VerificationMeta _acceptedJsonMeta = const VerificationMeta(
+    'acceptedJson',
+  );
+  late final GeneratedColumn<String> acceptedJson = GeneratedColumn<String>(
+    'accepted_json',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
+  static const VerificationMeta _recoveryIdMeta = const VerificationMeta(
+    'recoveryId',
+  );
+  late final GeneratedColumn<String> recoveryId = GeneratedColumn<String>(
+    'recovery_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    $customConstraints: '',
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    operationId,
+    fieldGroup,
+    disposition,
+    acceptedJson,
+    recoveryId,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'account_field_outcomes';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<AccountFieldOutcome> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('operation_id')) {
+      context.handle(
+        _operationIdMeta,
+        operationId.isAcceptableOrUnknown(
+          data['operation_id']!,
+          _operationIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_operationIdMeta);
+    }
+    if (data.containsKey('field_group')) {
+      context.handle(
+        _fieldGroupMeta,
+        fieldGroup.isAcceptableOrUnknown(data['field_group']!, _fieldGroupMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_fieldGroupMeta);
+    }
+    if (data.containsKey('disposition')) {
+      context.handle(
+        _dispositionMeta,
+        disposition.isAcceptableOrUnknown(
+          data['disposition']!,
+          _dispositionMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_dispositionMeta);
+    }
+    if (data.containsKey('accepted_json')) {
+      context.handle(
+        _acceptedJsonMeta,
+        acceptedJson.isAcceptableOrUnknown(
+          data['accepted_json']!,
+          _acceptedJsonMeta,
+        ),
+      );
+    }
+    if (data.containsKey('recovery_id')) {
+      context.handle(
+        _recoveryIdMeta,
+        recoveryId.isAcceptableOrUnknown(data['recovery_id']!, _recoveryIdMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {operationId, fieldGroup};
+  @override
+  AccountFieldOutcome map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return AccountFieldOutcome(
+      operationId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}operation_id'],
+      )!,
+      fieldGroup: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}field_group'],
+      )!,
+      disposition: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}disposition'],
+      )!,
+      acceptedJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}accepted_json'],
+      ),
+      recoveryId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}recovery_id'],
+      ),
+    );
+  }
+
+  @override
+  AccountFieldOutcomes createAlias(String alias) {
+    return AccountFieldOutcomes(attachedDatabase, alias);
+  }
+
+  @override
+  List<String> get customConstraints => const [
+    'PRIMARY KEY(operation_id, field_group)',
+  ];
+  @override
+  bool get dontWriteConstraints => true;
+}
+
+class AccountFieldOutcome extends DataClass
+    implements Insertable<AccountFieldOutcome> {
+  final String operationId;
+  final String fieldGroup;
+  final String disposition;
+  final String? acceptedJson;
+  final String? recoveryId;
+  const AccountFieldOutcome({
+    required this.operationId,
+    required this.fieldGroup,
+    required this.disposition,
+    this.acceptedJson,
+    this.recoveryId,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['operation_id'] = Variable<String>(operationId);
+    map['field_group'] = Variable<String>(fieldGroup);
+    map['disposition'] = Variable<String>(disposition);
+    if (!nullToAbsent || acceptedJson != null) {
+      map['accepted_json'] = Variable<String>(acceptedJson);
+    }
+    if (!nullToAbsent || recoveryId != null) {
+      map['recovery_id'] = Variable<String>(recoveryId);
+    }
+    return map;
+  }
+
+  AccountFieldOutcomesCompanion toCompanion(bool nullToAbsent) {
+    return AccountFieldOutcomesCompanion(
+      operationId: Value(operationId),
+      fieldGroup: Value(fieldGroup),
+      disposition: Value(disposition),
+      acceptedJson: acceptedJson == null && nullToAbsent
+          ? const Value.absent()
+          : Value(acceptedJson),
+      recoveryId: recoveryId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(recoveryId),
+    );
+  }
+
+  factory AccountFieldOutcome.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return AccountFieldOutcome(
+      operationId: serializer.fromJson<String>(json['operation_id']),
+      fieldGroup: serializer.fromJson<String>(json['field_group']),
+      disposition: serializer.fromJson<String>(json['disposition']),
+      acceptedJson: serializer.fromJson<String?>(json['accepted_json']),
+      recoveryId: serializer.fromJson<String?>(json['recovery_id']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'operation_id': serializer.toJson<String>(operationId),
+      'field_group': serializer.toJson<String>(fieldGroup),
+      'disposition': serializer.toJson<String>(disposition),
+      'accepted_json': serializer.toJson<String?>(acceptedJson),
+      'recovery_id': serializer.toJson<String?>(recoveryId),
+    };
+  }
+
+  AccountFieldOutcome copyWith({
+    String? operationId,
+    String? fieldGroup,
+    String? disposition,
+    Value<String?> acceptedJson = const Value.absent(),
+    Value<String?> recoveryId = const Value.absent(),
+  }) => AccountFieldOutcome(
+    operationId: operationId ?? this.operationId,
+    fieldGroup: fieldGroup ?? this.fieldGroup,
+    disposition: disposition ?? this.disposition,
+    acceptedJson: acceptedJson.present ? acceptedJson.value : this.acceptedJson,
+    recoveryId: recoveryId.present ? recoveryId.value : this.recoveryId,
+  );
+  AccountFieldOutcome copyWithCompanion(AccountFieldOutcomesCompanion data) {
+    return AccountFieldOutcome(
+      operationId: data.operationId.present
+          ? data.operationId.value
+          : this.operationId,
+      fieldGroup: data.fieldGroup.present
+          ? data.fieldGroup.value
+          : this.fieldGroup,
+      disposition: data.disposition.present
+          ? data.disposition.value
+          : this.disposition,
+      acceptedJson: data.acceptedJson.present
+          ? data.acceptedJson.value
+          : this.acceptedJson,
+      recoveryId: data.recoveryId.present
+          ? data.recoveryId.value
+          : this.recoveryId,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AccountFieldOutcome(')
+          ..write('operationId: $operationId, ')
+          ..write('fieldGroup: $fieldGroup, ')
+          ..write('disposition: $disposition, ')
+          ..write('acceptedJson: $acceptedJson, ')
+          ..write('recoveryId: $recoveryId')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    operationId,
+    fieldGroup,
+    disposition,
+    acceptedJson,
+    recoveryId,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is AccountFieldOutcome &&
+          other.operationId == this.operationId &&
+          other.fieldGroup == this.fieldGroup &&
+          other.disposition == this.disposition &&
+          other.acceptedJson == this.acceptedJson &&
+          other.recoveryId == this.recoveryId);
+}
+
+class AccountFieldOutcomesCompanion
+    extends UpdateCompanion<AccountFieldOutcome> {
+  final Value<String> operationId;
+  final Value<String> fieldGroup;
+  final Value<String> disposition;
+  final Value<String?> acceptedJson;
+  final Value<String?> recoveryId;
+  final Value<int> rowid;
+  const AccountFieldOutcomesCompanion({
+    this.operationId = const Value.absent(),
+    this.fieldGroup = const Value.absent(),
+    this.disposition = const Value.absent(),
+    this.acceptedJson = const Value.absent(),
+    this.recoveryId = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  AccountFieldOutcomesCompanion.insert({
+    required String operationId,
+    required String fieldGroup,
+    required String disposition,
+    this.acceptedJson = const Value.absent(),
+    this.recoveryId = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : operationId = Value(operationId),
+       fieldGroup = Value(fieldGroup),
+       disposition = Value(disposition);
+  static Insertable<AccountFieldOutcome> custom({
+    Expression<String>? operationId,
+    Expression<String>? fieldGroup,
+    Expression<String>? disposition,
+    Expression<String>? acceptedJson,
+    Expression<String>? recoveryId,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (operationId != null) 'operation_id': operationId,
+      if (fieldGroup != null) 'field_group': fieldGroup,
+      if (disposition != null) 'disposition': disposition,
+      if (acceptedJson != null) 'accepted_json': acceptedJson,
+      if (recoveryId != null) 'recovery_id': recoveryId,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  AccountFieldOutcomesCompanion copyWith({
+    Value<String>? operationId,
+    Value<String>? fieldGroup,
+    Value<String>? disposition,
+    Value<String?>? acceptedJson,
+    Value<String?>? recoveryId,
+    Value<int>? rowid,
+  }) {
+    return AccountFieldOutcomesCompanion(
+      operationId: operationId ?? this.operationId,
+      fieldGroup: fieldGroup ?? this.fieldGroup,
+      disposition: disposition ?? this.disposition,
+      acceptedJson: acceptedJson ?? this.acceptedJson,
+      recoveryId: recoveryId ?? this.recoveryId,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (operationId.present) {
+      map['operation_id'] = Variable<String>(operationId.value);
+    }
+    if (fieldGroup.present) {
+      map['field_group'] = Variable<String>(fieldGroup.value);
+    }
+    if (disposition.present) {
+      map['disposition'] = Variable<String>(disposition.value);
+    }
+    if (acceptedJson.present) {
+      map['accepted_json'] = Variable<String>(acceptedJson.value);
+    }
+    if (recoveryId.present) {
+      map['recovery_id'] = Variable<String>(recoveryId.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AccountFieldOutcomesCompanion(')
+          ..write('operationId: $operationId, ')
+          ..write('fieldGroup: $fieldGroup, ')
+          ..write('disposition: $disposition, ')
+          ..write('acceptedJson: $acceptedJson, ')
+          ..write('recoveryId: $recoveryId, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class AccountOriginals extends Table
+    with TableInfo<AccountOriginals, AccountOriginal> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  AccountOriginals(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _operationIdMeta = const VerificationMeta(
+    'operationId',
+  );
+  late final GeneratedColumn<String> operationId = GeneratedColumn<String>(
+    'operation_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL PRIMARY KEY',
+  );
+  static const VerificationMeta _deviceEpochMeta = const VerificationMeta(
+    'deviceEpoch',
+  );
+  late final GeneratedColumn<String> deviceEpoch = GeneratedColumn<String>(
+    'device_epoch',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _sequenceMeta = const VerificationMeta(
+    'sequence',
+  );
+  late final GeneratedColumn<int> sequence = GeneratedColumn<int>(
+    'sequence',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL CHECK (sequence > 0)',
+  );
+  static const VerificationMeta _payloadIdentityMeta = const VerificationMeta(
+    'payloadIdentity',
+  );
+  late final GeneratedColumn<String> payloadIdentity = GeneratedColumn<String>(
+    'payload_identity',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    operationId,
+    deviceEpoch,
+    sequence,
+    payloadIdentity,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'account_originals';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<AccountOriginal> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('operation_id')) {
+      context.handle(
+        _operationIdMeta,
+        operationId.isAcceptableOrUnknown(
+          data['operation_id']!,
+          _operationIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_operationIdMeta);
+    }
+    if (data.containsKey('device_epoch')) {
+      context.handle(
+        _deviceEpochMeta,
+        deviceEpoch.isAcceptableOrUnknown(
+          data['device_epoch']!,
+          _deviceEpochMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_deviceEpochMeta);
+    }
+    if (data.containsKey('sequence')) {
+      context.handle(
+        _sequenceMeta,
+        sequence.isAcceptableOrUnknown(data['sequence']!, _sequenceMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sequenceMeta);
+    }
+    if (data.containsKey('payload_identity')) {
+      context.handle(
+        _payloadIdentityMeta,
+        payloadIdentity.isAcceptableOrUnknown(
+          data['payload_identity']!,
+          _payloadIdentityMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_payloadIdentityMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {operationId};
+  @override
+  List<Set<GeneratedColumn>> get uniqueKeys => [
+    {deviceEpoch, sequence},
+  ];
+  @override
+  AccountOriginal map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return AccountOriginal(
+      operationId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}operation_id'],
+      )!,
+      deviceEpoch: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}device_epoch'],
+      )!,
+      sequence: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}sequence'],
+      )!,
+      payloadIdentity: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}payload_identity'],
+      )!,
+    );
+  }
+
+  @override
+  AccountOriginals createAlias(String alias) {
+    return AccountOriginals(attachedDatabase, alias);
+  }
+
+  @override
+  List<String> get customConstraints => const [
+    'UNIQUE(device_epoch, sequence)',
+  ];
+  @override
+  bool get dontWriteConstraints => true;
+}
+
+class AccountOriginal extends DataClass implements Insertable<AccountOriginal> {
+  final String operationId;
+  final String deviceEpoch;
+  final int sequence;
+  final String payloadIdentity;
+  const AccountOriginal({
+    required this.operationId,
+    required this.deviceEpoch,
+    required this.sequence,
+    required this.payloadIdentity,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['operation_id'] = Variable<String>(operationId);
+    map['device_epoch'] = Variable<String>(deviceEpoch);
+    map['sequence'] = Variable<int>(sequence);
+    map['payload_identity'] = Variable<String>(payloadIdentity);
+    return map;
+  }
+
+  AccountOriginalsCompanion toCompanion(bool nullToAbsent) {
+    return AccountOriginalsCompanion(
+      operationId: Value(operationId),
+      deviceEpoch: Value(deviceEpoch),
+      sequence: Value(sequence),
+      payloadIdentity: Value(payloadIdentity),
+    );
+  }
+
+  factory AccountOriginal.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return AccountOriginal(
+      operationId: serializer.fromJson<String>(json['operation_id']),
+      deviceEpoch: serializer.fromJson<String>(json['device_epoch']),
+      sequence: serializer.fromJson<int>(json['sequence']),
+      payloadIdentity: serializer.fromJson<String>(json['payload_identity']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'operation_id': serializer.toJson<String>(operationId),
+      'device_epoch': serializer.toJson<String>(deviceEpoch),
+      'sequence': serializer.toJson<int>(sequence),
+      'payload_identity': serializer.toJson<String>(payloadIdentity),
+    };
+  }
+
+  AccountOriginal copyWith({
+    String? operationId,
+    String? deviceEpoch,
+    int? sequence,
+    String? payloadIdentity,
+  }) => AccountOriginal(
+    operationId: operationId ?? this.operationId,
+    deviceEpoch: deviceEpoch ?? this.deviceEpoch,
+    sequence: sequence ?? this.sequence,
+    payloadIdentity: payloadIdentity ?? this.payloadIdentity,
+  );
+  AccountOriginal copyWithCompanion(AccountOriginalsCompanion data) {
+    return AccountOriginal(
+      operationId: data.operationId.present
+          ? data.operationId.value
+          : this.operationId,
+      deviceEpoch: data.deviceEpoch.present
+          ? data.deviceEpoch.value
+          : this.deviceEpoch,
+      sequence: data.sequence.present ? data.sequence.value : this.sequence,
+      payloadIdentity: data.payloadIdentity.present
+          ? data.payloadIdentity.value
+          : this.payloadIdentity,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AccountOriginal(')
+          ..write('operationId: $operationId, ')
+          ..write('deviceEpoch: $deviceEpoch, ')
+          ..write('sequence: $sequence, ')
+          ..write('payloadIdentity: $payloadIdentity')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(operationId, deviceEpoch, sequence, payloadIdentity);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is AccountOriginal &&
+          other.operationId == this.operationId &&
+          other.deviceEpoch == this.deviceEpoch &&
+          other.sequence == this.sequence &&
+          other.payloadIdentity == this.payloadIdentity);
+}
+
+class AccountOriginalsCompanion extends UpdateCompanion<AccountOriginal> {
+  final Value<String> operationId;
+  final Value<String> deviceEpoch;
+  final Value<int> sequence;
+  final Value<String> payloadIdentity;
+  final Value<int> rowid;
+  const AccountOriginalsCompanion({
+    this.operationId = const Value.absent(),
+    this.deviceEpoch = const Value.absent(),
+    this.sequence = const Value.absent(),
+    this.payloadIdentity = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  AccountOriginalsCompanion.insert({
+    required String operationId,
+    required String deviceEpoch,
+    required int sequence,
+    required String payloadIdentity,
+    this.rowid = const Value.absent(),
+  }) : operationId = Value(operationId),
+       deviceEpoch = Value(deviceEpoch),
+       sequence = Value(sequence),
+       payloadIdentity = Value(payloadIdentity);
+  static Insertable<AccountOriginal> custom({
+    Expression<String>? operationId,
+    Expression<String>? deviceEpoch,
+    Expression<int>? sequence,
+    Expression<String>? payloadIdentity,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (operationId != null) 'operation_id': operationId,
+      if (deviceEpoch != null) 'device_epoch': deviceEpoch,
+      if (sequence != null) 'sequence': sequence,
+      if (payloadIdentity != null) 'payload_identity': payloadIdentity,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  AccountOriginalsCompanion copyWith({
+    Value<String>? operationId,
+    Value<String>? deviceEpoch,
+    Value<int>? sequence,
+    Value<String>? payloadIdentity,
+    Value<int>? rowid,
+  }) {
+    return AccountOriginalsCompanion(
+      operationId: operationId ?? this.operationId,
+      deviceEpoch: deviceEpoch ?? this.deviceEpoch,
+      sequence: sequence ?? this.sequence,
+      payloadIdentity: payloadIdentity ?? this.payloadIdentity,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (operationId.present) {
+      map['operation_id'] = Variable<String>(operationId.value);
+    }
+    if (deviceEpoch.present) {
+      map['device_epoch'] = Variable<String>(deviceEpoch.value);
+    }
+    if (sequence.present) {
+      map['sequence'] = Variable<int>(sequence.value);
+    }
+    if (payloadIdentity.present) {
+      map['payload_identity'] = Variable<String>(payloadIdentity.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AccountOriginalsCompanion(')
+          ..write('operationId: $operationId, ')
+          ..write('deviceEpoch: $deviceEpoch, ')
+          ..write('sequence: $sequence, ')
+          ..write('payloadIdentity: $payloadIdentity, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class AccountRecoveryArchive extends Table
+    with TableInfo<AccountRecoveryArchive, AccountRecoveryArchiveData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  AccountRecoveryArchive(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _candidateIdMeta = const VerificationMeta(
+    'candidateId',
+  );
+  late final GeneratedColumn<String> candidateId = GeneratedColumn<String>(
+    'candidate_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL PRIMARY KEY',
+  );
+  static const VerificationMeta _operationIdMeta = const VerificationMeta(
+    'operationId',
+  );
+  late final GeneratedColumn<String> operationId = GeneratedColumn<String>(
+    'operation_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL REFERENCES account_originals(operation_id)',
+  );
+  static const VerificationMeta _fieldGroupMeta = const VerificationMeta(
+    'fieldGroup',
+  );
+  late final GeneratedColumn<String> fieldGroup = GeneratedColumn<String>(
+    'field_group',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _originalRecordJsonMeta =
+      const VerificationMeta('originalRecordJson');
+  late final GeneratedColumn<String> originalRecordJson =
+      GeneratedColumn<String>(
+        'original_record_json',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+        $customConstraints: 'NOT NULL',
+      );
+  @override
+  List<GeneratedColumn> get $columns => [
+    candidateId,
+    operationId,
+    fieldGroup,
+    originalRecordJson,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'account_recovery_archive';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<AccountRecoveryArchiveData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('candidate_id')) {
+      context.handle(
+        _candidateIdMeta,
+        candidateId.isAcceptableOrUnknown(
+          data['candidate_id']!,
+          _candidateIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_candidateIdMeta);
+    }
+    if (data.containsKey('operation_id')) {
+      context.handle(
+        _operationIdMeta,
+        operationId.isAcceptableOrUnknown(
+          data['operation_id']!,
+          _operationIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_operationIdMeta);
+    }
+    if (data.containsKey('field_group')) {
+      context.handle(
+        _fieldGroupMeta,
+        fieldGroup.isAcceptableOrUnknown(data['field_group']!, _fieldGroupMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_fieldGroupMeta);
+    }
+    if (data.containsKey('original_record_json')) {
+      context.handle(
+        _originalRecordJsonMeta,
+        originalRecordJson.isAcceptableOrUnknown(
+          data['original_record_json']!,
+          _originalRecordJsonMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_originalRecordJsonMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {candidateId};
+  @override
+  List<Set<GeneratedColumn>> get uniqueKeys => [
+    {operationId, fieldGroup},
+  ];
+  @override
+  AccountRecoveryArchiveData map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return AccountRecoveryArchiveData(
+      candidateId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}candidate_id'],
+      )!,
+      operationId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}operation_id'],
+      )!,
+      fieldGroup: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}field_group'],
+      )!,
+      originalRecordJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}original_record_json'],
+      )!,
+    );
+  }
+
+  @override
+  AccountRecoveryArchive createAlias(String alias) {
+    return AccountRecoveryArchive(attachedDatabase, alias);
+  }
+
+  @override
+  List<String> get customConstraints => const [
+    'UNIQUE(operation_id, field_group)',
+  ];
+  @override
+  bool get dontWriteConstraints => true;
+}
+
+class AccountRecoveryArchiveData extends DataClass
+    implements Insertable<AccountRecoveryArchiveData> {
+  final String candidateId;
+  final String operationId;
+  final String fieldGroup;
+  final String originalRecordJson;
+  const AccountRecoveryArchiveData({
+    required this.candidateId,
+    required this.operationId,
+    required this.fieldGroup,
+    required this.originalRecordJson,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['candidate_id'] = Variable<String>(candidateId);
+    map['operation_id'] = Variable<String>(operationId);
+    map['field_group'] = Variable<String>(fieldGroup);
+    map['original_record_json'] = Variable<String>(originalRecordJson);
+    return map;
+  }
+
+  AccountRecoveryArchiveCompanion toCompanion(bool nullToAbsent) {
+    return AccountRecoveryArchiveCompanion(
+      candidateId: Value(candidateId),
+      operationId: Value(operationId),
+      fieldGroup: Value(fieldGroup),
+      originalRecordJson: Value(originalRecordJson),
+    );
+  }
+
+  factory AccountRecoveryArchiveData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return AccountRecoveryArchiveData(
+      candidateId: serializer.fromJson<String>(json['candidate_id']),
+      operationId: serializer.fromJson<String>(json['operation_id']),
+      fieldGroup: serializer.fromJson<String>(json['field_group']),
+      originalRecordJson: serializer.fromJson<String>(
+        json['original_record_json'],
+      ),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'candidate_id': serializer.toJson<String>(candidateId),
+      'operation_id': serializer.toJson<String>(operationId),
+      'field_group': serializer.toJson<String>(fieldGroup),
+      'original_record_json': serializer.toJson<String>(originalRecordJson),
+    };
+  }
+
+  AccountRecoveryArchiveData copyWith({
+    String? candidateId,
+    String? operationId,
+    String? fieldGroup,
+    String? originalRecordJson,
+  }) => AccountRecoveryArchiveData(
+    candidateId: candidateId ?? this.candidateId,
+    operationId: operationId ?? this.operationId,
+    fieldGroup: fieldGroup ?? this.fieldGroup,
+    originalRecordJson: originalRecordJson ?? this.originalRecordJson,
+  );
+  AccountRecoveryArchiveData copyWithCompanion(
+    AccountRecoveryArchiveCompanion data,
+  ) {
+    return AccountRecoveryArchiveData(
+      candidateId: data.candidateId.present
+          ? data.candidateId.value
+          : this.candidateId,
+      operationId: data.operationId.present
+          ? data.operationId.value
+          : this.operationId,
+      fieldGroup: data.fieldGroup.present
+          ? data.fieldGroup.value
+          : this.fieldGroup,
+      originalRecordJson: data.originalRecordJson.present
+          ? data.originalRecordJson.value
+          : this.originalRecordJson,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AccountRecoveryArchiveData(')
+          ..write('candidateId: $candidateId, ')
+          ..write('operationId: $operationId, ')
+          ..write('fieldGroup: $fieldGroup, ')
+          ..write('originalRecordJson: $originalRecordJson')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(candidateId, operationId, fieldGroup, originalRecordJson);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is AccountRecoveryArchiveData &&
+          other.candidateId == this.candidateId &&
+          other.operationId == this.operationId &&
+          other.fieldGroup == this.fieldGroup &&
+          other.originalRecordJson == this.originalRecordJson);
+}
+
+class AccountRecoveryArchiveCompanion
+    extends UpdateCompanion<AccountRecoveryArchiveData> {
+  final Value<String> candidateId;
+  final Value<String> operationId;
+  final Value<String> fieldGroup;
+  final Value<String> originalRecordJson;
+  final Value<int> rowid;
+  const AccountRecoveryArchiveCompanion({
+    this.candidateId = const Value.absent(),
+    this.operationId = const Value.absent(),
+    this.fieldGroup = const Value.absent(),
+    this.originalRecordJson = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  AccountRecoveryArchiveCompanion.insert({
+    required String candidateId,
+    required String operationId,
+    required String fieldGroup,
+    required String originalRecordJson,
+    this.rowid = const Value.absent(),
+  }) : candidateId = Value(candidateId),
+       operationId = Value(operationId),
+       fieldGroup = Value(fieldGroup),
+       originalRecordJson = Value(originalRecordJson);
+  static Insertable<AccountRecoveryArchiveData> custom({
+    Expression<String>? candidateId,
+    Expression<String>? operationId,
+    Expression<String>? fieldGroup,
+    Expression<String>? originalRecordJson,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (candidateId != null) 'candidate_id': candidateId,
+      if (operationId != null) 'operation_id': operationId,
+      if (fieldGroup != null) 'field_group': fieldGroup,
+      if (originalRecordJson != null)
+        'original_record_json': originalRecordJson,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  AccountRecoveryArchiveCompanion copyWith({
+    Value<String>? candidateId,
+    Value<String>? operationId,
+    Value<String>? fieldGroup,
+    Value<String>? originalRecordJson,
+    Value<int>? rowid,
+  }) {
+    return AccountRecoveryArchiveCompanion(
+      candidateId: candidateId ?? this.candidateId,
+      operationId: operationId ?? this.operationId,
+      fieldGroup: fieldGroup ?? this.fieldGroup,
+      originalRecordJson: originalRecordJson ?? this.originalRecordJson,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (candidateId.present) {
+      map['candidate_id'] = Variable<String>(candidateId.value);
+    }
+    if (operationId.present) {
+      map['operation_id'] = Variable<String>(operationId.value);
+    }
+    if (fieldGroup.present) {
+      map['field_group'] = Variable<String>(fieldGroup.value);
+    }
+    if (originalRecordJson.present) {
+      map['original_record_json'] = Variable<String>(originalRecordJson.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AccountRecoveryArchiveCompanion(')
+          ..write('candidateId: $candidateId, ')
+          ..write('operationId: $operationId, ')
+          ..write('fieldGroup: $fieldGroup, ')
+          ..write('originalRecordJson: $originalRecordJson, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class AccountRecords extends Table
+    with TableInfo<AccountRecords, AccountRecord> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  AccountRecords(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _recordKindMeta = const VerificationMeta(
+    'recordKind',
+  );
+  late final GeneratedColumn<String> recordKind = GeneratedColumn<String>(
+    'record_kind',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL CHECK (record_kind IN (\'records\', \'recovery\', \'history\', \'resolutions\'))',
+  );
+  static const VerificationMeta _recordKeyMeta = const VerificationMeta(
+    'recordKey',
+  );
+  late final GeneratedColumn<String> recordKey = GeneratedColumn<String>(
+    'record_key',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _recordJsonMeta = const VerificationMeta(
+    'recordJson',
+  );
+  late final GeneratedColumn<String> recordJson = GeneratedColumn<String>(
+    'record_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  @override
+  List<GeneratedColumn> get $columns => [recordKind, recordKey, recordJson];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'account_records';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<AccountRecord> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('record_kind')) {
+      context.handle(
+        _recordKindMeta,
+        recordKind.isAcceptableOrUnknown(data['record_kind']!, _recordKindMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_recordKindMeta);
+    }
+    if (data.containsKey('record_key')) {
+      context.handle(
+        _recordKeyMeta,
+        recordKey.isAcceptableOrUnknown(data['record_key']!, _recordKeyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_recordKeyMeta);
+    }
+    if (data.containsKey('record_json')) {
+      context.handle(
+        _recordJsonMeta,
+        recordJson.isAcceptableOrUnknown(data['record_json']!, _recordJsonMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_recordJsonMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {recordKind, recordKey};
+  @override
+  AccountRecord map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return AccountRecord(
+      recordKind: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}record_kind'],
+      )!,
+      recordKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}record_key'],
+      )!,
+      recordJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}record_json'],
+      )!,
+    );
+  }
+
+  @override
+  AccountRecords createAlias(String alias) {
+    return AccountRecords(attachedDatabase, alias);
+  }
+
+  @override
+  List<String> get customConstraints => const [
+    'PRIMARY KEY(record_kind, record_key)',
+  ];
+  @override
+  bool get dontWriteConstraints => true;
+}
+
+class AccountRecord extends DataClass implements Insertable<AccountRecord> {
+  final String recordKind;
+  final String recordKey;
+  final String recordJson;
+  const AccountRecord({
+    required this.recordKind,
+    required this.recordKey,
+    required this.recordJson,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['record_kind'] = Variable<String>(recordKind);
+    map['record_key'] = Variable<String>(recordKey);
+    map['record_json'] = Variable<String>(recordJson);
+    return map;
+  }
+
+  AccountRecordsCompanion toCompanion(bool nullToAbsent) {
+    return AccountRecordsCompanion(
+      recordKind: Value(recordKind),
+      recordKey: Value(recordKey),
+      recordJson: Value(recordJson),
+    );
+  }
+
+  factory AccountRecord.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return AccountRecord(
+      recordKind: serializer.fromJson<String>(json['record_kind']),
+      recordKey: serializer.fromJson<String>(json['record_key']),
+      recordJson: serializer.fromJson<String>(json['record_json']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'record_kind': serializer.toJson<String>(recordKind),
+      'record_key': serializer.toJson<String>(recordKey),
+      'record_json': serializer.toJson<String>(recordJson),
+    };
+  }
+
+  AccountRecord copyWith({
+    String? recordKind,
+    String? recordKey,
+    String? recordJson,
+  }) => AccountRecord(
+    recordKind: recordKind ?? this.recordKind,
+    recordKey: recordKey ?? this.recordKey,
+    recordJson: recordJson ?? this.recordJson,
+  );
+  AccountRecord copyWithCompanion(AccountRecordsCompanion data) {
+    return AccountRecord(
+      recordKind: data.recordKind.present
+          ? data.recordKind.value
+          : this.recordKind,
+      recordKey: data.recordKey.present ? data.recordKey.value : this.recordKey,
+      recordJson: data.recordJson.present
+          ? data.recordJson.value
+          : this.recordJson,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AccountRecord(')
+          ..write('recordKind: $recordKind, ')
+          ..write('recordKey: $recordKey, ')
+          ..write('recordJson: $recordJson')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(recordKind, recordKey, recordJson);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is AccountRecord &&
+          other.recordKind == this.recordKind &&
+          other.recordKey == this.recordKey &&
+          other.recordJson == this.recordJson);
+}
+
+class AccountRecordsCompanion extends UpdateCompanion<AccountRecord> {
+  final Value<String> recordKind;
+  final Value<String> recordKey;
+  final Value<String> recordJson;
+  final Value<int> rowid;
+  const AccountRecordsCompanion({
+    this.recordKind = const Value.absent(),
+    this.recordKey = const Value.absent(),
+    this.recordJson = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  AccountRecordsCompanion.insert({
+    required String recordKind,
+    required String recordKey,
+    required String recordJson,
+    this.rowid = const Value.absent(),
+  }) : recordKind = Value(recordKind),
+       recordKey = Value(recordKey),
+       recordJson = Value(recordJson);
+  static Insertable<AccountRecord> custom({
+    Expression<String>? recordKind,
+    Expression<String>? recordKey,
+    Expression<String>? recordJson,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (recordKind != null) 'record_kind': recordKind,
+      if (recordKey != null) 'record_key': recordKey,
+      if (recordJson != null) 'record_json': recordJson,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  AccountRecordsCompanion copyWith({
+    Value<String>? recordKind,
+    Value<String>? recordKey,
+    Value<String>? recordJson,
+    Value<int>? rowid,
+  }) {
+    return AccountRecordsCompanion(
+      recordKind: recordKind ?? this.recordKind,
+      recordKey: recordKey ?? this.recordKey,
+      recordJson: recordJson ?? this.recordJson,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (recordKind.present) {
+      map['record_kind'] = Variable<String>(recordKind.value);
+    }
+    if (recordKey.present) {
+      map['record_key'] = Variable<String>(recordKey.value);
+    }
+    if (recordJson.present) {
+      map['record_json'] = Variable<String>(recordJson.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AccountRecordsCompanion(')
+          ..write('recordKind: $recordKind, ')
+          ..write('recordKey: $recordKey, ')
+          ..write('recordJson: $recordJson, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class AccountSnapshot extends Table
+    with TableInfo<AccountSnapshot, AccountSnapshotData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  AccountSnapshot(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _singletonMeta = const VerificationMeta(
+    'singleton',
+  );
+  late final GeneratedColumn<int> singleton = GeneratedColumn<int>(
+    'singleton',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    $customConstraints: 'NOT NULL PRIMARY KEY CHECK (singleton = 1)',
+  );
+  static const VerificationMeta _manifestJsonMeta = const VerificationMeta(
+    'manifestJson',
+  );
+  late final GeneratedColumn<String> manifestJson = GeneratedColumn<String>(
+    'manifest_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _nextPageMeta = const VerificationMeta(
+    'nextPage',
+  );
+  late final GeneratedColumn<int> nextPage = GeneratedColumn<int>(
+    'next_page',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    $customConstraints: 'NOT NULL DEFAULT 0 CHECK (next_page >= 0)',
+    defaultValue: const CustomExpression('0'),
+  );
+  static const VerificationMeta _recordCountMeta = const VerificationMeta(
+    'recordCount',
+  );
+  late final GeneratedColumn<int> recordCount = GeneratedColumn<int>(
+    'record_count',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    $customConstraints: 'NOT NULL DEFAULT 0 CHECK (record_count >= 0)',
+    defaultValue: const CustomExpression('0'),
+  );
+  static const VerificationMeta _byteCountMeta = const VerificationMeta(
+    'byteCount',
+  );
+  late final GeneratedColumn<int> byteCount = GeneratedColumn<int>(
+    'byte_count',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    $customConstraints: 'NOT NULL DEFAULT 0 CHECK (byte_count >= 0)',
+    defaultValue: const CustomExpression('0'),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    singleton,
+    manifestJson,
+    nextPage,
+    recordCount,
+    byteCount,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'account_snapshot';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<AccountSnapshotData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('singleton')) {
+      context.handle(
+        _singletonMeta,
+        singleton.isAcceptableOrUnknown(data['singleton']!, _singletonMeta),
+      );
+    }
+    if (data.containsKey('manifest_json')) {
+      context.handle(
+        _manifestJsonMeta,
+        manifestJson.isAcceptableOrUnknown(
+          data['manifest_json']!,
+          _manifestJsonMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_manifestJsonMeta);
+    }
+    if (data.containsKey('next_page')) {
+      context.handle(
+        _nextPageMeta,
+        nextPage.isAcceptableOrUnknown(data['next_page']!, _nextPageMeta),
+      );
+    }
+    if (data.containsKey('record_count')) {
+      context.handle(
+        _recordCountMeta,
+        recordCount.isAcceptableOrUnknown(
+          data['record_count']!,
+          _recordCountMeta,
+        ),
+      );
+    }
+    if (data.containsKey('byte_count')) {
+      context.handle(
+        _byteCountMeta,
+        byteCount.isAcceptableOrUnknown(data['byte_count']!, _byteCountMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {singleton};
+  @override
+  AccountSnapshotData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return AccountSnapshotData(
+      singleton: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}singleton'],
+      )!,
+      manifestJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}manifest_json'],
+      )!,
+      nextPage: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}next_page'],
+      )!,
+      recordCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}record_count'],
+      )!,
+      byteCount: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}byte_count'],
+      )!,
+    );
+  }
+
+  @override
+  AccountSnapshot createAlias(String alias) {
+    return AccountSnapshot(attachedDatabase, alias);
+  }
+
+  @override
+  bool get dontWriteConstraints => true;
+}
+
+class AccountSnapshotData extends DataClass
+    implements Insertable<AccountSnapshotData> {
+  final int singleton;
+  final String manifestJson;
+  final int nextPage;
+  final int recordCount;
+  final int byteCount;
+  const AccountSnapshotData({
+    required this.singleton,
+    required this.manifestJson,
+    required this.nextPage,
+    required this.recordCount,
+    required this.byteCount,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['singleton'] = Variable<int>(singleton);
+    map['manifest_json'] = Variable<String>(manifestJson);
+    map['next_page'] = Variable<int>(nextPage);
+    map['record_count'] = Variable<int>(recordCount);
+    map['byte_count'] = Variable<int>(byteCount);
+    return map;
+  }
+
+  AccountSnapshotCompanion toCompanion(bool nullToAbsent) {
+    return AccountSnapshotCompanion(
+      singleton: Value(singleton),
+      manifestJson: Value(manifestJson),
+      nextPage: Value(nextPage),
+      recordCount: Value(recordCount),
+      byteCount: Value(byteCount),
+    );
+  }
+
+  factory AccountSnapshotData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return AccountSnapshotData(
+      singleton: serializer.fromJson<int>(json['singleton']),
+      manifestJson: serializer.fromJson<String>(json['manifest_json']),
+      nextPage: serializer.fromJson<int>(json['next_page']),
+      recordCount: serializer.fromJson<int>(json['record_count']),
+      byteCount: serializer.fromJson<int>(json['byte_count']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'singleton': serializer.toJson<int>(singleton),
+      'manifest_json': serializer.toJson<String>(manifestJson),
+      'next_page': serializer.toJson<int>(nextPage),
+      'record_count': serializer.toJson<int>(recordCount),
+      'byte_count': serializer.toJson<int>(byteCount),
+    };
+  }
+
+  AccountSnapshotData copyWith({
+    int? singleton,
+    String? manifestJson,
+    int? nextPage,
+    int? recordCount,
+    int? byteCount,
+  }) => AccountSnapshotData(
+    singleton: singleton ?? this.singleton,
+    manifestJson: manifestJson ?? this.manifestJson,
+    nextPage: nextPage ?? this.nextPage,
+    recordCount: recordCount ?? this.recordCount,
+    byteCount: byteCount ?? this.byteCount,
+  );
+  AccountSnapshotData copyWithCompanion(AccountSnapshotCompanion data) {
+    return AccountSnapshotData(
+      singleton: data.singleton.present ? data.singleton.value : this.singleton,
+      manifestJson: data.manifestJson.present
+          ? data.manifestJson.value
+          : this.manifestJson,
+      nextPage: data.nextPage.present ? data.nextPage.value : this.nextPage,
+      recordCount: data.recordCount.present
+          ? data.recordCount.value
+          : this.recordCount,
+      byteCount: data.byteCount.present ? data.byteCount.value : this.byteCount,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AccountSnapshotData(')
+          ..write('singleton: $singleton, ')
+          ..write('manifestJson: $manifestJson, ')
+          ..write('nextPage: $nextPage, ')
+          ..write('recordCount: $recordCount, ')
+          ..write('byteCount: $byteCount')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(singleton, manifestJson, nextPage, recordCount, byteCount);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is AccountSnapshotData &&
+          other.singleton == this.singleton &&
+          other.manifestJson == this.manifestJson &&
+          other.nextPage == this.nextPage &&
+          other.recordCount == this.recordCount &&
+          other.byteCount == this.byteCount);
+}
+
+class AccountSnapshotCompanion extends UpdateCompanion<AccountSnapshotData> {
+  final Value<int> singleton;
+  final Value<String> manifestJson;
+  final Value<int> nextPage;
+  final Value<int> recordCount;
+  final Value<int> byteCount;
+  const AccountSnapshotCompanion({
+    this.singleton = const Value.absent(),
+    this.manifestJson = const Value.absent(),
+    this.nextPage = const Value.absent(),
+    this.recordCount = const Value.absent(),
+    this.byteCount = const Value.absent(),
+  });
+  AccountSnapshotCompanion.insert({
+    this.singleton = const Value.absent(),
+    required String manifestJson,
+    this.nextPage = const Value.absent(),
+    this.recordCount = const Value.absent(),
+    this.byteCount = const Value.absent(),
+  }) : manifestJson = Value(manifestJson);
+  static Insertable<AccountSnapshotData> custom({
+    Expression<int>? singleton,
+    Expression<String>? manifestJson,
+    Expression<int>? nextPage,
+    Expression<int>? recordCount,
+    Expression<int>? byteCount,
+  }) {
+    return RawValuesInsertable({
+      if (singleton != null) 'singleton': singleton,
+      if (manifestJson != null) 'manifest_json': manifestJson,
+      if (nextPage != null) 'next_page': nextPage,
+      if (recordCount != null) 'record_count': recordCount,
+      if (byteCount != null) 'byte_count': byteCount,
+    });
+  }
+
+  AccountSnapshotCompanion copyWith({
+    Value<int>? singleton,
+    Value<String>? manifestJson,
+    Value<int>? nextPage,
+    Value<int>? recordCount,
+    Value<int>? byteCount,
+  }) {
+    return AccountSnapshotCompanion(
+      singleton: singleton ?? this.singleton,
+      manifestJson: manifestJson ?? this.manifestJson,
+      nextPage: nextPage ?? this.nextPage,
+      recordCount: recordCount ?? this.recordCount,
+      byteCount: byteCount ?? this.byteCount,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (singleton.present) {
+      map['singleton'] = Variable<int>(singleton.value);
+    }
+    if (manifestJson.present) {
+      map['manifest_json'] = Variable<String>(manifestJson.value);
+    }
+    if (nextPage.present) {
+      map['next_page'] = Variable<int>(nextPage.value);
+    }
+    if (recordCount.present) {
+      map['record_count'] = Variable<int>(recordCount.value);
+    }
+    if (byteCount.present) {
+      map['byte_count'] = Variable<int>(byteCount.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AccountSnapshotCompanion(')
+          ..write('singleton: $singleton, ')
+          ..write('manifestJson: $manifestJson, ')
+          ..write('nextPage: $nextPage, ')
+          ..write('recordCount: $recordCount, ')
+          ..write('byteCount: $byteCount')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class AccountSnapshotPages extends Table
+    with TableInfo<AccountSnapshotPages, AccountSnapshotPage> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  AccountSnapshotPages(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _pageMeta = const VerificationMeta('page');
+  late final GeneratedColumn<int> page = GeneratedColumn<int>(
+    'page',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    $customConstraints: 'NOT NULL PRIMARY KEY CHECK (page >= 0)',
+  );
+  static const VerificationMeta _replyJsonMeta = const VerificationMeta(
+    'replyJson',
+  );
+  late final GeneratedColumn<String> replyJson = GeneratedColumn<String>(
+    'reply_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  @override
+  List<GeneratedColumn> get $columns => [page, replyJson];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'account_snapshot_pages';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<AccountSnapshotPage> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('page')) {
+      context.handle(
+        _pageMeta,
+        page.isAcceptableOrUnknown(data['page']!, _pageMeta),
+      );
+    }
+    if (data.containsKey('reply_json')) {
+      context.handle(
+        _replyJsonMeta,
+        replyJson.isAcceptableOrUnknown(data['reply_json']!, _replyJsonMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_replyJsonMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {page};
+  @override
+  AccountSnapshotPage map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return AccountSnapshotPage(
+      page: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}page'],
+      )!,
+      replyJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}reply_json'],
+      )!,
+    );
+  }
+
+  @override
+  AccountSnapshotPages createAlias(String alias) {
+    return AccountSnapshotPages(attachedDatabase, alias);
+  }
+
+  @override
+  bool get dontWriteConstraints => true;
+}
+
+class AccountSnapshotPage extends DataClass
+    implements Insertable<AccountSnapshotPage> {
+  final int page;
+  final String replyJson;
+  const AccountSnapshotPage({required this.page, required this.replyJson});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['page'] = Variable<int>(page);
+    map['reply_json'] = Variable<String>(replyJson);
+    return map;
+  }
+
+  AccountSnapshotPagesCompanion toCompanion(bool nullToAbsent) {
+    return AccountSnapshotPagesCompanion(
+      page: Value(page),
+      replyJson: Value(replyJson),
+    );
+  }
+
+  factory AccountSnapshotPage.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return AccountSnapshotPage(
+      page: serializer.fromJson<int>(json['page']),
+      replyJson: serializer.fromJson<String>(json['reply_json']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'page': serializer.toJson<int>(page),
+      'reply_json': serializer.toJson<String>(replyJson),
+    };
+  }
+
+  AccountSnapshotPage copyWith({int? page, String? replyJson}) =>
+      AccountSnapshotPage(
+        page: page ?? this.page,
+        replyJson: replyJson ?? this.replyJson,
+      );
+  AccountSnapshotPage copyWithCompanion(AccountSnapshotPagesCompanion data) {
+    return AccountSnapshotPage(
+      page: data.page.present ? data.page.value : this.page,
+      replyJson: data.replyJson.present ? data.replyJson.value : this.replyJson,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AccountSnapshotPage(')
+          ..write('page: $page, ')
+          ..write('replyJson: $replyJson')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(page, replyJson);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is AccountSnapshotPage &&
+          other.page == this.page &&
+          other.replyJson == this.replyJson);
+}
+
+class AccountSnapshotPagesCompanion
+    extends UpdateCompanion<AccountSnapshotPage> {
+  final Value<int> page;
+  final Value<String> replyJson;
+  const AccountSnapshotPagesCompanion({
+    this.page = const Value.absent(),
+    this.replyJson = const Value.absent(),
+  });
+  AccountSnapshotPagesCompanion.insert({
+    this.page = const Value.absent(),
+    required String replyJson,
+  }) : replyJson = Value(replyJson);
+  static Insertable<AccountSnapshotPage> custom({
+    Expression<int>? page,
+    Expression<String>? replyJson,
+  }) {
+    return RawValuesInsertable({
+      if (page != null) 'page': page,
+      if (replyJson != null) 'reply_json': replyJson,
+    });
+  }
+
+  AccountSnapshotPagesCompanion copyWith({
+    Value<int>? page,
+    Value<String>? replyJson,
+  }) {
+    return AccountSnapshotPagesCompanion(
+      page: page ?? this.page,
+      replyJson: replyJson ?? this.replyJson,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (page.present) {
+      map['page'] = Variable<int>(page.value);
+    }
+    if (replyJson.present) {
+      map['reply_json'] = Variable<String>(replyJson.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AccountSnapshotPagesCompanion(')
+          ..write('page: $page, ')
+          ..write('replyJson: $replyJson')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class AccountSnapshotRecords extends Table
+    with TableInfo<AccountSnapshotRecords, AccountSnapshotRecord> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  AccountSnapshotRecords(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _recordKindMeta = const VerificationMeta(
+    'recordKind',
+  );
+  late final GeneratedColumn<String> recordKind = GeneratedColumn<String>(
+    'record_kind',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL CHECK (record_kind IN (\'records\', \'recovery\', \'history\', \'resolutions\'))',
+  );
+  static const VerificationMeta _recordKeyMeta = const VerificationMeta(
+    'recordKey',
+  );
+  late final GeneratedColumn<String> recordKey = GeneratedColumn<String>(
+    'record_key',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _recordJsonMeta = const VerificationMeta(
+    'recordJson',
+  );
+  late final GeneratedColumn<String> recordJson = GeneratedColumn<String>(
+    'record_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  @override
+  List<GeneratedColumn> get $columns => [recordKind, recordKey, recordJson];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'account_snapshot_records';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<AccountSnapshotRecord> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('record_kind')) {
+      context.handle(
+        _recordKindMeta,
+        recordKind.isAcceptableOrUnknown(data['record_kind']!, _recordKindMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_recordKindMeta);
+    }
+    if (data.containsKey('record_key')) {
+      context.handle(
+        _recordKeyMeta,
+        recordKey.isAcceptableOrUnknown(data['record_key']!, _recordKeyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_recordKeyMeta);
+    }
+    if (data.containsKey('record_json')) {
+      context.handle(
+        _recordJsonMeta,
+        recordJson.isAcceptableOrUnknown(data['record_json']!, _recordJsonMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_recordJsonMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {recordKind, recordKey};
+  @override
+  AccountSnapshotRecord map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return AccountSnapshotRecord(
+      recordKind: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}record_kind'],
+      )!,
+      recordKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}record_key'],
+      )!,
+      recordJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}record_json'],
+      )!,
+    );
+  }
+
+  @override
+  AccountSnapshotRecords createAlias(String alias) {
+    return AccountSnapshotRecords(attachedDatabase, alias);
+  }
+
+  @override
+  List<String> get customConstraints => const [
+    'PRIMARY KEY(record_kind, record_key)',
+  ];
+  @override
+  bool get dontWriteConstraints => true;
+}
+
+class AccountSnapshotRecord extends DataClass
+    implements Insertable<AccountSnapshotRecord> {
+  final String recordKind;
+  final String recordKey;
+  final String recordJson;
+  const AccountSnapshotRecord({
+    required this.recordKind,
+    required this.recordKey,
+    required this.recordJson,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['record_kind'] = Variable<String>(recordKind);
+    map['record_key'] = Variable<String>(recordKey);
+    map['record_json'] = Variable<String>(recordJson);
+    return map;
+  }
+
+  AccountSnapshotRecordsCompanion toCompanion(bool nullToAbsent) {
+    return AccountSnapshotRecordsCompanion(
+      recordKind: Value(recordKind),
+      recordKey: Value(recordKey),
+      recordJson: Value(recordJson),
+    );
+  }
+
+  factory AccountSnapshotRecord.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return AccountSnapshotRecord(
+      recordKind: serializer.fromJson<String>(json['record_kind']),
+      recordKey: serializer.fromJson<String>(json['record_key']),
+      recordJson: serializer.fromJson<String>(json['record_json']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'record_kind': serializer.toJson<String>(recordKind),
+      'record_key': serializer.toJson<String>(recordKey),
+      'record_json': serializer.toJson<String>(recordJson),
+    };
+  }
+
+  AccountSnapshotRecord copyWith({
+    String? recordKind,
+    String? recordKey,
+    String? recordJson,
+  }) => AccountSnapshotRecord(
+    recordKind: recordKind ?? this.recordKind,
+    recordKey: recordKey ?? this.recordKey,
+    recordJson: recordJson ?? this.recordJson,
+  );
+  AccountSnapshotRecord copyWithCompanion(
+    AccountSnapshotRecordsCompanion data,
+  ) {
+    return AccountSnapshotRecord(
+      recordKind: data.recordKind.present
+          ? data.recordKind.value
+          : this.recordKind,
+      recordKey: data.recordKey.present ? data.recordKey.value : this.recordKey,
+      recordJson: data.recordJson.present
+          ? data.recordJson.value
+          : this.recordJson,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AccountSnapshotRecord(')
+          ..write('recordKind: $recordKind, ')
+          ..write('recordKey: $recordKey, ')
+          ..write('recordJson: $recordJson')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(recordKind, recordKey, recordJson);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is AccountSnapshotRecord &&
+          other.recordKind == this.recordKind &&
+          other.recordKey == this.recordKey &&
+          other.recordJson == this.recordJson);
+}
+
+class AccountSnapshotRecordsCompanion
+    extends UpdateCompanion<AccountSnapshotRecord> {
+  final Value<String> recordKind;
+  final Value<String> recordKey;
+  final Value<String> recordJson;
+  final Value<int> rowid;
+  const AccountSnapshotRecordsCompanion({
+    this.recordKind = const Value.absent(),
+    this.recordKey = const Value.absent(),
+    this.recordJson = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  AccountSnapshotRecordsCompanion.insert({
+    required String recordKind,
+    required String recordKey,
+    required String recordJson,
+    this.rowid = const Value.absent(),
+  }) : recordKind = Value(recordKind),
+       recordKey = Value(recordKey),
+       recordJson = Value(recordJson);
+  static Insertable<AccountSnapshotRecord> custom({
+    Expression<String>? recordKind,
+    Expression<String>? recordKey,
+    Expression<String>? recordJson,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (recordKind != null) 'record_kind': recordKind,
+      if (recordKey != null) 'record_key': recordKey,
+      if (recordJson != null) 'record_json': recordJson,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  AccountSnapshotRecordsCompanion copyWith({
+    Value<String>? recordKind,
+    Value<String>? recordKey,
+    Value<String>? recordJson,
+    Value<int>? rowid,
+  }) {
+    return AccountSnapshotRecordsCompanion(
+      recordKind: recordKind ?? this.recordKind,
+      recordKey: recordKey ?? this.recordKey,
+      recordJson: recordJson ?? this.recordJson,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (recordKind.present) {
+      map['record_kind'] = Variable<String>(recordKind.value);
+    }
+    if (recordKey.present) {
+      map['record_key'] = Variable<String>(recordKey.value);
+    }
+    if (recordJson.present) {
+      map['record_json'] = Variable<String>(recordJson.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AccountSnapshotRecordsCompanion(')
+          ..write('recordKind: $recordKind, ')
+          ..write('recordKey: $recordKey, ')
+          ..write('recordJson: $recordJson, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -8495,6 +11882,21 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     this,
   );
   late final ImportJournal importJournal = ImportJournal(this);
+  late final AccountState accountState = AccountState(this);
+  late final AccountOperations accountOperations = AccountOperations(this);
+  late final AccountFieldOutcomes accountFieldOutcomes = AccountFieldOutcomes(
+    this,
+  );
+  late final AccountOriginals accountOriginals = AccountOriginals(this);
+  late final AccountRecoveryArchive accountRecoveryArchive =
+      AccountRecoveryArchive(this);
+  late final AccountRecords accountRecords = AccountRecords(this);
+  late final AccountSnapshot accountSnapshot = AccountSnapshot(this);
+  late final AccountSnapshotPages accountSnapshotPages = AccountSnapshotPages(
+    this,
+  );
+  late final AccountSnapshotRecords accountSnapshotRecords =
+      AccountSnapshotRecords(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -8525,6 +11927,15 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     notificationDirty,
     deviceNotifications,
     importJournal,
+    accountState,
+    accountOperations,
+    accountFieldOutcomes,
+    accountOriginals,
+    accountRecoveryArchive,
+    accountRecords,
+    accountSnapshot,
+    accountSnapshotPages,
+    accountSnapshotRecords,
   ];
 }
 
@@ -14732,6 +18143,2357 @@ typedef $ImportJournalProcessedTableManager =
       ImportJournalData,
       PrefetchHooks Function()
     >;
+typedef $AccountStateCreateCompanionBuilder = AccountStateCompanion Function({
+  Value<int> singleton,
+  required String ownerId,
+  required int generation,
+  Value<String?> serverEpoch,
+  Value<int> cursor,
+  Value<String> deviceHighWatersJson,
+  Value<int> requiresRecovery,
+});
+typedef $AccountStateUpdateCompanionBuilder = AccountStateCompanion Function({
+  Value<int> singleton,
+  Value<String> ownerId,
+  Value<int> generation,
+  Value<String?> serverEpoch,
+  Value<int> cursor,
+  Value<String> deviceHighWatersJson,
+  Value<int> requiresRecovery,
+});
+
+class $AccountStateFilterComposer
+    extends Composer<_$AppDatabase, AccountState> {
+  $AccountStateFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get singleton => $composableBuilder(
+    column: $table.singleton,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get ownerId => $composableBuilder(
+    column: $table.ownerId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get generation => $composableBuilder(
+    column: $table.generation,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get serverEpoch => $composableBuilder(
+    column: $table.serverEpoch,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get cursor => $composableBuilder(
+    column: $table.cursor,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get deviceHighWatersJson => $composableBuilder(
+    column: $table.deviceHighWatersJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get requiresRecovery => $composableBuilder(
+    column: $table.requiresRecovery,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $AccountStateOrderingComposer
+    extends Composer<_$AppDatabase, AccountState> {
+  $AccountStateOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get singleton => $composableBuilder(
+    column: $table.singleton,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get ownerId => $composableBuilder(
+    column: $table.ownerId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get generation => $composableBuilder(
+    column: $table.generation,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get serverEpoch => $composableBuilder(
+    column: $table.serverEpoch,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get cursor => $composableBuilder(
+    column: $table.cursor,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get deviceHighWatersJson => $composableBuilder(
+    column: $table.deviceHighWatersJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get requiresRecovery => $composableBuilder(
+    column: $table.requiresRecovery,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $AccountStateAnnotationComposer
+    extends Composer<_$AppDatabase, AccountState> {
+  $AccountStateAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get singleton =>
+      $composableBuilder(column: $table.singleton, builder: (column) => column);
+
+  GeneratedColumn<String> get ownerId =>
+      $composableBuilder(column: $table.ownerId, builder: (column) => column);
+
+  GeneratedColumn<int> get generation => $composableBuilder(
+    column: $table.generation,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get serverEpoch => $composableBuilder(
+    column: $table.serverEpoch,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get cursor =>
+      $composableBuilder(column: $table.cursor, builder: (column) => column);
+
+  GeneratedColumn<String> get deviceHighWatersJson => $composableBuilder(
+    column: $table.deviceHighWatersJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get requiresRecovery => $composableBuilder(
+    column: $table.requiresRecovery,
+    builder: (column) => column,
+  );
+}
+
+class $AccountStateTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          AccountState,
+          AccountStateData,
+          $AccountStateFilterComposer,
+          $AccountStateOrderingComposer,
+          $AccountStateAnnotationComposer,
+          $AccountStateCreateCompanionBuilder,
+          $AccountStateUpdateCompanionBuilder,
+          (
+            AccountStateData,
+            BaseReferences<_$AppDatabase, AccountState, AccountStateData>,
+          ),
+          AccountStateData,
+          PrefetchHooks Function()
+        > {
+  $AccountStateTableManager(_$AppDatabase db, AccountState table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $AccountStateFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $AccountStateOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $AccountStateAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> singleton = const Value.absent(),
+                Value<String> ownerId = const Value.absent(),
+                Value<int> generation = const Value.absent(),
+                Value<String?> serverEpoch = const Value.absent(),
+                Value<int> cursor = const Value.absent(),
+                Value<String> deviceHighWatersJson = const Value.absent(),
+                Value<int> requiresRecovery = const Value.absent(),
+              }) => AccountStateCompanion(
+                singleton: singleton,
+                ownerId: ownerId,
+                generation: generation,
+                serverEpoch: serverEpoch,
+                cursor: cursor,
+                deviceHighWatersJson: deviceHighWatersJson,
+                requiresRecovery: requiresRecovery,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> singleton = const Value.absent(),
+                required String ownerId,
+                required int generation,
+                Value<String?> serverEpoch = const Value.absent(),
+                Value<int> cursor = const Value.absent(),
+                Value<String> deviceHighWatersJson = const Value.absent(),
+                Value<int> requiresRecovery = const Value.absent(),
+              }) => AccountStateCompanion.insert(
+                singleton: singleton,
+                ownerId: ownerId,
+                generation: generation,
+                serverEpoch: serverEpoch,
+                cursor: cursor,
+                deviceHighWatersJson: deviceHighWatersJson,
+                requiresRecovery: requiresRecovery,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<AccountState, AccountStateData>(table),
+                  BaseReferences<_$AppDatabase, AccountState, AccountStateData>(
+                    db,
+                    table,
+                    e,
+                  ),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $AccountStateProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      AccountState,
+      AccountStateData,
+      $AccountStateFilterComposer,
+      $AccountStateOrderingComposer,
+      $AccountStateAnnotationComposer,
+      $AccountStateCreateCompanionBuilder,
+      $AccountStateUpdateCompanionBuilder,
+      (
+        AccountStateData,
+        BaseReferences<_$AppDatabase, AccountState, AccountStateData>,
+      ),
+      AccountStateData,
+      PrefetchHooks Function()
+    >;
+typedef $AccountOperationsCreateCompanionBuilder =
+    AccountOperationsCompanion Function({
+      required String operationId,
+      required String deviceEpoch,
+      required int sequence,
+      required String entityKey,
+      required String envelopeJson,
+      required String payloadIdentity,
+      required String originServerEpoch,
+      Value<String> transportState,
+      Value<String?> receiptJson,
+      Value<String?> receiptEpoch,
+      Value<int> rowid,
+    });
+typedef $AccountOperationsUpdateCompanionBuilder =
+    AccountOperationsCompanion Function({
+      Value<String> operationId,
+      Value<String> deviceEpoch,
+      Value<int> sequence,
+      Value<String> entityKey,
+      Value<String> envelopeJson,
+      Value<String> payloadIdentity,
+      Value<String> originServerEpoch,
+      Value<String> transportState,
+      Value<String?> receiptJson,
+      Value<String?> receiptEpoch,
+      Value<int> rowid,
+    });
+
+final class $AccountOperationsReferences
+    extends BaseReferences<_$AppDatabase, AccountOperations, AccountOperation> {
+  $AccountOperationsReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static MultiTypedResultKey<AccountFieldOutcomes, List<AccountFieldOutcome>>
+  _accountFieldOutcomesRefsTable(_$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(
+        db.accountFieldOutcomes,
+        aliasName: 'account_operations__operation_id__account_field_outcomes__operation_id',
+      );
+
+  $AccountFieldOutcomesProcessedTableManager get accountFieldOutcomesRefs {
+    final manager =
+        $AccountFieldOutcomesTableManager(
+          $_db,
+          $_db.accountFieldOutcomes,
+        ).filter(
+          (f) => f.operationId.operationId.sqlEquals(
+            $_itemColumn<String>('operation_id')!,
+          ),
+        );
+
+    final cache = $_typedResult.readTableOrNull(
+      _accountFieldOutcomesRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
+
+class $AccountOperationsFilterComposer
+    extends Composer<_$AppDatabase, AccountOperations> {
+  $AccountOperationsFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get operationId => $composableBuilder(
+    column: $table.operationId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get deviceEpoch => $composableBuilder(
+    column: $table.deviceEpoch,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sequence => $composableBuilder(
+    column: $table.sequence,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get entityKey => $composableBuilder(
+    column: $table.entityKey,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get envelopeJson => $composableBuilder(
+    column: $table.envelopeJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get payloadIdentity => $composableBuilder(
+    column: $table.payloadIdentity,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get originServerEpoch => $composableBuilder(
+    column: $table.originServerEpoch,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get transportState => $composableBuilder(
+    column: $table.transportState,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get receiptJson => $composableBuilder(
+    column: $table.receiptJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get receiptEpoch => $composableBuilder(
+    column: $table.receiptEpoch,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  Expression<bool> accountFieldOutcomesRefs(
+    Expression<bool> Function($AccountFieldOutcomesFilterComposer f) f,
+  ) {
+    final $AccountFieldOutcomesFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.operationId,
+      referencedTable: $db.accountFieldOutcomes,
+      getReferencedColumn: (t) => t.operationId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $AccountFieldOutcomesFilterComposer(
+            $db: $db,
+            $table: $db.accountFieldOutcomes,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $AccountOperationsOrderingComposer
+    extends Composer<_$AppDatabase, AccountOperations> {
+  $AccountOperationsOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get operationId => $composableBuilder(
+    column: $table.operationId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get deviceEpoch => $composableBuilder(
+    column: $table.deviceEpoch,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get sequence => $composableBuilder(
+    column: $table.sequence,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get entityKey => $composableBuilder(
+    column: $table.entityKey,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get envelopeJson => $composableBuilder(
+    column: $table.envelopeJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get payloadIdentity => $composableBuilder(
+    column: $table.payloadIdentity,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get originServerEpoch => $composableBuilder(
+    column: $table.originServerEpoch,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get transportState => $composableBuilder(
+    column: $table.transportState,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get receiptJson => $composableBuilder(
+    column: $table.receiptJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get receiptEpoch => $composableBuilder(
+    column: $table.receiptEpoch,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $AccountOperationsAnnotationComposer
+    extends Composer<_$AppDatabase, AccountOperations> {
+  $AccountOperationsAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get operationId => $composableBuilder(
+    column: $table.operationId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get deviceEpoch => $composableBuilder(
+    column: $table.deviceEpoch,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get sequence =>
+      $composableBuilder(column: $table.sequence, builder: (column) => column);
+
+  GeneratedColumn<String> get entityKey =>
+      $composableBuilder(column: $table.entityKey, builder: (column) => column);
+
+  GeneratedColumn<String> get envelopeJson => $composableBuilder(
+    column: $table.envelopeJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get payloadIdentity => $composableBuilder(
+    column: $table.payloadIdentity,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get originServerEpoch => $composableBuilder(
+    column: $table.originServerEpoch,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get transportState => $composableBuilder(
+    column: $table.transportState,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get receiptJson => $composableBuilder(
+    column: $table.receiptJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get receiptEpoch => $composableBuilder(
+    column: $table.receiptEpoch,
+    builder: (column) => column,
+  );
+
+  Expression<T> accountFieldOutcomesRefs<T extends Object>(
+    Expression<T> Function($AccountFieldOutcomesAnnotationComposer a) f,
+  ) {
+    final $AccountFieldOutcomesAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.operationId,
+      referencedTable: $db.accountFieldOutcomes,
+      getReferencedColumn: (t) => t.operationId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $AccountFieldOutcomesAnnotationComposer(
+            $db: $db,
+            $table: $db.accountFieldOutcomes,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $AccountOperationsTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          AccountOperations,
+          AccountOperation,
+          $AccountOperationsFilterComposer,
+          $AccountOperationsOrderingComposer,
+          $AccountOperationsAnnotationComposer,
+          $AccountOperationsCreateCompanionBuilder,
+          $AccountOperationsUpdateCompanionBuilder,
+          (AccountOperation, $AccountOperationsReferences),
+          AccountOperation,
+          PrefetchHooks Function({bool accountFieldOutcomesRefs})
+        > {
+  $AccountOperationsTableManager(_$AppDatabase db, AccountOperations table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $AccountOperationsFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $AccountOperationsOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $AccountOperationsAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> operationId = const Value.absent(),
+                Value<String> deviceEpoch = const Value.absent(),
+                Value<int> sequence = const Value.absent(),
+                Value<String> entityKey = const Value.absent(),
+                Value<String> envelopeJson = const Value.absent(),
+                Value<String> payloadIdentity = const Value.absent(),
+                Value<String> originServerEpoch = const Value.absent(),
+                Value<String> transportState = const Value.absent(),
+                Value<String?> receiptJson = const Value.absent(),
+                Value<String?> receiptEpoch = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => AccountOperationsCompanion(
+                operationId: operationId,
+                deviceEpoch: deviceEpoch,
+                sequence: sequence,
+                entityKey: entityKey,
+                envelopeJson: envelopeJson,
+                payloadIdentity: payloadIdentity,
+                originServerEpoch: originServerEpoch,
+                transportState: transportState,
+                receiptJson: receiptJson,
+                receiptEpoch: receiptEpoch,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String operationId,
+                required String deviceEpoch,
+                required int sequence,
+                required String entityKey,
+                required String envelopeJson,
+                required String payloadIdentity,
+                required String originServerEpoch,
+                Value<String> transportState = const Value.absent(),
+                Value<String?> receiptJson = const Value.absent(),
+                Value<String?> receiptEpoch = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => AccountOperationsCompanion.insert(
+                operationId: operationId,
+                deviceEpoch: deviceEpoch,
+                sequence: sequence,
+                entityKey: entityKey,
+                envelopeJson: envelopeJson,
+                payloadIdentity: payloadIdentity,
+                originServerEpoch: originServerEpoch,
+                transportState: transportState,
+                receiptJson: receiptJson,
+                receiptEpoch: receiptEpoch,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<AccountOperations, AccountOperation>(table),
+                  $AccountOperationsReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({accountFieldOutcomesRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [
+                if (accountFieldOutcomesRefs) db.accountFieldOutcomes,
+              ],
+              addJoins: null,
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (accountFieldOutcomesRefs)
+                    await $_getPrefetchedData<
+                      AccountOperation,
+                      AccountOperations,
+                      AccountFieldOutcome
+                    >(
+                      currentTable: table,
+                      referencedTable: $AccountOperationsReferences
+                          ._accountFieldOutcomesRefsTable(db),
+                      managerFromTypedResult: (p0) =>
+                          $AccountOperationsReferences(
+                            db,
+                            table,
+                            p0,
+                          ).accountFieldOutcomesRefs,
+                      referencedItemsForCurrentItem: (item, referencedItems) =>
+                          referencedItems.where(
+                            (e) => e.operationId == item.operationId,
+                          ),
+                      typedResults: items,
+                    ),
+                ];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $AccountOperationsProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      AccountOperations,
+      AccountOperation,
+      $AccountOperationsFilterComposer,
+      $AccountOperationsOrderingComposer,
+      $AccountOperationsAnnotationComposer,
+      $AccountOperationsCreateCompanionBuilder,
+      $AccountOperationsUpdateCompanionBuilder,
+      (AccountOperation, $AccountOperationsReferences),
+      AccountOperation,
+      PrefetchHooks Function({bool accountFieldOutcomesRefs})
+    >;
+typedef $AccountFieldOutcomesCreateCompanionBuilder =
+    AccountFieldOutcomesCompanion Function({
+      required String operationId,
+      required String fieldGroup,
+      required String disposition,
+      Value<String?> acceptedJson,
+      Value<String?> recoveryId,
+      Value<int> rowid,
+    });
+typedef $AccountFieldOutcomesUpdateCompanionBuilder =
+    AccountFieldOutcomesCompanion Function({
+      Value<String> operationId,
+      Value<String> fieldGroup,
+      Value<String> disposition,
+      Value<String?> acceptedJson,
+      Value<String?> recoveryId,
+      Value<int> rowid,
+    });
+
+final class $AccountFieldOutcomesReferences
+    extends
+        BaseReferences<
+          _$AppDatabase,
+          AccountFieldOutcomes,
+          AccountFieldOutcome
+        > {
+  $AccountFieldOutcomesReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static AccountOperations _operationIdTable(
+    _$AppDatabase db,
+  ) => db.accountOperations.createAlias(
+    'account_field_outcomes__operation_id__account_operations__operation_id',
+  );
+
+  $AccountOperationsProcessedTableManager get operationId {
+    final $_column = $_itemColumn<String>('operation_id')!;
+
+    final manager = $AccountOperationsTableManager(
+      $_db,
+      $_db.accountOperations,
+    ).filter((f) => f.operationId.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_operationIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $AccountFieldOutcomesFilterComposer
+    extends Composer<_$AppDatabase, AccountFieldOutcomes> {
+  $AccountFieldOutcomesFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get fieldGroup => $composableBuilder(
+    column: $table.fieldGroup,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get disposition => $composableBuilder(
+    column: $table.disposition,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get acceptedJson => $composableBuilder(
+    column: $table.acceptedJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get recoveryId => $composableBuilder(
+    column: $table.recoveryId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $AccountOperationsFilterComposer get operationId {
+    final $AccountOperationsFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.operationId,
+      referencedTable: $db.accountOperations,
+      getReferencedColumn: (t) => t.operationId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $AccountOperationsFilterComposer(
+            $db: $db,
+            $table: $db.accountOperations,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $AccountFieldOutcomesOrderingComposer
+    extends Composer<_$AppDatabase, AccountFieldOutcomes> {
+  $AccountFieldOutcomesOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get fieldGroup => $composableBuilder(
+    column: $table.fieldGroup,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get disposition => $composableBuilder(
+    column: $table.disposition,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get acceptedJson => $composableBuilder(
+    column: $table.acceptedJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get recoveryId => $composableBuilder(
+    column: $table.recoveryId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $AccountOperationsOrderingComposer get operationId {
+    final $AccountOperationsOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.operationId,
+      referencedTable: $db.accountOperations,
+      getReferencedColumn: (t) => t.operationId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $AccountOperationsOrderingComposer(
+            $db: $db,
+            $table: $db.accountOperations,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $AccountFieldOutcomesAnnotationComposer
+    extends Composer<_$AppDatabase, AccountFieldOutcomes> {
+  $AccountFieldOutcomesAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get fieldGroup => $composableBuilder(
+    column: $table.fieldGroup,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get disposition => $composableBuilder(
+    column: $table.disposition,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get acceptedJson => $composableBuilder(
+    column: $table.acceptedJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get recoveryId => $composableBuilder(
+    column: $table.recoveryId,
+    builder: (column) => column,
+  );
+
+  $AccountOperationsAnnotationComposer get operationId {
+    final $AccountOperationsAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.operationId,
+      referencedTable: $db.accountOperations,
+      getReferencedColumn: (t) => t.operationId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $AccountOperationsAnnotationComposer(
+            $db: $db,
+            $table: $db.accountOperations,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $AccountFieldOutcomesTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          AccountFieldOutcomes,
+          AccountFieldOutcome,
+          $AccountFieldOutcomesFilterComposer,
+          $AccountFieldOutcomesOrderingComposer,
+          $AccountFieldOutcomesAnnotationComposer,
+          $AccountFieldOutcomesCreateCompanionBuilder,
+          $AccountFieldOutcomesUpdateCompanionBuilder,
+          (AccountFieldOutcome, $AccountFieldOutcomesReferences),
+          AccountFieldOutcome,
+          PrefetchHooks Function({bool operationId})
+        > {
+  $AccountFieldOutcomesTableManager(
+    _$AppDatabase db,
+    AccountFieldOutcomes table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $AccountFieldOutcomesFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $AccountFieldOutcomesOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $AccountFieldOutcomesAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> operationId = const Value.absent(),
+                Value<String> fieldGroup = const Value.absent(),
+                Value<String> disposition = const Value.absent(),
+                Value<String?> acceptedJson = const Value.absent(),
+                Value<String?> recoveryId = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => AccountFieldOutcomesCompanion(
+                operationId: operationId,
+                fieldGroup: fieldGroup,
+                disposition: disposition,
+                acceptedJson: acceptedJson,
+                recoveryId: recoveryId,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String operationId,
+                required String fieldGroup,
+                required String disposition,
+                Value<String?> acceptedJson = const Value.absent(),
+                Value<String?> recoveryId = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => AccountFieldOutcomesCompanion.insert(
+                operationId: operationId,
+                fieldGroup: fieldGroup,
+                disposition: disposition,
+                acceptedJson: acceptedJson,
+                recoveryId: recoveryId,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<AccountFieldOutcomes, AccountFieldOutcome>(table),
+                  $AccountFieldOutcomesReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({operationId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (operationId) {
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.operationId,
+                        referencedTable: $AccountFieldOutcomesReferences
+                            ._operationIdTable(db),
+                        referencedColumn: $AccountFieldOutcomesReferences
+                            ._operationIdTable(db)
+                            .operationId,
+                      ) as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $AccountFieldOutcomesProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      AccountFieldOutcomes,
+      AccountFieldOutcome,
+      $AccountFieldOutcomesFilterComposer,
+      $AccountFieldOutcomesOrderingComposer,
+      $AccountFieldOutcomesAnnotationComposer,
+      $AccountFieldOutcomesCreateCompanionBuilder,
+      $AccountFieldOutcomesUpdateCompanionBuilder,
+      (AccountFieldOutcome, $AccountFieldOutcomesReferences),
+      AccountFieldOutcome,
+      PrefetchHooks Function({bool operationId})
+    >;
+typedef $AccountOriginalsCreateCompanionBuilder =
+    AccountOriginalsCompanion Function({
+      required String operationId,
+      required String deviceEpoch,
+      required int sequence,
+      required String payloadIdentity,
+      Value<int> rowid,
+    });
+typedef $AccountOriginalsUpdateCompanionBuilder =
+    AccountOriginalsCompanion Function({
+      Value<String> operationId,
+      Value<String> deviceEpoch,
+      Value<int> sequence,
+      Value<String> payloadIdentity,
+      Value<int> rowid,
+    });
+
+final class $AccountOriginalsReferences
+    extends BaseReferences<_$AppDatabase, AccountOriginals, AccountOriginal> {
+  $AccountOriginalsReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static MultiTypedResultKey<
+    AccountRecoveryArchive,
+    List<AccountRecoveryArchiveData>
+  >
+  _accountRecoveryArchiveRefsTable(_$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(
+        db.accountRecoveryArchive,
+        aliasName: 'account_originals__operation_id__account_recovery_archive__operation_id',
+      );
+
+  $AccountRecoveryArchiveProcessedTableManager get accountRecoveryArchiveRefs {
+    final manager =
+        $AccountRecoveryArchiveTableManager(
+          $_db,
+          $_db.accountRecoveryArchive,
+        ).filter(
+          (f) => f.operationId.operationId.sqlEquals(
+            $_itemColumn<String>('operation_id')!,
+          ),
+        );
+
+    final cache = $_typedResult.readTableOrNull(
+      _accountRecoveryArchiveRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
+
+class $AccountOriginalsFilterComposer
+    extends Composer<_$AppDatabase, AccountOriginals> {
+  $AccountOriginalsFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get operationId => $composableBuilder(
+    column: $table.operationId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get deviceEpoch => $composableBuilder(
+    column: $table.deviceEpoch,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sequence => $composableBuilder(
+    column: $table.sequence,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get payloadIdentity => $composableBuilder(
+    column: $table.payloadIdentity,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  Expression<bool> accountRecoveryArchiveRefs(
+    Expression<bool> Function($AccountRecoveryArchiveFilterComposer f) f,
+  ) {
+    final $AccountRecoveryArchiveFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.operationId,
+      referencedTable: $db.accountRecoveryArchive,
+      getReferencedColumn: (t) => t.operationId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $AccountRecoveryArchiveFilterComposer(
+            $db: $db,
+            $table: $db.accountRecoveryArchive,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $AccountOriginalsOrderingComposer
+    extends Composer<_$AppDatabase, AccountOriginals> {
+  $AccountOriginalsOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get operationId => $composableBuilder(
+    column: $table.operationId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get deviceEpoch => $composableBuilder(
+    column: $table.deviceEpoch,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get sequence => $composableBuilder(
+    column: $table.sequence,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get payloadIdentity => $composableBuilder(
+    column: $table.payloadIdentity,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $AccountOriginalsAnnotationComposer
+    extends Composer<_$AppDatabase, AccountOriginals> {
+  $AccountOriginalsAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get operationId => $composableBuilder(
+    column: $table.operationId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get deviceEpoch => $composableBuilder(
+    column: $table.deviceEpoch,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get sequence =>
+      $composableBuilder(column: $table.sequence, builder: (column) => column);
+
+  GeneratedColumn<String> get payloadIdentity => $composableBuilder(
+    column: $table.payloadIdentity,
+    builder: (column) => column,
+  );
+
+  Expression<T> accountRecoveryArchiveRefs<T extends Object>(
+    Expression<T> Function($AccountRecoveryArchiveAnnotationComposer a) f,
+  ) {
+    final $AccountRecoveryArchiveAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.operationId,
+      referencedTable: $db.accountRecoveryArchive,
+      getReferencedColumn: (t) => t.operationId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $AccountRecoveryArchiveAnnotationComposer(
+            $db: $db,
+            $table: $db.accountRecoveryArchive,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $AccountOriginalsTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          AccountOriginals,
+          AccountOriginal,
+          $AccountOriginalsFilterComposer,
+          $AccountOriginalsOrderingComposer,
+          $AccountOriginalsAnnotationComposer,
+          $AccountOriginalsCreateCompanionBuilder,
+          $AccountOriginalsUpdateCompanionBuilder,
+          (AccountOriginal, $AccountOriginalsReferences),
+          AccountOriginal,
+          PrefetchHooks Function({bool accountRecoveryArchiveRefs})
+        > {
+  $AccountOriginalsTableManager(_$AppDatabase db, AccountOriginals table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $AccountOriginalsFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $AccountOriginalsOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $AccountOriginalsAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> operationId = const Value.absent(),
+                Value<String> deviceEpoch = const Value.absent(),
+                Value<int> sequence = const Value.absent(),
+                Value<String> payloadIdentity = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => AccountOriginalsCompanion(
+                operationId: operationId,
+                deviceEpoch: deviceEpoch,
+                sequence: sequence,
+                payloadIdentity: payloadIdentity,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String operationId,
+                required String deviceEpoch,
+                required int sequence,
+                required String payloadIdentity,
+                Value<int> rowid = const Value.absent(),
+              }) => AccountOriginalsCompanion.insert(
+                operationId: operationId,
+                deviceEpoch: deviceEpoch,
+                sequence: sequence,
+                payloadIdentity: payloadIdentity,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<AccountOriginals, AccountOriginal>(table),
+                  $AccountOriginalsReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({accountRecoveryArchiveRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [
+                if (accountRecoveryArchiveRefs) db.accountRecoveryArchive,
+              ],
+              addJoins: null,
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (accountRecoveryArchiveRefs)
+                    await $_getPrefetchedData<
+                      AccountOriginal,
+                      AccountOriginals,
+                      AccountRecoveryArchiveData
+                    >(
+                      currentTable: table,
+                      referencedTable: $AccountOriginalsReferences
+                          ._accountRecoveryArchiveRefsTable(db),
+                      managerFromTypedResult: (p0) =>
+                          $AccountOriginalsReferences(
+                            db,
+                            table,
+                            p0,
+                          ).accountRecoveryArchiveRefs,
+                      referencedItemsForCurrentItem: (item, referencedItems) =>
+                          referencedItems.where(
+                            (e) => e.operationId == item.operationId,
+                          ),
+                      typedResults: items,
+                    ),
+                ];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $AccountOriginalsProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      AccountOriginals,
+      AccountOriginal,
+      $AccountOriginalsFilterComposer,
+      $AccountOriginalsOrderingComposer,
+      $AccountOriginalsAnnotationComposer,
+      $AccountOriginalsCreateCompanionBuilder,
+      $AccountOriginalsUpdateCompanionBuilder,
+      (AccountOriginal, $AccountOriginalsReferences),
+      AccountOriginal,
+      PrefetchHooks Function({bool accountRecoveryArchiveRefs})
+    >;
+typedef $AccountRecoveryArchiveCreateCompanionBuilder =
+    AccountRecoveryArchiveCompanion Function({
+      required String candidateId,
+      required String operationId,
+      required String fieldGroup,
+      required String originalRecordJson,
+      Value<int> rowid,
+    });
+typedef $AccountRecoveryArchiveUpdateCompanionBuilder =
+    AccountRecoveryArchiveCompanion Function({
+      Value<String> candidateId,
+      Value<String> operationId,
+      Value<String> fieldGroup,
+      Value<String> originalRecordJson,
+      Value<int> rowid,
+    });
+
+final class $AccountRecoveryArchiveReferences
+    extends
+        BaseReferences<
+          _$AppDatabase,
+          AccountRecoveryArchive,
+          AccountRecoveryArchiveData
+        > {
+  $AccountRecoveryArchiveReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static AccountOriginals _operationIdTable(
+    _$AppDatabase db,
+  ) => db.accountOriginals.createAlias(
+    'account_recovery_archive__operation_id__account_originals__operation_id',
+  );
+
+  $AccountOriginalsProcessedTableManager get operationId {
+    final $_column = $_itemColumn<String>('operation_id')!;
+
+    final manager = $AccountOriginalsTableManager(
+      $_db,
+      $_db.accountOriginals,
+    ).filter((f) => f.operationId.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_operationIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $AccountRecoveryArchiveFilterComposer
+    extends Composer<_$AppDatabase, AccountRecoveryArchive> {
+  $AccountRecoveryArchiveFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get candidateId => $composableBuilder(
+    column: $table.candidateId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get fieldGroup => $composableBuilder(
+    column: $table.fieldGroup,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get originalRecordJson => $composableBuilder(
+    column: $table.originalRecordJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $AccountOriginalsFilterComposer get operationId {
+    final $AccountOriginalsFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.operationId,
+      referencedTable: $db.accountOriginals,
+      getReferencedColumn: (t) => t.operationId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $AccountOriginalsFilterComposer(
+            $db: $db,
+            $table: $db.accountOriginals,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $AccountRecoveryArchiveOrderingComposer
+    extends Composer<_$AppDatabase, AccountRecoveryArchive> {
+  $AccountRecoveryArchiveOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get candidateId => $composableBuilder(
+    column: $table.candidateId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get fieldGroup => $composableBuilder(
+    column: $table.fieldGroup,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get originalRecordJson => $composableBuilder(
+    column: $table.originalRecordJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $AccountOriginalsOrderingComposer get operationId {
+    final $AccountOriginalsOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.operationId,
+      referencedTable: $db.accountOriginals,
+      getReferencedColumn: (t) => t.operationId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $AccountOriginalsOrderingComposer(
+            $db: $db,
+            $table: $db.accountOriginals,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $AccountRecoveryArchiveAnnotationComposer
+    extends Composer<_$AppDatabase, AccountRecoveryArchive> {
+  $AccountRecoveryArchiveAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get candidateId => $composableBuilder(
+    column: $table.candidateId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get fieldGroup => $composableBuilder(
+    column: $table.fieldGroup,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get originalRecordJson => $composableBuilder(
+    column: $table.originalRecordJson,
+    builder: (column) => column,
+  );
+
+  $AccountOriginalsAnnotationComposer get operationId {
+    final $AccountOriginalsAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.operationId,
+      referencedTable: $db.accountOriginals,
+      getReferencedColumn: (t) => t.operationId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $AccountOriginalsAnnotationComposer(
+            $db: $db,
+            $table: $db.accountOriginals,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $AccountRecoveryArchiveTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          AccountRecoveryArchive,
+          AccountRecoveryArchiveData,
+          $AccountRecoveryArchiveFilterComposer,
+          $AccountRecoveryArchiveOrderingComposer,
+          $AccountRecoveryArchiveAnnotationComposer,
+          $AccountRecoveryArchiveCreateCompanionBuilder,
+          $AccountRecoveryArchiveUpdateCompanionBuilder,
+          (AccountRecoveryArchiveData, $AccountRecoveryArchiveReferences),
+          AccountRecoveryArchiveData,
+          PrefetchHooks Function({bool operationId})
+        > {
+  $AccountRecoveryArchiveTableManager(
+    _$AppDatabase db,
+    AccountRecoveryArchive table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $AccountRecoveryArchiveFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $AccountRecoveryArchiveOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $AccountRecoveryArchiveAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> candidateId = const Value.absent(),
+                Value<String> operationId = const Value.absent(),
+                Value<String> fieldGroup = const Value.absent(),
+                Value<String> originalRecordJson = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => AccountRecoveryArchiveCompanion(
+                candidateId: candidateId,
+                operationId: operationId,
+                fieldGroup: fieldGroup,
+                originalRecordJson: originalRecordJson,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String candidateId,
+                required String operationId,
+                required String fieldGroup,
+                required String originalRecordJson,
+                Value<int> rowid = const Value.absent(),
+              }) => AccountRecoveryArchiveCompanion.insert(
+                candidateId: candidateId,
+                operationId: operationId,
+                fieldGroup: fieldGroup,
+                originalRecordJson: originalRecordJson,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<
+                    AccountRecoveryArchive,
+                    AccountRecoveryArchiveData
+                  >(table),
+                  $AccountRecoveryArchiveReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({operationId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (operationId) {
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.operationId,
+                        referencedTable: $AccountRecoveryArchiveReferences
+                            ._operationIdTable(db),
+                        referencedColumn: $AccountRecoveryArchiveReferences
+                            ._operationIdTable(db)
+                            .operationId,
+                      ) as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $AccountRecoveryArchiveProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      AccountRecoveryArchive,
+      AccountRecoveryArchiveData,
+      $AccountRecoveryArchiveFilterComposer,
+      $AccountRecoveryArchiveOrderingComposer,
+      $AccountRecoveryArchiveAnnotationComposer,
+      $AccountRecoveryArchiveCreateCompanionBuilder,
+      $AccountRecoveryArchiveUpdateCompanionBuilder,
+      (AccountRecoveryArchiveData, $AccountRecoveryArchiveReferences),
+      AccountRecoveryArchiveData,
+      PrefetchHooks Function({bool operationId})
+    >;
+typedef $AccountRecordsCreateCompanionBuilder =
+    AccountRecordsCompanion Function({
+      required String recordKind,
+      required String recordKey,
+      required String recordJson,
+      Value<int> rowid,
+    });
+typedef $AccountRecordsUpdateCompanionBuilder =
+    AccountRecordsCompanion Function({
+      Value<String> recordKind,
+      Value<String> recordKey,
+      Value<String> recordJson,
+      Value<int> rowid,
+    });
+
+class $AccountRecordsFilterComposer
+    extends Composer<_$AppDatabase, AccountRecords> {
+  $AccountRecordsFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get recordKind => $composableBuilder(
+    column: $table.recordKind,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get recordKey => $composableBuilder(
+    column: $table.recordKey,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get recordJson => $composableBuilder(
+    column: $table.recordJson,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $AccountRecordsOrderingComposer
+    extends Composer<_$AppDatabase, AccountRecords> {
+  $AccountRecordsOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get recordKind => $composableBuilder(
+    column: $table.recordKind,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get recordKey => $composableBuilder(
+    column: $table.recordKey,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get recordJson => $composableBuilder(
+    column: $table.recordJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $AccountRecordsAnnotationComposer
+    extends Composer<_$AppDatabase, AccountRecords> {
+  $AccountRecordsAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get recordKind => $composableBuilder(
+    column: $table.recordKind,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get recordKey =>
+      $composableBuilder(column: $table.recordKey, builder: (column) => column);
+
+  GeneratedColumn<String> get recordJson => $composableBuilder(
+    column: $table.recordJson,
+    builder: (column) => column,
+  );
+}
+
+class $AccountRecordsTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          AccountRecords,
+          AccountRecord,
+          $AccountRecordsFilterComposer,
+          $AccountRecordsOrderingComposer,
+          $AccountRecordsAnnotationComposer,
+          $AccountRecordsCreateCompanionBuilder,
+          $AccountRecordsUpdateCompanionBuilder,
+          (
+            AccountRecord,
+            BaseReferences<_$AppDatabase, AccountRecords, AccountRecord>,
+          ),
+          AccountRecord,
+          PrefetchHooks Function()
+        > {
+  $AccountRecordsTableManager(_$AppDatabase db, AccountRecords table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $AccountRecordsFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $AccountRecordsOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $AccountRecordsAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> recordKind = const Value.absent(),
+                Value<String> recordKey = const Value.absent(),
+                Value<String> recordJson = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => AccountRecordsCompanion(
+                recordKind: recordKind,
+                recordKey: recordKey,
+                recordJson: recordJson,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String recordKind,
+                required String recordKey,
+                required String recordJson,
+                Value<int> rowid = const Value.absent(),
+              }) => AccountRecordsCompanion.insert(
+                recordKind: recordKind,
+                recordKey: recordKey,
+                recordJson: recordJson,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<AccountRecords, AccountRecord>(table),
+                  BaseReferences<_$AppDatabase, AccountRecords, AccountRecord>(
+                    db,
+                    table,
+                    e,
+                  ),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $AccountRecordsProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      AccountRecords,
+      AccountRecord,
+      $AccountRecordsFilterComposer,
+      $AccountRecordsOrderingComposer,
+      $AccountRecordsAnnotationComposer,
+      $AccountRecordsCreateCompanionBuilder,
+      $AccountRecordsUpdateCompanionBuilder,
+      (
+        AccountRecord,
+        BaseReferences<_$AppDatabase, AccountRecords, AccountRecord>,
+      ),
+      AccountRecord,
+      PrefetchHooks Function()
+    >;
+typedef $AccountSnapshotCreateCompanionBuilder =
+    AccountSnapshotCompanion Function({
+      Value<int> singleton,
+      required String manifestJson,
+      Value<int> nextPage,
+      Value<int> recordCount,
+      Value<int> byteCount,
+    });
+typedef $AccountSnapshotUpdateCompanionBuilder =
+    AccountSnapshotCompanion Function({
+      Value<int> singleton,
+      Value<String> manifestJson,
+      Value<int> nextPage,
+      Value<int> recordCount,
+      Value<int> byteCount,
+    });
+
+class $AccountSnapshotFilterComposer
+    extends Composer<_$AppDatabase, AccountSnapshot> {
+  $AccountSnapshotFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get singleton => $composableBuilder(
+    column: $table.singleton,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get manifestJson => $composableBuilder(
+    column: $table.manifestJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get nextPage => $composableBuilder(
+    column: $table.nextPage,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get recordCount => $composableBuilder(
+    column: $table.recordCount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get byteCount => $composableBuilder(
+    column: $table.byteCount,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $AccountSnapshotOrderingComposer
+    extends Composer<_$AppDatabase, AccountSnapshot> {
+  $AccountSnapshotOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get singleton => $composableBuilder(
+    column: $table.singleton,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get manifestJson => $composableBuilder(
+    column: $table.manifestJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get nextPage => $composableBuilder(
+    column: $table.nextPage,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get recordCount => $composableBuilder(
+    column: $table.recordCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get byteCount => $composableBuilder(
+    column: $table.byteCount,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $AccountSnapshotAnnotationComposer
+    extends Composer<_$AppDatabase, AccountSnapshot> {
+  $AccountSnapshotAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get singleton =>
+      $composableBuilder(column: $table.singleton, builder: (column) => column);
+
+  GeneratedColumn<String> get manifestJson => $composableBuilder(
+    column: $table.manifestJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get nextPage =>
+      $composableBuilder(column: $table.nextPage, builder: (column) => column);
+
+  GeneratedColumn<int> get recordCount => $composableBuilder(
+    column: $table.recordCount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get byteCount =>
+      $composableBuilder(column: $table.byteCount, builder: (column) => column);
+}
+
+class $AccountSnapshotTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          AccountSnapshot,
+          AccountSnapshotData,
+          $AccountSnapshotFilterComposer,
+          $AccountSnapshotOrderingComposer,
+          $AccountSnapshotAnnotationComposer,
+          $AccountSnapshotCreateCompanionBuilder,
+          $AccountSnapshotUpdateCompanionBuilder,
+          (
+            AccountSnapshotData,
+            BaseReferences<_$AppDatabase, AccountSnapshot, AccountSnapshotData>,
+          ),
+          AccountSnapshotData,
+          PrefetchHooks Function()
+        > {
+  $AccountSnapshotTableManager(_$AppDatabase db, AccountSnapshot table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $AccountSnapshotFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $AccountSnapshotOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $AccountSnapshotAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> singleton = const Value.absent(),
+                Value<String> manifestJson = const Value.absent(),
+                Value<int> nextPage = const Value.absent(),
+                Value<int> recordCount = const Value.absent(),
+                Value<int> byteCount = const Value.absent(),
+              }) => AccountSnapshotCompanion(
+                singleton: singleton,
+                manifestJson: manifestJson,
+                nextPage: nextPage,
+                recordCount: recordCount,
+                byteCount: byteCount,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> singleton = const Value.absent(),
+                required String manifestJson,
+                Value<int> nextPage = const Value.absent(),
+                Value<int> recordCount = const Value.absent(),
+                Value<int> byteCount = const Value.absent(),
+              }) => AccountSnapshotCompanion.insert(
+                singleton: singleton,
+                manifestJson: manifestJson,
+                nextPage: nextPage,
+                recordCount: recordCount,
+                byteCount: byteCount,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<AccountSnapshot, AccountSnapshotData>(table),
+                  BaseReferences<
+                    _$AppDatabase,
+                    AccountSnapshot,
+                    AccountSnapshotData
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $AccountSnapshotProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      AccountSnapshot,
+      AccountSnapshotData,
+      $AccountSnapshotFilterComposer,
+      $AccountSnapshotOrderingComposer,
+      $AccountSnapshotAnnotationComposer,
+      $AccountSnapshotCreateCompanionBuilder,
+      $AccountSnapshotUpdateCompanionBuilder,
+      (
+        AccountSnapshotData,
+        BaseReferences<_$AppDatabase, AccountSnapshot, AccountSnapshotData>,
+      ),
+      AccountSnapshotData,
+      PrefetchHooks Function()
+    >;
+typedef $AccountSnapshotPagesCreateCompanionBuilder =
+    AccountSnapshotPagesCompanion Function({
+      Value<int> page,
+      required String replyJson,
+    });
+typedef $AccountSnapshotPagesUpdateCompanionBuilder =
+    AccountSnapshotPagesCompanion Function({
+      Value<int> page,
+      Value<String> replyJson,
+    });
+
+class $AccountSnapshotPagesFilterComposer
+    extends Composer<_$AppDatabase, AccountSnapshotPages> {
+  $AccountSnapshotPagesFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get page => $composableBuilder(
+    column: $table.page,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get replyJson => $composableBuilder(
+    column: $table.replyJson,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $AccountSnapshotPagesOrderingComposer
+    extends Composer<_$AppDatabase, AccountSnapshotPages> {
+  $AccountSnapshotPagesOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get page => $composableBuilder(
+    column: $table.page,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get replyJson => $composableBuilder(
+    column: $table.replyJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $AccountSnapshotPagesAnnotationComposer
+    extends Composer<_$AppDatabase, AccountSnapshotPages> {
+  $AccountSnapshotPagesAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get page =>
+      $composableBuilder(column: $table.page, builder: (column) => column);
+
+  GeneratedColumn<String> get replyJson =>
+      $composableBuilder(column: $table.replyJson, builder: (column) => column);
+}
+
+class $AccountSnapshotPagesTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          AccountSnapshotPages,
+          AccountSnapshotPage,
+          $AccountSnapshotPagesFilterComposer,
+          $AccountSnapshotPagesOrderingComposer,
+          $AccountSnapshotPagesAnnotationComposer,
+          $AccountSnapshotPagesCreateCompanionBuilder,
+          $AccountSnapshotPagesUpdateCompanionBuilder,
+          (
+            AccountSnapshotPage,
+            BaseReferences<
+              _$AppDatabase,
+              AccountSnapshotPages,
+              AccountSnapshotPage
+            >,
+          ),
+          AccountSnapshotPage,
+          PrefetchHooks Function()
+        > {
+  $AccountSnapshotPagesTableManager(
+    _$AppDatabase db,
+    AccountSnapshotPages table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $AccountSnapshotPagesFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $AccountSnapshotPagesOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $AccountSnapshotPagesAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> page = const Value.absent(),
+            Value<String> replyJson = const Value.absent(),
+          }) => AccountSnapshotPagesCompanion(page: page, replyJson: replyJson),
+          createCompanionCallback:
+              ({
+                Value<int> page = const Value.absent(),
+                required String replyJson,
+              }) => AccountSnapshotPagesCompanion.insert(
+                page: page,
+                replyJson: replyJson,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<AccountSnapshotPages, AccountSnapshotPage>(table),
+                  BaseReferences<
+                    _$AppDatabase,
+                    AccountSnapshotPages,
+                    AccountSnapshotPage
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $AccountSnapshotPagesProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      AccountSnapshotPages,
+      AccountSnapshotPage,
+      $AccountSnapshotPagesFilterComposer,
+      $AccountSnapshotPagesOrderingComposer,
+      $AccountSnapshotPagesAnnotationComposer,
+      $AccountSnapshotPagesCreateCompanionBuilder,
+      $AccountSnapshotPagesUpdateCompanionBuilder,
+      (
+        AccountSnapshotPage,
+        BaseReferences<
+          _$AppDatabase,
+          AccountSnapshotPages,
+          AccountSnapshotPage
+        >,
+      ),
+      AccountSnapshotPage,
+      PrefetchHooks Function()
+    >;
+typedef $AccountSnapshotRecordsCreateCompanionBuilder =
+    AccountSnapshotRecordsCompanion Function({
+      required String recordKind,
+      required String recordKey,
+      required String recordJson,
+      Value<int> rowid,
+    });
+typedef $AccountSnapshotRecordsUpdateCompanionBuilder =
+    AccountSnapshotRecordsCompanion Function({
+      Value<String> recordKind,
+      Value<String> recordKey,
+      Value<String> recordJson,
+      Value<int> rowid,
+    });
+
+class $AccountSnapshotRecordsFilterComposer
+    extends Composer<_$AppDatabase, AccountSnapshotRecords> {
+  $AccountSnapshotRecordsFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get recordKind => $composableBuilder(
+    column: $table.recordKind,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get recordKey => $composableBuilder(
+    column: $table.recordKey,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get recordJson => $composableBuilder(
+    column: $table.recordJson,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $AccountSnapshotRecordsOrderingComposer
+    extends Composer<_$AppDatabase, AccountSnapshotRecords> {
+  $AccountSnapshotRecordsOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get recordKind => $composableBuilder(
+    column: $table.recordKind,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get recordKey => $composableBuilder(
+    column: $table.recordKey,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get recordJson => $composableBuilder(
+    column: $table.recordJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $AccountSnapshotRecordsAnnotationComposer
+    extends Composer<_$AppDatabase, AccountSnapshotRecords> {
+  $AccountSnapshotRecordsAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get recordKind => $composableBuilder(
+    column: $table.recordKind,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get recordKey =>
+      $composableBuilder(column: $table.recordKey, builder: (column) => column);
+
+  GeneratedColumn<String> get recordJson => $composableBuilder(
+    column: $table.recordJson,
+    builder: (column) => column,
+  );
+}
+
+class $AccountSnapshotRecordsTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          AccountSnapshotRecords,
+          AccountSnapshotRecord,
+          $AccountSnapshotRecordsFilterComposer,
+          $AccountSnapshotRecordsOrderingComposer,
+          $AccountSnapshotRecordsAnnotationComposer,
+          $AccountSnapshotRecordsCreateCompanionBuilder,
+          $AccountSnapshotRecordsUpdateCompanionBuilder,
+          (
+            AccountSnapshotRecord,
+            BaseReferences<
+              _$AppDatabase,
+              AccountSnapshotRecords,
+              AccountSnapshotRecord
+            >,
+          ),
+          AccountSnapshotRecord,
+          PrefetchHooks Function()
+        > {
+  $AccountSnapshotRecordsTableManager(
+    _$AppDatabase db,
+    AccountSnapshotRecords table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $AccountSnapshotRecordsFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $AccountSnapshotRecordsOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $AccountSnapshotRecordsAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> recordKind = const Value.absent(),
+                Value<String> recordKey = const Value.absent(),
+                Value<String> recordJson = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => AccountSnapshotRecordsCompanion(
+                recordKind: recordKind,
+                recordKey: recordKey,
+                recordJson: recordJson,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String recordKind,
+                required String recordKey,
+                required String recordJson,
+                Value<int> rowid = const Value.absent(),
+              }) => AccountSnapshotRecordsCompanion.insert(
+                recordKind: recordKind,
+                recordKey: recordKey,
+                recordJson: recordJson,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<AccountSnapshotRecords, AccountSnapshotRecord>(
+                    table,
+                  ),
+                  BaseReferences<
+                    _$AppDatabase,
+                    AccountSnapshotRecords,
+                    AccountSnapshotRecord
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $AccountSnapshotRecordsProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      AccountSnapshotRecords,
+      AccountSnapshotRecord,
+      $AccountSnapshotRecordsFilterComposer,
+      $AccountSnapshotRecordsOrderingComposer,
+      $AccountSnapshotRecordsAnnotationComposer,
+      $AccountSnapshotRecordsCreateCompanionBuilder,
+      $AccountSnapshotRecordsUpdateCompanionBuilder,
+      (
+        AccountSnapshotRecord,
+        BaseReferences<
+          _$AppDatabase,
+          AccountSnapshotRecords,
+          AccountSnapshotRecord
+        >,
+      ),
+      AccountSnapshotRecord,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -14775,4 +20537,22 @@ class $AppDatabaseManager {
       $DeviceNotificationsTableManager(_db, _db.deviceNotifications);
   $ImportJournalTableManager get importJournal =>
       $ImportJournalTableManager(_db, _db.importJournal);
+  $AccountStateTableManager get accountState =>
+      $AccountStateTableManager(_db, _db.accountState);
+  $AccountOperationsTableManager get accountOperations =>
+      $AccountOperationsTableManager(_db, _db.accountOperations);
+  $AccountFieldOutcomesTableManager get accountFieldOutcomes =>
+      $AccountFieldOutcomesTableManager(_db, _db.accountFieldOutcomes);
+  $AccountOriginalsTableManager get accountOriginals =>
+      $AccountOriginalsTableManager(_db, _db.accountOriginals);
+  $AccountRecoveryArchiveTableManager get accountRecoveryArchive =>
+      $AccountRecoveryArchiveTableManager(_db, _db.accountRecoveryArchive);
+  $AccountRecordsTableManager get accountRecords =>
+      $AccountRecordsTableManager(_db, _db.accountRecords);
+  $AccountSnapshotTableManager get accountSnapshot =>
+      $AccountSnapshotTableManager(_db, _db.accountSnapshot);
+  $AccountSnapshotPagesTableManager get accountSnapshotPages =>
+      $AccountSnapshotPagesTableManager(_db, _db.accountSnapshotPages);
+  $AccountSnapshotRecordsTableManager get accountSnapshotRecords =>
+      $AccountSnapshotRecordsTableManager(_db, _db.accountSnapshotRecords);
 }
