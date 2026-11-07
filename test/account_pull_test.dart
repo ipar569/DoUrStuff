@@ -170,6 +170,179 @@ void main() {
     expect(await store.checkpoint(), at);
   });
 
+  for (final kind in ['closure', 'original', 'history']) {
+    test(
+      'own-device $kind ahead of next sequence atomically latches recovery',
+      () async {
+        final original = op(sequence: 5);
+        final status = AcceptedField(6, {
+          'status': 'completed',
+          'completed_at': 100,
+        });
+        final result = pull(
+          recovery: kind == 'original' ? [candidate(original)] : [],
+          history: kind == 'history'
+              ? [
+                  StatusHistoryEvent(
+                    operationId: original.operationId,
+                    taskId: task.key.single,
+                    revision: 6,
+                    previousStatus: null,
+                    status: status,
+                    fields: {'status_group': status},
+                    provenance: {},
+                    recordedAtUtc: now,
+                    operation: AccountOperation(
+                      operationId: original.operationId,
+                      deviceEpoch: device,
+                      sequence: 5,
+                      entity: task,
+                      command: 'task.status',
+                      patches: {
+                        'status_group': FieldPatch(
+                          const AbsentBase(),
+                          status.value,
+                        ),
+                      },
+                    ),
+                  ),
+                ]
+              : [],
+          resolutions: kind == 'closure'
+              ? [
+                  RecoveryResolution(
+                    conflictId: id(30),
+                    expectedConflictRevision: 5,
+                    revision: 6,
+                    operationId: id(31),
+                    deviceEpoch: device,
+                    sequence: 5,
+                    choice: RecoveryChoice.discard,
+                  ),
+                ]
+              : [],
+        );
+        await db.customStatement(
+          "CREATE TRIGGER fail_pull BEFORE UPDATE OF cursor ON account_state BEGIN SELECT RAISE(ABORT,'injected'); END",
+        );
+        await expectLater(
+          store.applyPull(PullRequest(at), result),
+          throwsA(anything),
+        );
+        expect(
+          (await db
+                  .customSelect('SELECT requires_recovery FROM account_state')
+                  .getSingle())
+              .read<int>('requires_recovery'),
+          0,
+        );
+        expect(await store.checkpoint(), at);
+        await db.customStatement('DROP TRIGGER fail_pull');
+        await store.applyPull(PullRequest(at), result);
+        expect(
+          (await db
+                  .customSelect('SELECT requires_recovery FROM account_state')
+                  .getSingle())
+              .read<int>('requires_recovery'),
+          1,
+        );
+        expect(
+          (await db
+                  .customSelect('SELECT next_sequence FROM profile_metadata')
+                  .getSingle())
+              .read<int>('next_sequence'),
+          1,
+        );
+        await expectLater(retain(op()), throwsStateError);
+        await store.applyPull(
+          PullRequest((await store.checkpoint())!),
+          pull(revision: 7),
+        );
+        await expectLater(retain(op()), throwsStateError);
+      },
+    );
+  }
+
+  test('downloaded receipt cannot reintroduce compacted payload', () async {
+    final operation = op();
+    await retain(operation);
+    await receipt(operation);
+    await store.applyPull(
+      PullRequest(at),
+      pull(records: [shadow(revision: 6, title: 'local')]),
+    );
+    await store.applyPull(
+      PullRequest((await store.checkpoint())!),
+      pull(
+        revision: 7,
+        records: [shadow(revision: 7, title: 'local', exists: false)],
+      ),
+    );
+    await store.applyPull(
+      PullRequest((await store.checkpoint())!),
+      pull(
+        revision: 8,
+        records: [
+          ShadowRecord(
+            entity: task,
+            fields: {'existence': AcceptedField(7, false)},
+            deleteOperationId: id(90),
+          ),
+        ],
+      ),
+    );
+    final projected = await store.projection(task);
+    expect(projected.values.containsKey('title'), isFalse);
+    expect(projected.pendingSources, isEmpty);
+    expect(projected.proposals.single.acceptedFields['title']!.value, 'local');
+    expect(
+      projected.proposals.single.operation.payloadIdentity,
+      operation.payloadIdentity,
+    );
+  });
+
+  test('inherited child compaction accepts deleted parent without changing child identity', () async {
+    final child = SyncEntity(SyncEntityKind.milestone, [id(3)]);
+    final retained = {
+      'parent': AcceptedField(6, task.key.single),
+      'existence': AcceptedField(6, true),
+    };
+    await store.applyPull(
+      PullRequest(at),
+      pull(
+        records: [
+          ShadowRecord(
+            entity: child,
+            fields: {
+              ...retained,
+              'title': AcceptedField(6, 'child'),
+              'completion': AcceptedField(6, false),
+            },
+          ),
+        ],
+      ),
+    );
+    final before = (await store.checkpoint())!;
+    final compact = ShadowRecord(entity: child, fields: retained);
+    await expectLater(
+      store.applyPull(
+        PullRequest(before),
+        pull(revision: 7, records: [compact]),
+      ),
+      throwsStateError,
+    );
+    expect(await store.checkpoint(), before);
+    // Child first deliberately: a whole revision cannot depend on row order.
+    await store.applyPull(
+      PullRequest(before),
+      pull(revision: 7, records: [compact, shadow(revision: 7, exists: false)]),
+    );
+    final projected = await store.projection(child);
+    expect(projected.visible, isFalse);
+    expect(projected.values, {'existence': true, 'parent': task.key.single});
+    expect(projected.accepted!.deleteOperationId, isNull);
+  });
+
   test(
     'known and unknown history survives; repeated event identity cannot change',
     () async {

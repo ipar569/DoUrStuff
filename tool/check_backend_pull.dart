@@ -62,12 +62,17 @@ Future<void> main(List<String> args) async {
       pages++;
     }
     final projection = await store.projection(operation.entity);
-    if (projection.values['title'] != 'chosen' ||
+    if (projection.values['title'] !=
+            (fixture.containsKey('expected_title')
+                ? fixture['expected_title']
+                : 'chosen') ||
         projection.unresolvedRecovery.isNotEmpty ||
         projection.proposals.single.operation.payloadIdentity !=
             operation.payloadIdentity ||
         projection.proposals.single.projectedOutcomes['title'] !=
-            FieldDisposition.conflict) {
+            FieldDisposition.values.byName(
+              fixture['expected_disposition'] as String? ?? 'conflict',
+            )) {
       throw StateError('Pending-safe final projection mismatch.');
     }
     final expected = <String>[];

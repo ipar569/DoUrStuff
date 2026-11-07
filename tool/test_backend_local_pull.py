@@ -12,12 +12,16 @@ from test_backend_foundation import Backend, require, sql
 from test_backend_task_create import TaskFixture, status
 from test_backend_apply import observed, predecessor, uid
 from test_backend_resolution import begin, page, pull, candidates, request, resolve
+from test_backend_milestone_create import milestone
+from test_backend_task_delete import deletion
+from test_backend_deleted_content import age, prune
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--supabase', default='supabase')
     parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--inherited-compaction', action='store_true')
     args = parser.parse_args()
     subprocess.run([sys.executable, 'tool/local_backend.py'], check=True)
     backend = Backend(args.supabase)
@@ -25,6 +29,8 @@ def main():
         epoch = sql('select server_epoch from sync_private.backend_state;')
         f = TaskFixture(backend, epoch)
         f.apply(f.create())
+        if args.inherited_compaction:
+            f.apply(milestone(f, 2))
         local_device = uid()
         f.register(local_device)
         initial = begin(f)
@@ -32,16 +38,21 @@ def main():
         checked = backend.wire[-1]['checked_at_utc']
         pending = f.op(1, 'offline original', observed(1, 'X'))
         pending['device_epoch'] = local_device
-        first = f.op(2, 'canonical')
-        conflict = f.op(3, 'candidate')
-        held = f.op(4, 'held', predecessor(conflict, 'candidate'))
-        f.apply(first, conflict, held)
-        cs = candidates(f)
-        chosen = next(c for c in cs if c['operation']['operation_id'] == conflict['operation_id'])
-        descendant = next(c for c in cs if c['operation']['operation_id'] == held['operation_id'])
-        result = resolve(f, request(f, chosen, 5, 'chosen', [(descendant, 'discard')]))
-        require(result['status'] == 'success', 'Resolution fixture')
-        f.apply(f.set_status(6, status('completed', 100), observed(1, status())))
+        if args.inherited_compaction:
+            f.apply(deletion(f, 3))
+            age(f)
+            require(prune(f)['shadows_compacted'] == 2, 'Task and inherited child compacted')
+        else:
+            first = f.op(2, 'canonical')
+            conflict = f.op(3, 'candidate')
+            held = f.op(4, 'held', predecessor(conflict, 'candidate'))
+            f.apply(first, conflict, held)
+            cs = candidates(f)
+            chosen = next(c for c in cs if c['operation']['operation_id'] == conflict['operation_id'])
+            descendant = next(c for c in cs if c['operation']['operation_id'] == held['operation_id'])
+            result = resolve(f, request(f, chosen, 5, 'chosen', [(descendant, 'discard')]))
+            require(result['status'] == 'success', 'Resolution fixture')
+            f.apply(f.set_status(6, status('completed', 100), observed(1, status())))
         cursor = initial['at']['revision']
         downloads = []
         while True:
@@ -57,9 +68,11 @@ def main():
             manifest=initial, pages=initial_pages, checked_at_utc=checked,
             pending_envelope='  ' + json.dumps(pending) + '\n', downloads=downloads,
             terminal_manifest=terminal, terminal_pages=terminal_pages,
+            expected_title=None if args.inherited_compaction else 'chosen',
+            expected_disposition='recovery' if args.inherited_compaction else 'conflict',
         ), ensure_ascii=False), encoding='utf-8')
-        require(cursor == 6 and len(downloads) == 3, 'Whole-revision pagination')
-        print('PASS: real snapshot, three pull pages, originals, closures and status history captured', flush=True)
+        require(cursor == terminal['at']['revision'] and len(downloads) == (2 if args.inherited_compaction else 3), 'Whole-revision pagination')
+        print(f'PASS: real snapshot and {len(downloads)} whole-revision pull pages captured', flush=True)
     finally:
         backend.cleanup()
 

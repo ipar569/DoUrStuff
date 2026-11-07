@@ -1,6 +1,6 @@
 # Phase 3 verification
 
-## Current handoff — bounded incremental pull, 6 November 2026
+## Current handoff — bounded incremental pull, updated 7 November 2026
 
 Refreshed clean Git/GitHub at PR23 merge
 `1fd12bfe1e7a4be6f80e8067028bb39b6aba25e5` and created
@@ -40,12 +40,34 @@ exact-head review, hosted checks and final native build results.
 original pending bytes and conflict preserved. Synthetic captures explicitly
 correlate one owner; a shared epoch/revision is never used to guess ownership.
 The six existing foundation/apply/snapshot/history/resolution/compound suites
-and their production decoding/snapshot-install checks are running sequentially.
+passed **67 groups / 343 production-decoded replies**; eight real snapshots with
+460 records installed in SQLite. Final pre-review builds passed in 7.7 seconds
+(Windows) and 20 seconds (process-local Java21 Android); hosted Quality/Android/
+Windows passed on `4cd6c6f0d955231185e78be94f0a1f4fb8421e8e`.
 Only `python tool/local_backend.py --start` started/verified the existing nine
 services/eight healthchecks with loopback bindings. No reset, migration, container
 or volume replacement occurred. Local Windows release compiled in 26.9 seconds;
 the documented process-only Java21 Gradle APK build passed in 1m54s.
 Ignored logs use `.tools/account-pull-*`; actual final evidence belongs in the PR.
+
+The first independent review attempt hit a usage limit without returning a
+review. On 7 November, refreshed Git/GitHub was unchanged and the resumed
+read-only review found three P2 issues: valid inherited milestone compaction
+was rejected; downloaded own-device identities ahead of local sequence history
+did not latch recovery; old acknowledged fields could reappear after compaction.
+The fixes validate inherited deletion against accepted parent state/the complete
+revision, latch recovery with the cursor without advancing local sequences or
+inventing outcomes, and bridge receipts only while the applied cursor is behind.
+The focused suite passes **54 tests**, including own-device history/recovery/
+closure proof rollback, child-before-parent ordering and receipt compaction.
+
+The real inherited-compaction capture (`test_backend_local_pull.py
+--inherited-compaction`) passes the production SQLite consumer: **two pages /
+three records** match a fresh snapshot, alongside the original three-page/seven-
+record fixture. Docker was stopped on resume; after launching the installed
+engine, only the guarded helper verified/started the preserved services. No
+container or volume was replaced. Revised full quality, exact-head independent
+re-review and hosted checks must pass before merge; see PR24's final timeline.
 
 SQLite v1/v2 snapshots/helpers, generated schema, lockfile and all **26** backend
 migrations remain unchanged. App account writes remain disabled. Next bounded

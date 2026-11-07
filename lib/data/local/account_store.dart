@@ -321,40 +321,66 @@ final class AccountStore {
   /// caller fetches outside SQLite and must refetch from checkpoint after a
   /// stale response (including a retry whose first commit already succeeded).
   /// No upload acknowledgement or device watermark is inferred from a pull.
-  Future<void> applyPull(PullRequest request, RecoveryPullResult result) =>
-      db.transaction(() async {
-        final state = await _guard();
-        validateRecoveryPullReply(request, result);
-        if (state.readNullable<String>('server_epoch') !=
-                request.after.serverEpoch ||
-            state.read<int>('cursor') != request.after.revision) {
-          throw StateError('Pull does not start at the installed checkpoint.');
+  Future<void> applyPull(
+    PullRequest request,
+    RecoveryPullResult result,
+  ) => db.transaction(() async {
+    final state = await _guard();
+    validateRecoveryPullReply(request, result);
+    if (state.readNullable<String>('server_epoch') !=
+            request.after.serverEpoch ||
+        state.read<int>('cursor') != request.after.revision) {
+      throw StateError('Pull does not start at the installed checkpoint.');
+    }
+    // Encoding also validates directly constructed values and the 4 MiB
+    // wire bound. Work only from this detached representation after awaits.
+    final reply = recoveryPullCodec.encodeReply(SyncSuccess(result));
+    final groups = (reply['result'] as Map)['groups'] as List;
+    final profile = await db
+        .customSelect('SELECT device_epoch,next_sequence FROM profile_metadata')
+        .getSingle();
+    var needsRecovery = state.read<int>('requires_recovery') != 0;
+    var revision = request.after.revision;
+    var count = 0;
+    for (final raw in groups) {
+      final group = (raw as Map).cast<String, Object?>();
+      if (group['revision'] != ++revision) {
+        throw StateError('Pull revision gap.');
+      }
+      final records = _records(group);
+      final shadows = <String, Map>{
+        for (final record in records)
+          if (record[0] == 'records')
+            record[1] as String: jsonDecode(record[2] as String) as Map,
+      };
+      count += records.length;
+      if (count > 10000) throw StateError('Pull record bound exceeded.');
+      for (final record in records) {
+        await _applyRecord(record, shadows);
+        final value = jsonDecode(record[2] as String) as Map;
+        final identity = record[0] == 'resolutions'
+            ? value
+            : value['operation'] as Map?;
+        if (identity != null &&
+            identity['device_epoch'] == profile.read<String>('device_epoch') &&
+            (identity['sequence'] as int) >=
+                profile.read<int>('next_sequence')) {
+          // A consumed identity ahead of this installation proves missing
+          // local history, not accepted fields or a safe sequence to reuse.
+          needsRecovery = true;
         }
-        // Encoding also validates directly constructed values and the 4 MiB
-        // wire bound. Work only from this detached representation after awaits.
-        final reply = recoveryPullCodec.encodeReply(SyncSuccess(result));
-        final groups = (reply['result'] as Map)['groups'] as List;
-        var revision = request.after.revision;
-        var count = 0;
-        for (final raw in groups) {
-          final group = (raw as Map).cast<String, Object?>();
-          if (group['revision'] != ++revision) {
-            throw StateError('Pull revision gap.');
-          }
-          final records = _records(group);
-          count += records.length;
-          if (count > 10000) throw StateError('Pull record bound exceeded.');
-          for (final record in records) {
-            await _applyRecord(record);
-          }
-        }
-        await db.customStatement(
-          'UPDATE account_state SET cursor=? WHERE singleton=1',
-          [revision],
-        );
-      });
+      }
+    }
+    await db.customStatement(
+      'UPDATE account_state SET cursor=?,requires_recovery=? WHERE singleton=1',
+      [revision, needsRecovery ? 1 : 0],
+    );
+  });
 
-  Future<void> _applyRecord(List<Object?> record) async {
+  Future<void> _applyRecord(
+    List<Object?> record,
+    Map<String, Map> shadows,
+  ) async {
     final kind = record[0] as String;
     final key = record[1] as String;
     final encoded = record[2] as String;
@@ -391,12 +417,13 @@ final class AccountStore {
         for (final entry in previousFields.entries) {
           final next = fields[entry.key] as Map?;
           final before = entry.value as Map;
-          // Deleted-content compaction may drop payload fields, but never
-          // identity/existence/parent or fields of a visible entity.
+          // Compaction also covers live children of deleted parents. Consult
+          // the whole revision, independent of record order, then accepted DB
+          // state; pending local visibility cannot authorize remote compaction.
           if (next == null) {
-            if ((fields['existence'] as Map?)?['value'] != false ||
-                entry.key == 'existence' ||
-                entry.key == 'parent') {
+            if (entry.key == 'existence' ||
+                entry.key == 'parent' ||
+                !await _canCompact(value, shadows)) {
               throw StateError('Shadow lost a retained field.');
             }
           } else if ((next['revision'] as int) < (before['revision'] as int) ||
@@ -466,6 +493,27 @@ final class AccountStore {
       'INSERT OR REPLACE INTO account_records VALUES(?,?,?)',
       record,
     );
+  }
+
+  Future<bool> _canCompact(Map shadow, Map<String, Map> shadows) async {
+    final fields = shadow['fields'] as Map;
+    if ((fields['existence'] as Map?)?['value'] == false) return true;
+    if ((shadow['entity'] as Map)['kind'] != 'milestone') return false;
+    final parentId = (fields['parent'] as Map?)?['value'];
+    if (parentId is! String) return false;
+    final key = SyncEntity(SyncEntityKind.task, [parentId]).identity;
+    var parent = shadows[key];
+    if (parent == null) {
+      final rows = await db
+          .customSelect(
+            "SELECT record_json FROM account_records WHERE record_kind='records' AND record_key=?",
+            variables: [Variable(key)],
+          )
+          .get();
+      if (rows.isEmpty) return false;
+      parent = jsonDecode(rows.single.read<String>('record_json')) as Map;
+    }
+    return ((parent['fields'] as Map)['existence'] as Map?)?['value'] == false;
   }
 
   Future<void> _archiveRecovery(
@@ -789,7 +837,8 @@ final class AccountStore {
         } else if (accepted != null) {
           // Keep acknowledged values visible until pull reaches their revision,
           // but never overlay them over a later downloaded accepted value.
-          if (accepted.revision > (shadow?.fields[group]?.revision ?? 0)) {
+          if (accepted.revision > state.read<int>('cursor') &&
+              accepted.revision > (shadow?.fields[group]?.revision ?? 0)) {
             values[group] = accepted.value;
             sources[group] = operation.operationId;
           }

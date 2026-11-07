@@ -45,7 +45,8 @@ explicit pending operation sources. It does not fabricate server revisions or
 flatten account values into guest/native task rows. Independent original-base
 patches and proven same-field local predecessor chains can project; downloaded
 conflicts/held/recovery, uncertain receipts and closed groups cannot. Accepted
-receipt values bridge download lag only until a shadow reaches their revision.
+receipt values bridge download lag only while the applied cursor and shadow are
+behind their revision; removed compacted fields cannot revive old receipts.
 Later accepted values supersede them without changing the original receipt.
 Unacknowledged complete creates, restores and parent-operation dependencies stay
 held pending command-level validation/binding. This is deliberately partial
@@ -99,9 +100,14 @@ All shadow/history/recovery/closure writes, original identity proofs, first
 recovery archives and cursor advancement share one SQLite transaction. No network
 call, receipt acknowledgement or device watermark is inferred inside it. Shadow
 field revisions cannot regress or substitute values at the same revision. Deleted
-content can compact to identity fields; deletion identities survive restoration.
+content can compact to identity fields, including live milestones beneath deleted
+parents; parent validation uses accepted state and the complete incoming revision,
+not local pending visibility or record order. Deletion identities survive restoration.
 History and closure facts are immutable; candidate closure versions and operation/
-device/sequence proofs are checked. Original envelopes and receipts stay untouched.
+device/sequence proofs are checked. A downloaded original or closure from this
+device at or beyond its next local sequence atomically latches explicit recovery;
+it does not advance that sequence or invent field outcomes. Original envelopes
+and receipts stay untouched.
 
 A rolled-back page can retry; an already committed or otherwise stale request is
 rejected without writes, and the caller must refetch from `checkpoint()`. There
