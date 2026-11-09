@@ -417,7 +417,7 @@ void main() {
   });
 
   test(
-    'unacknowledged creates are held as whole commands, never merged fieldwise',
+    'invalid creates need recovery as whole commands, never merged fieldwise',
     () async {
       final create = AccountOperation(
         operationId: id(10),
@@ -438,7 +438,7 @@ void main() {
       expect(projected.values.containsKey('description'), isFalse);
       expect(
         projected.proposals.single.projectedOutcomes.values.every(
-          (d) => d == FieldDisposition.held,
+          (d) => d == FieldDisposition.recovery,
         ),
         isTrue,
       );

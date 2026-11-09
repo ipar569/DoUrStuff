@@ -12,7 +12,7 @@ import 'package:sqlite3/sqlite3.dart' as sqlite;
 import 'generated/schema.dart';
 
 void main() {
-  test('fresh schema matches the generated v2 contract', () async {
+  test('fresh schema matches the generated v3 contract', () async {
     final db = AppDatabase(NativeDatabase.memory());
     addTearDown(db.close);
     await db.initializeProfile('guest');
@@ -29,7 +29,7 @@ void main() {
       );
       final db = AppDatabase(fixture.newConnection());
       addTearDown(db.close);
-      await verifier.migrateAndValidate(db, 2);
+      await verifier.migrateAndValidate(db, 3);
       await db.initializeProfile('guest');
       expect(
         (await LocalTaskRepository(db).watchTasks().first).single.title,
@@ -67,7 +67,7 @@ void main() {
       await db.close();
       raw.close();
       final upgraded = sqlite.sqlite3.open(file.path);
-      expect(upgraded.userVersion, 2);
+      expect(upgraded.userVersion, 3);
       expect(legacyRows(upgraded), before);
       expect(upgraded.select('SELECT * FROM account_operations'), isEmpty);
       upgraded.close();
@@ -149,13 +149,13 @@ void main() {
       }
       final check = sqlite.sqlite3.open(file.path);
       try {
-        expect(check.userVersion, 2);
+        expect(check.userVersion, 3);
         expect(legacyRows(check), before);
         expect(
           check.select(
             "SELECT name FROM sqlite_master WHERE type='table' AND name LIKE 'account_%'",
           ),
-          hasLength(9),
+          hasLength(11),
         );
       } finally {
         check.close();
@@ -192,7 +192,85 @@ void main() {
     expect(occupied.readAsStringSync(), 'existing backup');
     raw.close();
   });
+
+  for (final fail in [false, true]) {
+    test('v2 retained account data survives v3 upgrade (failure=$fail)', () async {
+      final directory = await Directory.systemTemp.createTemp('account-v3-');
+      addTearDown(() => directory.delete(recursive: true));
+      final fixture = await SchemaVerifier(GeneratedHelper()).schemaAt(2);
+      final file = File('${directory.path}/account.sqlite');
+      fixture.rawDatabase.execute('VACUUM INTO ?', [file.path]);
+      fixture.rawDatabase.close();
+      final raw = sqlite.sqlite3.open(file.path);
+      seedLegacy(raw);
+      for (final sql in [
+        "INSERT INTO account_state VALUES(1,'owner',7,'epoch',15,'{\"device\":3}',1)",
+        "INSERT INTO account_operations VALUES('op','device',4,'entity',' { \"original\": true } ','identity','epoch','reconcile',NULL,NULL)",
+        "INSERT INTO account_originals VALUES('op','device',4,'identity')",
+        "INSERT INTO account_field_outcomes VALUES('op','title','held',NULL,'candidate')",
+        "INSERT INTO account_recovery_archive VALUES('candidate','op','title',' { \"retained\": true } ')",
+        "INSERT INTO account_records VALUES('records','entity',' { \"shadow\": true } ')",
+        "INSERT INTO account_records VALUES('history','event','{}')",
+        "INSERT INTO account_records VALUES('resolutions','closed','{}')",
+        "INSERT INTO account_snapshot VALUES(1,' { \"manifest\": true } ',1,1,99)",
+        "INSERT INTO account_snapshot_pages VALUES(0,' { \"page\": true } ')",
+        "INSERT INTO account_snapshot_records VALUES('records','staged','{}')",
+      ]) {
+        raw.execute(sql);
+      }
+      final before = allRows(raw);
+      if (fail) {
+        raw.execute(
+          'CREATE TABLE account_notification_dirty (unexpected TEXT)',
+        );
+      }
+      raw.close();
+      final db = AppDatabase.file(file);
+      if (fail) {
+        await expectLater(db.initializeProfile('guest'), throwsA(anything));
+      } else {
+        await db.initializeProfile('guest');
+        await db.validateDatabaseSchema();
+      }
+      await db.close();
+      final check = sqlite.sqlite3.open(file.path);
+      expect(check.userVersion, fail ? 2 : 3);
+      for (final entry in before.entries) {
+        expect(allRows(check)[entry.key], entry.value, reason: entry.key);
+      }
+      if (fail) {
+        expect(
+          check.select(
+            "SELECT name FROM sqlite_master WHERE name='account_command_history'",
+          ),
+          isEmpty,
+        );
+      }
+      check.close();
+      final backup = directory.listSync().whereType<File>().singleWhere(
+        (f) => f.path.contains('.backup-'),
+      );
+      final retained = sqlite.sqlite3.open(backup.path);
+      expect(retained.userVersion, 2);
+      for (final entry in before.entries) {
+        expect(allRows(retained)[entry.key], entry.value);
+      }
+      retained.close();
+    });
+  }
 }
+
+Map<String, String> allRows(sqlite.Database db) => {
+  for (final row in db.select(
+    "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name",
+  ))
+    row['name'] as String: jsonEncode(
+      db
+          .select('SELECT * FROM ${row['name']} ORDER BY rowid')
+          .map((r) => Map.of(r))
+          .toList(),
+    ),
+};
 
 /// Pinned Drift writes user_version only after this callback returns. Throwing
 /// here reproduces interruption after migration COMMIT but before that write.

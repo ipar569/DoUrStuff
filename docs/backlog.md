@@ -344,6 +344,20 @@ native read-model integration, recovery/export, adoption and worker/lifecycle fo
 Both SQLite snapshots and all 26 backend migrations stay unchanged. Account app
 writes, representation/external/native acceptance and Phase 4 remain gated.
 
+9 November bounded 3.2 increment: SQLite v3 adds account local intent history
+and reminder-dirty tables while preserving v1/v2 data/snapshots and all 26 backend
+migrations. Task create/edit/status/delete and milestone create/edit/delete now
+commit explicit original bases, identity/sequence, history and dirty intent
+together. Whole creates and exact dependencies project without implicit rebasing;
+receipts bridge pull lag. PR24 merged at `2cf59e9c2416858799d5c9a2375f1988a8d59f1e`.
+See the latest verification/PR timeline for this increment's checks and merge.
+Next bounded 3.2 work: remaining account commands (ordering, tags/memberships,
+views/preferences and exact-deletion restore), bulk/undo and their dependency
+projection. Keep native OAuth/secure-storage feasibility on the plan before app
+activation; native materialization, recovery/export, adoption and worker/lifecycle
+remain unfinished. Representation, external/native acceptance and Phase 4 stay
+open. No production changes or releases are authorized.
+
 ## Phase 4: recurrence, calendar and reminders
 
 Bounded deterministic generation/history; immutable future segments and offline

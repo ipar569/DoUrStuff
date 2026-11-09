@@ -11843,6 +11843,625 @@ class AccountSnapshotRecordsCompanion
   }
 }
 
+class AccountCommandHistory extends Table
+    with TableInfo<AccountCommandHistory, AccountCommandHistoryData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  AccountCommandHistory(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _operationIdMeta = const VerificationMeta(
+    'operationId',
+  );
+  late final GeneratedColumn<String> operationId = GeneratedColumn<String>(
+    'operation_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints:
+        'NOT NULL PRIMARY KEY REFERENCES account_operations(operation_id)',
+  );
+  static const VerificationMeta _entityKeyMeta = const VerificationMeta(
+    'entityKey',
+  );
+  late final GeneratedColumn<String> entityKey = GeneratedColumn<String>(
+    'entity_key',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _occurredAtMeta = const VerificationMeta(
+    'occurredAt',
+  );
+  late final GeneratedColumn<int> occurredAt = GeneratedColumn<int>(
+    'occurred_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _beforeJsonMeta = const VerificationMeta(
+    'beforeJson',
+  );
+  late final GeneratedColumn<String> beforeJson = GeneratedColumn<String>(
+    'before_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  static const VerificationMeta _afterJsonMeta = const VerificationMeta(
+    'afterJson',
+  );
+  late final GeneratedColumn<String> afterJson = GeneratedColumn<String>(
+    'after_json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL',
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    operationId,
+    entityKey,
+    occurredAt,
+    beforeJson,
+    afterJson,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'account_command_history';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<AccountCommandHistoryData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('operation_id')) {
+      context.handle(
+        _operationIdMeta,
+        operationId.isAcceptableOrUnknown(
+          data['operation_id']!,
+          _operationIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_operationIdMeta);
+    }
+    if (data.containsKey('entity_key')) {
+      context.handle(
+        _entityKeyMeta,
+        entityKey.isAcceptableOrUnknown(data['entity_key']!, _entityKeyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_entityKeyMeta);
+    }
+    if (data.containsKey('occurred_at')) {
+      context.handle(
+        _occurredAtMeta,
+        occurredAt.isAcceptableOrUnknown(data['occurred_at']!, _occurredAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_occurredAtMeta);
+    }
+    if (data.containsKey('before_json')) {
+      context.handle(
+        _beforeJsonMeta,
+        beforeJson.isAcceptableOrUnknown(data['before_json']!, _beforeJsonMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_beforeJsonMeta);
+    }
+    if (data.containsKey('after_json')) {
+      context.handle(
+        _afterJsonMeta,
+        afterJson.isAcceptableOrUnknown(data['after_json']!, _afterJsonMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_afterJsonMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {operationId};
+  @override
+  AccountCommandHistoryData map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return AccountCommandHistoryData(
+      operationId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}operation_id'],
+      )!,
+      entityKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}entity_key'],
+      )!,
+      occurredAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}occurred_at'],
+      )!,
+      beforeJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}before_json'],
+      )!,
+      afterJson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}after_json'],
+      )!,
+    );
+  }
+
+  @override
+  AccountCommandHistory createAlias(String alias) {
+    return AccountCommandHistory(attachedDatabase, alias);
+  }
+
+  @override
+  bool get dontWriteConstraints => true;
+}
+
+class AccountCommandHistoryData extends DataClass
+    implements Insertable<AccountCommandHistoryData> {
+  final String operationId;
+  final String entityKey;
+  final int occurredAt;
+  final String beforeJson;
+  final String afterJson;
+  const AccountCommandHistoryData({
+    required this.operationId,
+    required this.entityKey,
+    required this.occurredAt,
+    required this.beforeJson,
+    required this.afterJson,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['operation_id'] = Variable<String>(operationId);
+    map['entity_key'] = Variable<String>(entityKey);
+    map['occurred_at'] = Variable<int>(occurredAt);
+    map['before_json'] = Variable<String>(beforeJson);
+    map['after_json'] = Variable<String>(afterJson);
+    return map;
+  }
+
+  AccountCommandHistoryCompanion toCompanion(bool nullToAbsent) {
+    return AccountCommandHistoryCompanion(
+      operationId: Value(operationId),
+      entityKey: Value(entityKey),
+      occurredAt: Value(occurredAt),
+      beforeJson: Value(beforeJson),
+      afterJson: Value(afterJson),
+    );
+  }
+
+  factory AccountCommandHistoryData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return AccountCommandHistoryData(
+      operationId: serializer.fromJson<String>(json['operation_id']),
+      entityKey: serializer.fromJson<String>(json['entity_key']),
+      occurredAt: serializer.fromJson<int>(json['occurred_at']),
+      beforeJson: serializer.fromJson<String>(json['before_json']),
+      afterJson: serializer.fromJson<String>(json['after_json']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'operation_id': serializer.toJson<String>(operationId),
+      'entity_key': serializer.toJson<String>(entityKey),
+      'occurred_at': serializer.toJson<int>(occurredAt),
+      'before_json': serializer.toJson<String>(beforeJson),
+      'after_json': serializer.toJson<String>(afterJson),
+    };
+  }
+
+  AccountCommandHistoryData copyWith({
+    String? operationId,
+    String? entityKey,
+    int? occurredAt,
+    String? beforeJson,
+    String? afterJson,
+  }) => AccountCommandHistoryData(
+    operationId: operationId ?? this.operationId,
+    entityKey: entityKey ?? this.entityKey,
+    occurredAt: occurredAt ?? this.occurredAt,
+    beforeJson: beforeJson ?? this.beforeJson,
+    afterJson: afterJson ?? this.afterJson,
+  );
+  AccountCommandHistoryData copyWithCompanion(
+    AccountCommandHistoryCompanion data,
+  ) {
+    return AccountCommandHistoryData(
+      operationId: data.operationId.present
+          ? data.operationId.value
+          : this.operationId,
+      entityKey: data.entityKey.present ? data.entityKey.value : this.entityKey,
+      occurredAt: data.occurredAt.present
+          ? data.occurredAt.value
+          : this.occurredAt,
+      beforeJson: data.beforeJson.present
+          ? data.beforeJson.value
+          : this.beforeJson,
+      afterJson: data.afterJson.present ? data.afterJson.value : this.afterJson,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AccountCommandHistoryData(')
+          ..write('operationId: $operationId, ')
+          ..write('entityKey: $entityKey, ')
+          ..write('occurredAt: $occurredAt, ')
+          ..write('beforeJson: $beforeJson, ')
+          ..write('afterJson: $afterJson')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(operationId, entityKey, occurredAt, beforeJson, afterJson);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is AccountCommandHistoryData &&
+          other.operationId == this.operationId &&
+          other.entityKey == this.entityKey &&
+          other.occurredAt == this.occurredAt &&
+          other.beforeJson == this.beforeJson &&
+          other.afterJson == this.afterJson);
+}
+
+class AccountCommandHistoryCompanion
+    extends UpdateCompanion<AccountCommandHistoryData> {
+  final Value<String> operationId;
+  final Value<String> entityKey;
+  final Value<int> occurredAt;
+  final Value<String> beforeJson;
+  final Value<String> afterJson;
+  final Value<int> rowid;
+  const AccountCommandHistoryCompanion({
+    this.operationId = const Value.absent(),
+    this.entityKey = const Value.absent(),
+    this.occurredAt = const Value.absent(),
+    this.beforeJson = const Value.absent(),
+    this.afterJson = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  AccountCommandHistoryCompanion.insert({
+    required String operationId,
+    required String entityKey,
+    required int occurredAt,
+    required String beforeJson,
+    required String afterJson,
+    this.rowid = const Value.absent(),
+  }) : operationId = Value(operationId),
+       entityKey = Value(entityKey),
+       occurredAt = Value(occurredAt),
+       beforeJson = Value(beforeJson),
+       afterJson = Value(afterJson);
+  static Insertable<AccountCommandHistoryData> custom({
+    Expression<String>? operationId,
+    Expression<String>? entityKey,
+    Expression<int>? occurredAt,
+    Expression<String>? beforeJson,
+    Expression<String>? afterJson,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (operationId != null) 'operation_id': operationId,
+      if (entityKey != null) 'entity_key': entityKey,
+      if (occurredAt != null) 'occurred_at': occurredAt,
+      if (beforeJson != null) 'before_json': beforeJson,
+      if (afterJson != null) 'after_json': afterJson,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  AccountCommandHistoryCompanion copyWith({
+    Value<String>? operationId,
+    Value<String>? entityKey,
+    Value<int>? occurredAt,
+    Value<String>? beforeJson,
+    Value<String>? afterJson,
+    Value<int>? rowid,
+  }) {
+    return AccountCommandHistoryCompanion(
+      operationId: operationId ?? this.operationId,
+      entityKey: entityKey ?? this.entityKey,
+      occurredAt: occurredAt ?? this.occurredAt,
+      beforeJson: beforeJson ?? this.beforeJson,
+      afterJson: afterJson ?? this.afterJson,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (operationId.present) {
+      map['operation_id'] = Variable<String>(operationId.value);
+    }
+    if (entityKey.present) {
+      map['entity_key'] = Variable<String>(entityKey.value);
+    }
+    if (occurredAt.present) {
+      map['occurred_at'] = Variable<int>(occurredAt.value);
+    }
+    if (beforeJson.present) {
+      map['before_json'] = Variable<String>(beforeJson.value);
+    }
+    if (afterJson.present) {
+      map['after_json'] = Variable<String>(afterJson.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AccountCommandHistoryCompanion(')
+          ..write('operationId: $operationId, ')
+          ..write('entityKey: $entityKey, ')
+          ..write('occurredAt: $occurredAt, ')
+          ..write('beforeJson: $beforeJson, ')
+          ..write('afterJson: $afterJson, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class AccountNotificationDirty extends Table
+    with TableInfo<AccountNotificationDirty, AccountNotificationDirtyData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  AccountNotificationDirty(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _entityKeyMeta = const VerificationMeta(
+    'entityKey',
+  );
+  late final GeneratedColumn<String> entityKey = GeneratedColumn<String>(
+    'entity_key',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    $customConstraints: 'NOT NULL PRIMARY KEY',
+  );
+  static const VerificationMeta _generationMeta = const VerificationMeta(
+    'generation',
+  );
+  late final GeneratedColumn<int> generation = GeneratedColumn<int>(
+    'generation',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    $customConstraints: 'NOT NULL DEFAULT 1 CHECK (generation > 0)',
+    defaultValue: const CustomExpression('1'),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [entityKey, generation];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'account_notification_dirty';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<AccountNotificationDirtyData> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('entity_key')) {
+      context.handle(
+        _entityKeyMeta,
+        entityKey.isAcceptableOrUnknown(data['entity_key']!, _entityKeyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_entityKeyMeta);
+    }
+    if (data.containsKey('generation')) {
+      context.handle(
+        _generationMeta,
+        generation.isAcceptableOrUnknown(data['generation']!, _generationMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {entityKey};
+  @override
+  AccountNotificationDirtyData map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return AccountNotificationDirtyData(
+      entityKey: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}entity_key'],
+      )!,
+      generation: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}generation'],
+      )!,
+    );
+  }
+
+  @override
+  AccountNotificationDirty createAlias(String alias) {
+    return AccountNotificationDirty(attachedDatabase, alias);
+  }
+
+  @override
+  bool get dontWriteConstraints => true;
+}
+
+class AccountNotificationDirtyData extends DataClass
+    implements Insertable<AccountNotificationDirtyData> {
+  final String entityKey;
+  final int generation;
+  const AccountNotificationDirtyData({
+    required this.entityKey,
+    required this.generation,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['entity_key'] = Variable<String>(entityKey);
+    map['generation'] = Variable<int>(generation);
+    return map;
+  }
+
+  AccountNotificationDirtyCompanion toCompanion(bool nullToAbsent) {
+    return AccountNotificationDirtyCompanion(
+      entityKey: Value(entityKey),
+      generation: Value(generation),
+    );
+  }
+
+  factory AccountNotificationDirtyData.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return AccountNotificationDirtyData(
+      entityKey: serializer.fromJson<String>(json['entity_key']),
+      generation: serializer.fromJson<int>(json['generation']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'entity_key': serializer.toJson<String>(entityKey),
+      'generation': serializer.toJson<int>(generation),
+    };
+  }
+
+  AccountNotificationDirtyData copyWith({String? entityKey, int? generation}) =>
+      AccountNotificationDirtyData(
+        entityKey: entityKey ?? this.entityKey,
+        generation: generation ?? this.generation,
+      );
+  AccountNotificationDirtyData copyWithCompanion(
+    AccountNotificationDirtyCompanion data,
+  ) {
+    return AccountNotificationDirtyData(
+      entityKey: data.entityKey.present ? data.entityKey.value : this.entityKey,
+      generation: data.generation.present
+          ? data.generation.value
+          : this.generation,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AccountNotificationDirtyData(')
+          ..write('entityKey: $entityKey, ')
+          ..write('generation: $generation')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(entityKey, generation);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is AccountNotificationDirtyData &&
+          other.entityKey == this.entityKey &&
+          other.generation == this.generation);
+}
+
+class AccountNotificationDirtyCompanion
+    extends UpdateCompanion<AccountNotificationDirtyData> {
+  final Value<String> entityKey;
+  final Value<int> generation;
+  final Value<int> rowid;
+  const AccountNotificationDirtyCompanion({
+    this.entityKey = const Value.absent(),
+    this.generation = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  AccountNotificationDirtyCompanion.insert({
+    required String entityKey,
+    this.generation = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : entityKey = Value(entityKey);
+  static Insertable<AccountNotificationDirtyData> custom({
+    Expression<String>? entityKey,
+    Expression<int>? generation,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (entityKey != null) 'entity_key': entityKey,
+      if (generation != null) 'generation': generation,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  AccountNotificationDirtyCompanion copyWith({
+    Value<String>? entityKey,
+    Value<int>? generation,
+    Value<int>? rowid,
+  }) {
+    return AccountNotificationDirtyCompanion(
+      entityKey: entityKey ?? this.entityKey,
+      generation: generation ?? this.generation,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (entityKey.present) {
+      map['entity_key'] = Variable<String>(entityKey.value);
+    }
+    if (generation.present) {
+      map['generation'] = Variable<int>(generation.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AccountNotificationDirtyCompanion(')
+          ..write('entityKey: $entityKey, ')
+          ..write('generation: $generation, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -11897,6 +12516,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   );
   late final AccountSnapshotRecords accountSnapshotRecords =
       AccountSnapshotRecords(this);
+  late final AccountCommandHistory accountCommandHistory =
+      AccountCommandHistory(this);
+  late final AccountNotificationDirty accountNotificationDirty =
+      AccountNotificationDirty(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -11936,6 +12559,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     accountSnapshot,
     accountSnapshotPages,
     accountSnapshotRecords,
+    accountCommandHistory,
+    accountNotificationDirty,
   ];
 }
 
@@ -18448,6 +19073,35 @@ final class $AccountOperationsReferences
       manager.$state.copyWith(prefetchedData: cache),
     );
   }
+
+  static MultiTypedResultKey<
+    AccountCommandHistory,
+    List<AccountCommandHistoryData>
+  >
+  _accountCommandHistoryRefsTable(_$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(
+        db.accountCommandHistory,
+        aliasName: 'account_operations__operation_id__account_command_history__operation_id',
+      );
+
+  $AccountCommandHistoryProcessedTableManager get accountCommandHistoryRefs {
+    final manager =
+        $AccountCommandHistoryTableManager(
+          $_db,
+          $_db.accountCommandHistory,
+        ).filter(
+          (f) => f.operationId.operationId.sqlEquals(
+            $_itemColumn<String>('operation_id')!,
+          ),
+        );
+
+    final cache = $_typedResult.readTableOrNull(
+      _accountCommandHistoryRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
 }
 
 class $AccountOperationsFilterComposer
@@ -18525,6 +19179,31 @@ class $AccountOperationsFilterComposer
           }) => $AccountFieldOutcomesFilterComposer(
             $db: $db,
             $table: $db.accountFieldOutcomes,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> accountCommandHistoryRefs(
+    Expression<bool> Function($AccountCommandHistoryFilterComposer f) f,
+  ) {
+    final $AccountCommandHistoryFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.operationId,
+      referencedTable: $db.accountCommandHistory,
+      getReferencedColumn: (t) => t.operationId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $AccountCommandHistoryFilterComposer(
+            $db: $db,
+            $table: $db.accountCommandHistory,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -18674,6 +19353,31 @@ class $AccountOperationsAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> accountCommandHistoryRefs<T extends Object>(
+    Expression<T> Function($AccountCommandHistoryAnnotationComposer a) f,
+  ) {
+    final $AccountCommandHistoryAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.operationId,
+      referencedTable: $db.accountCommandHistory,
+      getReferencedColumn: (t) => t.operationId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $AccountCommandHistoryAnnotationComposer(
+            $db: $db,
+            $table: $db.accountCommandHistory,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $AccountOperationsTableManager
@@ -18689,7 +19393,10 @@ class $AccountOperationsTableManager
           $AccountOperationsUpdateCompanionBuilder,
           (AccountOperation, $AccountOperationsReferences),
           AccountOperation,
-          PrefetchHooks Function({bool accountFieldOutcomesRefs})
+          PrefetchHooks Function({
+            bool accountFieldOutcomesRefs,
+            bool accountCommandHistoryRefs,
+          })
         > {
   $AccountOperationsTableManager(_$AppDatabase db, AccountOperations table)
     : super(
@@ -18762,40 +19469,66 @@ class $AccountOperationsTableManager
                 ),
               )
               .toList(),
-          prefetchHooksCallback: ({accountFieldOutcomesRefs = false}) {
-            return PrefetchHooks(
-              db: db,
-              explicitlyWatchedTables: [
-                if (accountFieldOutcomesRefs) db.accountFieldOutcomes,
-              ],
-              addJoins: null,
-              getPrefetchedDataCallback: (items) async {
-                return [
-                  if (accountFieldOutcomesRefs)
-                    await $_getPrefetchedData<
-                      AccountOperation,
-                      AccountOperations,
-                      AccountFieldOutcome
-                    >(
-                      currentTable: table,
-                      referencedTable: $AccountOperationsReferences
-                          ._accountFieldOutcomesRefsTable(db),
-                      managerFromTypedResult: (p0) =>
-                          $AccountOperationsReferences(
-                            db,
-                            table,
-                            p0,
-                          ).accountFieldOutcomesRefs,
-                      referencedItemsForCurrentItem: (item, referencedItems) =>
-                          referencedItems.where(
-                            (e) => e.operationId == item.operationId,
-                          ),
-                      typedResults: items,
-                    ),
-                ];
+          prefetchHooksCallback:
+              ({
+                accountFieldOutcomesRefs = false,
+                accountCommandHistoryRefs = false,
+              }) {
+                return PrefetchHooks(
+                  db: db,
+                  explicitlyWatchedTables: [
+                    if (accountFieldOutcomesRefs) db.accountFieldOutcomes,
+                    if (accountCommandHistoryRefs) db.accountCommandHistory,
+                  ],
+                  addJoins: null,
+                  getPrefetchedDataCallback: (items) async {
+                    return [
+                      if (accountFieldOutcomesRefs)
+                        await $_getPrefetchedData<
+                          AccountOperation,
+                          AccountOperations,
+                          AccountFieldOutcome
+                        >(
+                          currentTable: table,
+                          referencedTable: $AccountOperationsReferences
+                              ._accountFieldOutcomesRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $AccountOperationsReferences(
+                                db,
+                                table,
+                                p0,
+                              ).accountFieldOutcomesRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.operationId == item.operationId,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (accountCommandHistoryRefs)
+                        await $_getPrefetchedData<
+                          AccountOperation,
+                          AccountOperations,
+                          AccountCommandHistoryData
+                        >(
+                          currentTable: table,
+                          referencedTable: $AccountOperationsReferences
+                              ._accountCommandHistoryRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $AccountOperationsReferences(
+                                db,
+                                table,
+                                p0,
+                              ).accountCommandHistoryRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.operationId == item.operationId,
+                              ),
+                          typedResults: items,
+                        ),
+                    ];
+                  },
+                );
               },
-            );
-          },
         ),
       );
 }
@@ -18812,7 +19545,10 @@ typedef $AccountOperationsProcessedTableManager =
       $AccountOperationsUpdateCompanionBuilder,
       (AccountOperation, $AccountOperationsReferences),
       AccountOperation,
-      PrefetchHooks Function({bool accountFieldOutcomesRefs})
+      PrefetchHooks Function({
+        bool accountFieldOutcomesRefs,
+        bool accountCommandHistoryRefs,
+      })
     >;
 typedef $AccountFieldOutcomesCreateCompanionBuilder =
     AccountFieldOutcomesCompanion Function({
@@ -20494,6 +21230,511 @@ typedef $AccountSnapshotRecordsProcessedTableManager =
       AccountSnapshotRecord,
       PrefetchHooks Function()
     >;
+typedef $AccountCommandHistoryCreateCompanionBuilder =
+    AccountCommandHistoryCompanion Function({
+      required String operationId,
+      required String entityKey,
+      required int occurredAt,
+      required String beforeJson,
+      required String afterJson,
+      Value<int> rowid,
+    });
+typedef $AccountCommandHistoryUpdateCompanionBuilder =
+    AccountCommandHistoryCompanion Function({
+      Value<String> operationId,
+      Value<String> entityKey,
+      Value<int> occurredAt,
+      Value<String> beforeJson,
+      Value<String> afterJson,
+      Value<int> rowid,
+    });
+
+final class $AccountCommandHistoryReferences
+    extends
+        BaseReferences<
+          _$AppDatabase,
+          AccountCommandHistory,
+          AccountCommandHistoryData
+        > {
+  $AccountCommandHistoryReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static AccountOperations _operationIdTable(
+    _$AppDatabase db,
+  ) => db.accountOperations.createAlias(
+    'account_command_history__operation_id__account_operations__operation_id',
+  );
+
+  $AccountOperationsProcessedTableManager get operationId {
+    final $_column = $_itemColumn<String>('operation_id')!;
+
+    final manager = $AccountOperationsTableManager(
+      $_db,
+      $_db.accountOperations,
+    ).filter((f) => f.operationId.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_operationIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $AccountCommandHistoryFilterComposer
+    extends Composer<_$AppDatabase, AccountCommandHistory> {
+  $AccountCommandHistoryFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get entityKey => $composableBuilder(
+    column: $table.entityKey,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get occurredAt => $composableBuilder(
+    column: $table.occurredAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get beforeJson => $composableBuilder(
+    column: $table.beforeJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get afterJson => $composableBuilder(
+    column: $table.afterJson,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $AccountOperationsFilterComposer get operationId {
+    final $AccountOperationsFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.operationId,
+      referencedTable: $db.accountOperations,
+      getReferencedColumn: (t) => t.operationId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $AccountOperationsFilterComposer(
+            $db: $db,
+            $table: $db.accountOperations,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $AccountCommandHistoryOrderingComposer
+    extends Composer<_$AppDatabase, AccountCommandHistory> {
+  $AccountCommandHistoryOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get entityKey => $composableBuilder(
+    column: $table.entityKey,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get occurredAt => $composableBuilder(
+    column: $table.occurredAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get beforeJson => $composableBuilder(
+    column: $table.beforeJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get afterJson => $composableBuilder(
+    column: $table.afterJson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $AccountOperationsOrderingComposer get operationId {
+    final $AccountOperationsOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.operationId,
+      referencedTable: $db.accountOperations,
+      getReferencedColumn: (t) => t.operationId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $AccountOperationsOrderingComposer(
+            $db: $db,
+            $table: $db.accountOperations,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $AccountCommandHistoryAnnotationComposer
+    extends Composer<_$AppDatabase, AccountCommandHistory> {
+  $AccountCommandHistoryAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get entityKey =>
+      $composableBuilder(column: $table.entityKey, builder: (column) => column);
+
+  GeneratedColumn<int> get occurredAt => $composableBuilder(
+    column: $table.occurredAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get beforeJson => $composableBuilder(
+    column: $table.beforeJson,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get afterJson =>
+      $composableBuilder(column: $table.afterJson, builder: (column) => column);
+
+  $AccountOperationsAnnotationComposer get operationId {
+    final $AccountOperationsAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.operationId,
+      referencedTable: $db.accountOperations,
+      getReferencedColumn: (t) => t.operationId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $AccountOperationsAnnotationComposer(
+            $db: $db,
+            $table: $db.accountOperations,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $AccountCommandHistoryTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          AccountCommandHistory,
+          AccountCommandHistoryData,
+          $AccountCommandHistoryFilterComposer,
+          $AccountCommandHistoryOrderingComposer,
+          $AccountCommandHistoryAnnotationComposer,
+          $AccountCommandHistoryCreateCompanionBuilder,
+          $AccountCommandHistoryUpdateCompanionBuilder,
+          (AccountCommandHistoryData, $AccountCommandHistoryReferences),
+          AccountCommandHistoryData,
+          PrefetchHooks Function({bool operationId})
+        > {
+  $AccountCommandHistoryTableManager(
+    _$AppDatabase db,
+    AccountCommandHistory table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $AccountCommandHistoryFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $AccountCommandHistoryOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $AccountCommandHistoryAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> operationId = const Value.absent(),
+                Value<String> entityKey = const Value.absent(),
+                Value<int> occurredAt = const Value.absent(),
+                Value<String> beforeJson = const Value.absent(),
+                Value<String> afterJson = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => AccountCommandHistoryCompanion(
+                operationId: operationId,
+                entityKey: entityKey,
+                occurredAt: occurredAt,
+                beforeJson: beforeJson,
+                afterJson: afterJson,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String operationId,
+                required String entityKey,
+                required int occurredAt,
+                required String beforeJson,
+                required String afterJson,
+                Value<int> rowid = const Value.absent(),
+              }) => AccountCommandHistoryCompanion.insert(
+                operationId: operationId,
+                entityKey: entityKey,
+                occurredAt: occurredAt,
+                beforeJson: beforeJson,
+                afterJson: afterJson,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<AccountCommandHistory, AccountCommandHistoryData>(
+                    table,
+                  ),
+                  $AccountCommandHistoryReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({operationId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (operationId) {
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.operationId,
+                        referencedTable: $AccountCommandHistoryReferences
+                            ._operationIdTable(db),
+                        referencedColumn: $AccountCommandHistoryReferences
+                            ._operationIdTable(db)
+                            .operationId,
+                      ) as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $AccountCommandHistoryProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      AccountCommandHistory,
+      AccountCommandHistoryData,
+      $AccountCommandHistoryFilterComposer,
+      $AccountCommandHistoryOrderingComposer,
+      $AccountCommandHistoryAnnotationComposer,
+      $AccountCommandHistoryCreateCompanionBuilder,
+      $AccountCommandHistoryUpdateCompanionBuilder,
+      (AccountCommandHistoryData, $AccountCommandHistoryReferences),
+      AccountCommandHistoryData,
+      PrefetchHooks Function({bool operationId})
+    >;
+typedef $AccountNotificationDirtyCreateCompanionBuilder =
+    AccountNotificationDirtyCompanion Function({
+      required String entityKey,
+      Value<int> generation,
+      Value<int> rowid,
+    });
+typedef $AccountNotificationDirtyUpdateCompanionBuilder =
+    AccountNotificationDirtyCompanion Function({
+      Value<String> entityKey,
+      Value<int> generation,
+      Value<int> rowid,
+    });
+
+class $AccountNotificationDirtyFilterComposer
+    extends Composer<_$AppDatabase, AccountNotificationDirty> {
+  $AccountNotificationDirtyFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get entityKey => $composableBuilder(
+    column: $table.entityKey,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get generation => $composableBuilder(
+    column: $table.generation,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $AccountNotificationDirtyOrderingComposer
+    extends Composer<_$AppDatabase, AccountNotificationDirty> {
+  $AccountNotificationDirtyOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get entityKey => $composableBuilder(
+    column: $table.entityKey,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get generation => $composableBuilder(
+    column: $table.generation,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $AccountNotificationDirtyAnnotationComposer
+    extends Composer<_$AppDatabase, AccountNotificationDirty> {
+  $AccountNotificationDirtyAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get entityKey =>
+      $composableBuilder(column: $table.entityKey, builder: (column) => column);
+
+  GeneratedColumn<int> get generation => $composableBuilder(
+    column: $table.generation,
+    builder: (column) => column,
+  );
+}
+
+class $AccountNotificationDirtyTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          AccountNotificationDirty,
+          AccountNotificationDirtyData,
+          $AccountNotificationDirtyFilterComposer,
+          $AccountNotificationDirtyOrderingComposer,
+          $AccountNotificationDirtyAnnotationComposer,
+          $AccountNotificationDirtyCreateCompanionBuilder,
+          $AccountNotificationDirtyUpdateCompanionBuilder,
+          (
+            AccountNotificationDirtyData,
+            BaseReferences<
+              _$AppDatabase,
+              AccountNotificationDirty,
+              AccountNotificationDirtyData
+            >,
+          ),
+          AccountNotificationDirtyData,
+          PrefetchHooks Function()
+        > {
+  $AccountNotificationDirtyTableManager(
+    _$AppDatabase db,
+    AccountNotificationDirty table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $AccountNotificationDirtyFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $AccountNotificationDirtyOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $AccountNotificationDirtyAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> entityKey = const Value.absent(),
+                Value<int> generation = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => AccountNotificationDirtyCompanion(
+                entityKey: entityKey,
+                generation: generation,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String entityKey,
+                Value<int> generation = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => AccountNotificationDirtyCompanion.insert(
+                entityKey: entityKey,
+                generation: generation,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<
+                    AccountNotificationDirty,
+                    AccountNotificationDirtyData
+                  >(table),
+                  BaseReferences<
+                    _$AppDatabase,
+                    AccountNotificationDirty,
+                    AccountNotificationDirtyData
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $AccountNotificationDirtyProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      AccountNotificationDirty,
+      AccountNotificationDirtyData,
+      $AccountNotificationDirtyFilterComposer,
+      $AccountNotificationDirtyOrderingComposer,
+      $AccountNotificationDirtyAnnotationComposer,
+      $AccountNotificationDirtyCreateCompanionBuilder,
+      $AccountNotificationDirtyUpdateCompanionBuilder,
+      (
+        AccountNotificationDirtyData,
+        BaseReferences<
+          _$AppDatabase,
+          AccountNotificationDirty,
+          AccountNotificationDirtyData
+        >,
+      ),
+      AccountNotificationDirtyData,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -20555,4 +21796,8 @@ class $AppDatabaseManager {
       $AccountSnapshotPagesTableManager(_db, _db.accountSnapshotPages);
   $AccountSnapshotRecordsTableManager get accountSnapshotRecords =>
       $AccountSnapshotRecordsTableManager(_db, _db.accountSnapshotRecords);
+  $AccountCommandHistoryTableManager get accountCommandHistory =>
+      $AccountCommandHistoryTableManager(_db, _db.accountCommandHistory);
+  $AccountNotificationDirtyTableManager get accountNotificationDirty =>
+      $AccountNotificationDirtyTableManager(_db, _db.accountNotificationDirty);
 }

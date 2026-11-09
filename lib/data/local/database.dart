@@ -7,7 +7,7 @@ import 'package:uuid/uuid.dart';
 
 part 'database.g.dart';
 
-const localSchemaVersion = 2;
+const localSchemaVersion = 3;
 
 /// Called before Drift starts its migration transaction. VACUUM INTO includes
 /// committed WAL contents, unlike copying just the main database file.
@@ -48,20 +48,24 @@ class AppDatabase extends _$AppDatabase {
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (migrator) => migrator.createAll(),
     onUpgrade: (migrator, from, to) async {
-      if (from != 1 || to != 2) {
+      if (from < 1 || from > 2 || to != 3) {
         throw StateError('Unsupported migration $from -> $to; data preserved.');
       }
       await transaction(() async {
         for (final table in <TableInfo>[
-          accountState,
-          accountOperations,
-          accountFieldOutcomes,
-          accountOriginals,
-          accountRecoveryArchive,
-          accountRecords,
-          accountSnapshot,
-          accountSnapshotPages,
-          accountSnapshotRecords,
+          if (from == 1) ...[
+            accountState,
+            accountOperations,
+            accountFieldOutcomes,
+            accountOriginals,
+            accountRecoveryArchive,
+            accountRecords,
+            accountSnapshot,
+            accountSnapshotPages,
+            accountSnapshotRecords,
+          ],
+          accountCommandHistory,
+          accountNotificationDirty,
         ]) {
           if ((await customSelect(
             'SELECT name FROM sqlite_master WHERE name=?',
@@ -73,8 +77,8 @@ class AppDatabase extends _$AppDatabase {
         }
         // Drift's later user_version write is outside this transaction. Commit
         // the marker with the DDL so interruption before beforeOpen completes
-        // cannot leave v1 pointing at already-committed v2 tables.
-        await customStatement('PRAGMA user_version = 2');
+        // cannot leave an older marker pointing at already-committed tables.
+        await customStatement('PRAGMA user_version = 3');
       });
     },
     beforeOpen: (_) async {
