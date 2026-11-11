@@ -47,6 +47,10 @@ remain prerequisites for enabling the app account path.
 
 Equivalence against accepted state does not create a pending field revision;
 equivalence against an existing pending value preserves that pending source.
+The displayed latest source and internal causal identity are separate. Equivalent
+operations share a causal identity so either may be named as predecessor; a later
+applied write invalidates both old references. Internal identities never become
+wire/server revisions, and receipts bind actual accepted revisions separately.
 Known conflicted/held predecessors keep descendants held, including edits/deletes
 of a milestone whose held create has no shadow yet. Missing children still cannot
 be manufactured by an absent-base edit. These previews are checked against real

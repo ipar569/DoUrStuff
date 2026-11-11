@@ -24,6 +24,19 @@ The revised full quality/build results, completed independent review and exact-h
 hosted checks must be recorded in PR25 before guarded merge. Its final timeline
 supersedes pending notes here. The initial implementation evidence follows.
 
+The fresh full review of `cdee13f259f783005aa602bfab7802e68d77791c` cleared
+those two findings and identified one adjacent equivalence issue: equivalent
+pending edits replaced the original predecessor source, so a later valid reference
+to that original became held. Two more failing-before tests cover references to
+either equivalent operation and invalidation by a subsequent applied write. The
+fix tracks ephemeral causal identities separately from the displayed pending
+source: equivalent operations share one identity, while applied writes replace
+it and accepted receipts carry their real revisions. These identities are never
+serialized or exposed as server revisions. The focused command/pull/store/schema/
+local-database/domain suite now passes **82 tests**. The real harness additionally
+supports `--scenario causal` to compare all four pre-acknowledgement field outcomes
+against PostgreSQL. Final re-review and final-head check results belong in PR25.
+
 Refreshed clean local/remote main at PR24 merge
 `2cf59e9c2416858799d5c9a2375f1988a8d59f1e`; read its
 [final handoff](https://github.com/ipar569/DoUrStuff/pull/24#issuecomment-6703812247)

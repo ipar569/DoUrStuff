@@ -913,6 +913,14 @@ final class AccountStore {
     final sources = <String, String>{};
     final pending = <String>{};
     final comparisonFields = <String, AcceptedField>{...?shadow?.fields};
+    // Ephemeral causal identities, never serialized or presented as server
+    // revisions. Equivalent operations share an identity; applied writes replace
+    // it. Keep each operation's identity so either equivalent predecessor binds.
+    final fieldVersions = <String, String>{
+      for (final entry in comparisonFields.entries)
+        entry.key: 'accepted:${entry.value.revision}',
+    };
+    final operationVersions = <String, Map<String, String>>{};
     final seen = <String, AccountProposal>{};
     for (final proposal in proposals) {
       final operation = proposal.operation;
@@ -950,9 +958,12 @@ final class AccountStore {
             sources[group] = operation.operationId;
             pending.remove(group);
             comparisonFields[group] = accepted;
+            fieldVersions[group] = 'accepted:${accepted.revision}';
           }
           decision = FieldDisposition.values.byName(outcome!);
           proposal._projectedOutcomes[group] = decision;
+          (operationVersions[operation.operationId] ??= {})[group] =
+              'accepted:${accepted.revision}';
           seen[operation.operationId] = proposal;
           continue;
         } else if (wholeDecision != null) {
@@ -982,13 +993,22 @@ final class AccountStore {
                 FieldDisposition.held,
               ].contains(predecessor.projectedOutcomes[group])) {
             decision = FieldDisposition.held;
-          } else if (sources[group] == base.operationId &&
-              _json(values[group]) == _json(base.value) &&
-              [
-                FieldDisposition.applied,
-                FieldDisposition.equivalent,
-              ].contains(predecessor.projectedOutcomes[group])) {
-            decision = FieldDisposition.applied;
+          } else if (operationVersions[base.operationId]?[group]
+              case final String version) {
+            final predecessorValue = predecessor.acceptedFields[group] != null
+                ? predecessor.acceptedFields[group]!.value
+                : predecessor.operation.patches[group]!.value;
+            if (_json(base.value) != _json(predecessorValue)) {
+              decision = FieldDisposition.recovery;
+            } else if (version == fieldVersions[group]) {
+              decision = FieldDisposition.applied;
+            } else {
+              decision =
+                  values.containsKey(group) &&
+                      _json(patch.value) == _json(values[group])
+                  ? FieldDisposition.equivalent
+                  : FieldDisposition.conflict;
+            }
           } else {
             decision = compareField(
               patch,
@@ -1055,7 +1075,12 @@ final class AccountStore {
           sources[group] = operation.operationId;
           // Equivalence against accepted state preserves its revision. Keep an
           // existing pending marker, but do not invent one for a no-op.
-          if (decision == FieldDisposition.applied) pending.add(group);
+          if (decision == FieldDisposition.applied) {
+            pending.add(group);
+            fieldVersions[group] = 'pending:${operation.operationId}';
+          }
+          (operationVersions[operation.operationId] ??= {})[group] =
+              fieldVersions[group]!;
         }
       }
       seen[operation.operationId] = proposal;

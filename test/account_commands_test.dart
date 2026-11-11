@@ -714,6 +714,63 @@ void main() {
     },
   );
 
+  for (final predecessorId in [10, 11]) {
+    test(
+      'equivalent pending edits preserve predecessor $predecessorId until a new write',
+      () async {
+        await download([
+          ShadowRecord(
+            entity: task,
+            fields: {
+              'existence': AcceptedField(6, true),
+              'title': AcceptedField(6, 'A'),
+            },
+          ),
+        ]);
+        for (final n in [10, 11]) {
+          await store.commitCommand(
+            operationId: id(n),
+            entity: task,
+            command: 'task.edit',
+            patches: {'title': FieldPatch(ObservedBase(6, 'A'), 'B')},
+            occurredAtUtc: now,
+          );
+        }
+        await store.commitCommand(
+          operationId: id(12),
+          entity: task,
+          command: 'task.edit',
+          patches: {
+            'title': FieldPatch(
+              PredecessorBase(id(predecessorId), predecessorId - 9, 'B'),
+              'C',
+            ),
+          },
+          occurredAtUtc: now,
+        );
+        final current = await store.projection(task);
+        expect(
+          current.proposals.last.projectedOutcomes['title'],
+          FieldDisposition.applied,
+        );
+        expect(current.values['title'], 'C');
+        await store.commitCommand(
+          operationId: id(13),
+          entity: task,
+          command: 'task.edit',
+          patches: {'title': FieldPatch(PredecessorBase(id(11), 2, 'B'), 'D')},
+          occurredAtUtc: now,
+        );
+        final after = await store.projection(task);
+        expect(
+          after.proposals.last.projectedOutcomes['title'],
+          FieldDisposition.conflict,
+        );
+        expect(after.values['title'], 'C');
+      },
+    );
+  }
+
   test('pending milestone edits retain their validated parent chain', () async {
     final parent = await create();
     final step = await milestone(parent);

@@ -17,7 +17,7 @@ def main():
     parser.add_argument('--supabase', default='supabase')
     parser.add_argument('--dart', default='dart')
     parser.add_argument('--output', type=Path, required=True)
-    parser.add_argument('--scenario', choices=['chain', 'equivalent', 'held'], default='chain')
+    parser.add_argument('--scenario', choices=['chain', 'equivalent', 'held', 'causal'], default='chain')
     args = parser.parse_args()
     if Path(args.dart).is_file():
         args.dart = str(Path(args.dart).resolve())
@@ -37,6 +37,12 @@ def main():
             f.register(f.device)
             if args.scenario == 'equivalent':
                 proposals = [f.op(1, 'A', observed(1, 'Old')), f.op(2, 'B', observed(2, 'A'))]
+            elif args.scenario == 'causal':
+                first = f.op(1, 'B', observed(1, 'Old'))
+                equivalent = f.op(2, 'B', observed(1, 'Old'))
+                next_edit = f.op(3, 'C', predecessor(first, 'B'))
+                stale = f.op(4, 'D', predecessor(equivalent, 'B'))
+                proposals = [first, equivalent, next_edit, stale]
             else:
                 creation = f.create(title='Collision')
                 step = milestone(f, 2)
@@ -63,6 +69,8 @@ def main():
         response = backend.rpc('apply', f.token, request)
         require(response['status'] == 'success', 'Apply succeeds')
         expected = ['conflict', 'held', 'held', 'held', 'held'] if args.scenario == 'held' else ['applied'] * len(request['operations'])
+        if args.scenario == 'causal':
+            expected = ['applied', 'applied', 'applied', 'conflict']
         require([r['disposition'] for r in response['result']['results']] == expected,
                 'Expected SQLite command outcomes')
         require(backend.rpc('apply', f.token, request) == response, 'Dropped-response retry is immutable')
