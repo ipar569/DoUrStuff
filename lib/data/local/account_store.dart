@@ -6,6 +6,7 @@ import '../../domain/account_sync.dart';
 import '../../domain/account_sync_codec.dart';
 import '../../domain/account_sync_rpc.dart';
 import 'database.dart' hide AccountOperation;
+import 'account_command_validation.dart';
 
 /// A read model for recovery/projection work, not a native task or an upload.
 /// Original operations remain separate from accepted state; no implicit rebase.
@@ -140,9 +141,101 @@ final class AccountStore {
         : (serverEpoch: epoch, revision: state.read<int>('cursor'));
   });
 
+  /// Commits explicit original bases, identity, local intent history and reminder
+  /// invalidation together. No network/OS action or guest translation occurs.
+  /// Retry with the same caller-allocated UUID and arguments after uncertainty.
+  Future<AccountOperation> commitCommand({
+    required String operationId,
+    required SyncEntity entity,
+    required String command,
+    required Map<String, FieldPatch> patches,
+    List<OperationDependency> dependencies = const [],
+    required DateTime occurredAtUtc,
+  }) => db.transaction(() async {
+    await _guard();
+    if (!occurredAtUtc.isUtc) throw ArgumentError('Expected UTC provenance.');
+    final profile = await db
+        .customSelect('SELECT * FROM profile_metadata')
+        .getSingle();
+    final existing = await db
+        .customSelect(
+          'SELECT envelope_json FROM account_operations WHERE operation_id=?',
+          variables: [Variable(operationId)],
+        )
+        .get();
+    final original = existing.isEmpty
+        ? null
+        : decodeAccountOperation(
+            jsonDecode(existing.single.read<String>('envelope_json')),
+          );
+    final operation = AccountOperation(
+      operationId: operationId,
+      deviceEpoch: profile.read<String>('device_epoch'),
+      sequence: original?.sequence ?? profile.read<int>('next_sequence'),
+      entity: entity,
+      command: command,
+      patches: patches,
+      dependencies: dependencies,
+      provenance: {'occurred_at': occurredAtUtc.millisecondsSinceEpoch},
+    );
+    if (!validLocalAccountCommand(operation)) {
+      throw const FormatException(
+        'Invalid or unsupported local account command.',
+      );
+    }
+    if (original != null) {
+      final history = await db
+          .customSelect(
+            'SELECT 1 FROM account_command_history WHERE operation_id=?',
+            variables: [Variable(operationId)],
+          )
+          .get();
+      if (history.isEmpty ||
+          original.payloadIdentity != operation.payloadIdentity) {
+        throw StateError('Command retry does not match committed intent.');
+      }
+      return original;
+    }
+    final before = await _projection(entity);
+    await retainOperation(jsonEncode(operation.toJson()));
+    final after = await _projection(entity);
+    await db.customStatement(
+      'INSERT INTO account_command_history VALUES(?,?,?,?,?)',
+      [
+        operation.operationId,
+        entity.identity,
+        occurredAtUtc.millisecondsSinceEpoch,
+        _json(before.values),
+        _json(after.values),
+      ],
+    );
+    final dirty = {entity.identity};
+    if (entity.kind == SyncEntityKind.milestone) {
+      final parents = before.proposals
+          .map((p) => p.operation.patches['parent']?.value)
+          .whereType<String>();
+      final parent =
+          patches['parent']?.value ??
+          before.values['parent'] ??
+          before.accepted?.fields['parent']?.value ??
+          parents.firstOrNull;
+      if (parent is String) {
+        dirty.add(SyncEntity(SyncEntityKind.task, [parent]).identity);
+      }
+    }
+    for (final key in dirty) {
+      await db.customStatement(
+        'INSERT INTO account_notification_dirty(entity_key) VALUES(?) '
+        'ON CONFLICT(entity_key) DO UPDATE SET generation=generation+1',
+        [key],
+      );
+    }
+    return operation;
+  });
+
   /// Retains an already constructed, explicit account envelope. This is not a
-  /// guest journal translator. Future commands must call within their local
-  /// entity/history/dirty transaction; this method nests in that transaction.
+  /// guest journal translator. Commands call within their local
+  /// projection/history/dirty transaction; this method nests in that transaction.
   Future<void> retainOperation(String envelope) => db.transaction(() async {
     final state = await _guard();
     if (utf8.encode(envelope).length > maxAccountOperationBytes) {
@@ -725,7 +818,10 @@ final class AccountStore {
   Future<AccountProjection> projection(SyncEntity entity) =>
       db.transaction(() => _projection(entity));
 
-  Future<AccountProjection> _projection(SyncEntity entity) async {
+  Future<AccountProjection> _projection(
+    SyncEntity entity, {
+    int? beforeSequence,
+  }) async {
     final state = await _guard();
     final rows = await db
         .customSelect(
@@ -741,8 +837,12 @@ final class AccountStore {
     }
     final operations = await db
         .customSelect(
-          'SELECT * FROM account_operations WHERE entity_key=? ORDER BY sequence',
-          variables: [Variable(entity.identity)],
+          'SELECT * FROM account_operations WHERE entity_key=? '
+          '${beforeSequence == null ? '' : 'AND sequence < ? '}ORDER BY sequence',
+          variables: [
+            Variable(entity.identity),
+            if (beforeSequence != null) Variable(beforeSequence),
+          ],
         )
         .get();
     final proposals = <AccountProposal>[];
@@ -811,9 +911,24 @@ final class AccountStore {
         entry.key: entry.value.value,
     };
     final sources = <String, String>{};
+    final pending = <String>{};
+    final comparisonFields = <String, AcceptedField>{...?shadow?.fields};
+    // Ephemeral causal identities, never serialized or presented as server
+    // revisions. Equivalent operations share an identity; applied writes replace
+    // it. Keep each operation's identity so either equivalent predecessor binds.
+    final fieldVersions = <String, String>{
+      for (final entry in comparisonFields.entries)
+        entry.key: 'accepted:${entry.value.revision}',
+    };
+    final operationVersions = <String, Map<String, String>>{};
     final seen = <String, AccountProposal>{};
     for (final proposal in proposals) {
       final operation = proposal.operation;
+      final completeCreate =
+          operation.command == 'task.create' ||
+          operation.command == 'milestone.create';
+      final wholeDecision = await _commandDecision(operation, shadow, values);
+      final decisions = <String, FieldDisposition>{};
       for (final entry in operation.patches.entries) {
         final group = entry.key;
         final patch = entry.value;
@@ -841,21 +956,24 @@ final class AccountStore {
               accepted.revision > (shadow?.fields[group]?.revision ?? 0)) {
             values[group] = accepted.value;
             sources[group] = operation.operationId;
+            pending.remove(group);
+            comparisonFields[group] = accepted;
+            fieldVersions[group] = 'accepted:${accepted.revision}';
           }
           decision = FieldDisposition.values.byName(outcome!);
           proposal._projectedOutcomes[group] = decision;
+          (operationVersions[operation.operationId] ??= {})[group] =
+              'accepted:${accepted.revision}';
           seen[operation.operationId] = proposal;
           continue;
-        } else if (operation.dependencies.isNotEmpty) {
-          // Parent receipt/dependency binding belongs to account commands.
-          // Preserve and hold rather than infer acceptance from visible parents.
-          decision = FieldDisposition.held;
-        } else if (operation.command.endsWith('.create') ||
+        } else if (wholeDecision != null) {
+          decision = wholeDecision;
+        } else if ((!completeCreate && operation.command.endsWith('.create')) ||
             operation.command == 'task.restore') {
           // Complete creates and exact-deletion restore need command-level
           // validation; individual field equivalence cannot authorize them.
           decision = FieldDisposition.held;
-        } else if (shadow?.fields['existence']?.value == false &&
+        } else if (values['existence'] == false &&
             operation.command != 'task.delete' &&
             operation.command != 'milestone.delete' &&
             operation.command != 'tag.delete' &&
@@ -869,17 +987,32 @@ final class AccountStore {
               !predecessor.operation.patches.containsKey(group) ||
               predecessor.closedGroups.contains(group)) {
             decision = FieldDisposition.held;
-          } else if (sources[group] == base.operationId &&
-              _json(values[group]) == _json(base.value) &&
-              [
-                FieldDisposition.applied,
-                FieldDisposition.equivalent,
+          } else if (!predecessor.needsReconciliation &&
+              const [
+                FieldDisposition.conflict,
+                FieldDisposition.held,
               ].contains(predecessor.projectedOutcomes[group])) {
-            decision = FieldDisposition.applied;
+            decision = FieldDisposition.held;
+          } else if (operationVersions[base.operationId]?[group]
+              case final String version) {
+            final predecessorValue = predecessor.acceptedFields[group] != null
+                ? predecessor.acceptedFields[group]!.value
+                : predecessor.operation.patches[group]!.value;
+            if (_json(base.value) != _json(predecessorValue)) {
+              decision = FieldDisposition.recovery;
+            } else if (version == fieldVersions[group]) {
+              decision = FieldDisposition.applied;
+            } else {
+              decision =
+                  values.containsKey(group) &&
+                      _json(patch.value) == _json(values[group])
+                  ? FieldDisposition.equivalent
+                  : FieldDisposition.conflict;
+            }
           } else {
             decision = compareField(
               patch,
-              shadow?.fields[group],
+              comparisonFields[group],
               acceptedPredecessor: predecessor.acceptedFields[group],
               predecessorNeedsRecovery:
                   predecessor.needsReconciliation ||
@@ -888,15 +1021,66 @@ final class AccountStore {
                     FieldDisposition.equivalent,
                   ].contains(predecessor.projectedOutcomes[group]),
             );
+            if (pending.contains(group) &&
+                (decision == FieldDisposition.applied ||
+                    decision == FieldDisposition.equivalent)) {
+              decision = _json(patch.value) == _json(values[group])
+                  ? FieldDisposition.equivalent
+                  : FieldDisposition.conflict;
+            }
           }
         } else {
-          decision = compareField(patch, shadow?.fields[group]);
+          decision = compareField(patch, comparisonFields[group]);
+          if (pending.contains(group)) {
+            decision = _json(patch.value) == _json(values[group])
+                ? FieldDisposition.equivalent
+                : FieldDisposition.conflict;
+          }
         }
+        // Bind a missing milestone's causal chain first: held descendants stay
+        // held, but neither an absent base nor a successful field comparison can
+        // manufacture a child that its complete create has not projected.
+        if (operation.entity.kind == SyncEntityKind.milestone &&
+            !completeCreate &&
+            shadow == null &&
+            values.isEmpty &&
+            (decision == FieldDisposition.applied ||
+                decision == FieldDisposition.equivalent)) {
+          decision = FieldDisposition.recovery;
+        }
+        decisions[group] = decision;
+      }
+      // A create is one command: never project a title or existence independently
+      // after any of its groups failed or closed. Receipts remain authoritative.
+      final failedCreate =
+          completeCreate &&
+          (proposal.closedGroups.isNotEmpty ||
+              decisions.values.any(
+                (d) =>
+                    d != FieldDisposition.applied &&
+                    d != FieldDisposition.equivalent,
+              ));
+      for (final entry in decisions.entries) {
+        final group = entry.key;
+        final decision =
+            failedCreate &&
+                (entry.value == FieldDisposition.applied ||
+                    entry.value == FieldDisposition.equivalent)
+            ? FieldDisposition.held
+            : entry.value;
         proposal._projectedOutcomes[group] = decision;
         if (decision == FieldDisposition.applied ||
             decision == FieldDisposition.equivalent) {
-          values[group] = patch.value;
+          values[group] = operation.patches[group]!.value;
           sources[group] = operation.operationId;
+          // Equivalence against accepted state preserves its revision. Keep an
+          // existing pending marker, but do not invent one for a no-op.
+          if (decision == FieldDisposition.applied) {
+            pending.add(group);
+            fieldVersions[group] = 'pending:${operation.operationId}';
+          }
+          (operationVersions[operation.operationId] ??= {})[group] =
+              fieldVersions[group]!;
         }
       }
       seen[operation.operationId] = proposal;
@@ -905,24 +1089,32 @@ final class AccountStore {
     if (entity.kind == SyncEntityKind.membership) {
       visible =
           values['membership'] == true &&
-          (await _projection(SyncEntity(SyncEntityKind.task, [entity.key[0]])))
-              .visible &&
-          (await _projection(SyncEntity(SyncEntityKind.tag, [entity.key[1]])))
-              .visible;
+          (await _projection(
+            SyncEntity(SyncEntityKind.task, [entity.key[0]]),
+            beforeSequence: beforeSequence,
+          )).visible &&
+          (await _projection(
+            SyncEntity(SyncEntityKind.tag, [entity.key[1]]),
+            beforeSequence: beforeSequence,
+          )).visible;
     } else if (entity.kind == SyncEntityKind.milestone) {
       final parent = values['parent'];
       visible =
           visible &&
           parent is String &&
-          (await _projection(SyncEntity(SyncEntityKind.task, [parent])))
-              .visible;
+          (await _projection(
+            SyncEntity(SyncEntityKind.task, [parent]),
+            beforeSequence: beforeSequence,
+          )).visible;
     } else if (entity.kind == SyncEntityKind.preference) {
       final view = values['value'];
       visible =
           view == null ||
           (view is String &&
-              (await _projection(SyncEntity(SyncEntityKind.view, [view])))
-                  .visible);
+              (await _projection(
+                SyncEntity(SyncEntityKind.view, [view]),
+                beforeSequence: beforeSequence,
+              )).visible);
     }
     return AccountProjection(
       shadow,
@@ -932,6 +1124,91 @@ final class AccountStore {
       Map.unmodifiable(sources),
       visible,
     );
+  }
+
+  Future<FieldDisposition?> _commandDecision(
+    AccountOperation operation,
+    ShadowRecord? shadow,
+    Map<String, Object?> values,
+  ) async {
+    final supported = const {
+      'task.create',
+      'task.edit',
+      'task.status',
+      'task.delete',
+      'milestone.create',
+      'milestone.edit',
+      'milestone.delete',
+    }.contains(operation.command);
+    if (supported && !validLocalAccountCommand(operation)) {
+      return FieldDisposition.recovery;
+    }
+    if (!supported) {
+      return operation.dependencies.isEmpty ? null : FieldDisposition.held;
+    }
+    if (operation.command.endsWith('.create') &&
+        (shadow != null || values.isNotEmpty)) {
+      return values['existence'] == false
+          ? FieldDisposition.recovery
+          : FieldDisposition.conflict;
+    }
+    if (!operation.command.endsWith('.create') &&
+        shadow == null &&
+        values.isEmpty) {
+      return operation.entity.kind == SyncEntityKind.milestone
+          ? null
+          : FieldDisposition.recovery;
+    }
+    if (operation.entity.kind != SyncEntityKind.milestone) return null;
+    // Independent child deletion survives a hidden/deleted parent.
+    if (operation.command == 'milestone.delete') return null;
+    final parentId = operation.patches['parent']?.value ?? values['parent'];
+    if (parentId is! String) return FieldDisposition.recovery;
+    final parent = await _projection(
+      SyncEntity(SyncEntityKind.task, [parentId]),
+      beforeSequence: operation.sequence,
+    );
+    if (operation.dependencies.isEmpty) {
+      // Unproven pending parents cannot authorize a child. The caller must name
+      // their exact earlier create/restore operation, not just its UUID.
+      return parent.visible &&
+              (parent.accepted?.fields['existence']?.value == true ||
+                  (operation.command != 'milestone.create' &&
+                      values['existence'] == true))
+          ? null
+          : FieldDisposition.recovery;
+    }
+    final dep = operation.dependencies.single;
+    final matches = parent.proposals.where(
+      (p) => p.operation.operationId == dep.operationId,
+    );
+    if (matches.length != 1) return FieldDisposition.recovery;
+    final predecessor = matches.single;
+    if (predecessor.operation.deviceEpoch != operation.deviceEpoch ||
+        predecessor.operation.sequence != dep.sequence ||
+        predecessor.operation.sequence >= operation.sequence ||
+        predecessor.operation.entity.identity != dep.entity.identity ||
+        predecessor.operation.patches['existence']?.value != true ||
+        predecessor.closedGroups.contains('existence') ||
+        predecessor.needsReconciliation) {
+      return FieldDisposition.recovery;
+    }
+    final decision = predecessor.projectedOutcomes['existence'];
+    if (decision == FieldDisposition.conflict ||
+        decision == FieldDisposition.held) {
+      return FieldDisposition.held;
+    }
+    if (!parent.visible ||
+        (decision != FieldDisposition.applied &&
+            decision != FieldDisposition.equivalent)) {
+      return FieldDisposition.recovery;
+    }
+    final accepted = predecessor.acceptedFields['existence'];
+    if (accepted?.value == true ||
+        parent.pendingSources['existence'] == dep.operationId) {
+      return null;
+    }
+    return FieldDisposition.held;
   }
 
   Future<void> _clearStaging() async {

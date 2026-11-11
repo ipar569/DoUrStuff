@@ -1,6 +1,133 @@
 # Phase 3 verification
 
-## Current handoff — bounded incremental pull, updated 7 November 2026
+## Current handoff — bounded account commands, updated 12 November 2026
+
+Resumed PR25 at unchanged clean head `a2fcc2be34a646a661d895e1066a28a7060fae69`
+and unchanged PR24 base. Hosted Quality/Android/Windows had all passed. The
+interrupted independent review reported two concrete projection defects: a local
+equivalent value invented a pending revision and blocked a subsequent valid edit;
+the missing-milestone guard ran before predecessor binding, turning transitive
+held edits/deletes into recovery. Both were reproduced with failing tests before
+the fixes. Equivalence now preserves the accepted revision, and missing-child
+predecessors bind first while successful/absent-base comparisons still cannot
+manufacture a child. The existing downloaded-conflict chain expectation now
+retains `held`, matching server semantics.
+
+The real SQLite-to-PostgreSQL harness adds `--scenario equivalent` (two commands,
+one pull page) and `--scenario held` (five commands, three pull pages). Both pass,
+comparing local previews to server field outcomes **before** storing receipts.
+The original seven-command/four-page chain also passes again. All three retain
+original bytes, duplicate receipts and snapshot-equivalent downloads. Docker was
+stopped on resume; the installed engine was launched and only the guarded starter
+started/verified the preserved services. No migration/container/volume was replaced.
+The revised full quality/build results, completed independent review and exact-head
+hosted checks must be recorded in PR25 before guarded merge. Its final timeline
+supersedes pending notes here. The initial implementation evidence follows.
+
+The fresh full review of `cdee13f259f783005aa602bfab7802e68d77791c` cleared
+those two findings and identified one adjacent equivalence issue: equivalent
+pending edits replaced the original predecessor source, so a later valid reference
+to that original became held. Two more failing-before tests cover references to
+either equivalent operation and invalidation by a subsequent applied write. The
+fix tracks ephemeral causal identities separately from the displayed pending
+source: equivalent operations share one identity, while applied writes replace
+it and accepted receipts carry their real revisions. These identities are never
+serialized or exposed as server revisions. The focused command/pull/store/schema/
+local-database/domain suite now passes **82 tests**. The real harness additionally
+supports `--scenario causal` to compare all four pre-acknowledgement field outcomes
+against PostgreSQL. Final re-review and final-head check results belong in PR25.
+
+Refreshed clean local/remote main at PR24 merge
+`2cf59e9c2416858799d5c9a2375f1988a8d59f1e`; read its
+[final handoff](https://github.com/ipar569/DoUrStuff/pull/24#issuecomment-6703812247)
+and created `codex/account-command-projection`. PR24's timeline supersedes its
+older pending notes below. No newer checkout work was discarded.
+
+This bounded 3.2 increment implements seven local command names: task
+create/edit/status/delete and milestone create/edit/delete. `commitCommand`
+accepts explicit original bases/dependencies and a stable caller operation UUID.
+Envelope, contiguous sequence, original identity, before/after local intent
+history and kind-qualified reminder-dirty intent commit together. Retry is
+idempotent; changed intent cannot reuse the UUID. There is no network or OS
+action inside the transaction, guest translation or app account activation.
+
+SQLite v3 adds two account tables. Both supported v1/v2 upgrades retain existing
+tables/bytes, including opaque journals, receipts, candidate archives, cursor and
+snapshot staging. A WAL-consistent backup precedes transactional DDL/version
+advancement. Failure preserves the source; no reset/recreation is used. The
+retained v1/v2 snapshots/helpers, lockfile and all 26 backend migrations are
+unchanged; v3 has a new snapshot/helper and the CI dump target advances to v3.
+
+Complete task/milestone creates project all-or-nothing, with exact dependency
+and accepted-receipt binding. Parent pending state is evaluated before the
+child's sequence; final visibility uses current parent state. Independent child
+deletes survive hidden parents. Older observed/predecessor bases cannot overwrite
+intervening pending fields. Receipt values bridge download lag without inventing
+revisions or rewriting original envelopes. Invalid whole creates and uncertain
+receipts remain recoverable. See the [storage contract](../architecture/account-local-storage-v2.md).
+
+Validation performed using the pinned `.tools/flutter/bin` SDK:
+
+- `flutter pub get --enforce-lockfile`, `dart run build_runner build`,
+  `dart format --output=none --set-exit-if-changed lib test tool`,
+  `flutter analyze`, `flutter test --reporter expanded`: passed. Final analysis
+  and full test rerun after the older-predecessor regression: **200 tests passed**.
+- Focused command/pull/store/schema/local-database/domain run passed **76 tests**
+  before that final extra regression; the full rerun includes it. Coverage includes
+  injected history/dirty failure rollback, restart, idempotent UUID retries,
+  collisions, parent conflict/missing/expired receipts, stale generation/recovery,
+  literal escapes versus NUL/unpaired Unicode and retained v1/v2 migration data.
+- `dart run drift_dev schema dump lib/data/local/database.dart
+  drift_schemas/drift_schema_v3.json` and `dart run drift_dev schema generate
+  drift_schemas test/generated`: passed after inspecting the pinned CLI help.
+- `python tool/test_backend_http.py`, `python tool/test_local_backend.py`,
+  `python tool/test_retention_runner.py`: passed **3 / 3 / 4** checks.
+- `flutter build windows --release`: passed in **37.6 seconds**.
+  `$env:JAVA_HOME='D:/Projects/DoUrStuff/.tools/jdk/jdk-21.0.12.1+1';
+  android/gradlew.bat -p android assembleDebug -Ptarget-platform=android-arm64
+  --no-daemon`: passed in **1m 9s**, with existing Gradle deprecation warnings.
+  This uses the documented process-only JDK override, not a global setting change.
+- `python tool/test_backend_local_commands.py --supabase
+  .tools/supabase/supabase.exe --dart .tools/flutter/bin/dart.bat --output
+  .tools/account-commands-real.json`: passed. Seven SQLite-created commands
+  reach real local HTTP/JWT/PostgreSQL, duplicate submission is immutable, seven
+  correlated receipts survive duplicate local acknowledgement, and **four pull
+  pages** match a fresh authoritative snapshot without changing original bytes.
+  The synthetic fixture uses one explicit owner; credentials stay in the Python
+  harness. Unique ignored SQLite files retain each run's local evidence.
+
+Initial checks exposed a test constructor typo, an older test expecting held
+rather than recovery for an invalid create, analyzer brace/printing diagnostics,
+and Windows batch-path spelling in the new harness. These were corrected and
+the corresponding tests/analysis/integration rerun successfully. The initial
+sandboxed Git fetch/backend startup and changelog fetch were permission/network
+restricted; approved execution succeeded. Supabase changelog/docs were consulted;
+the pinned local CLI/stack and dependencies were not upgraded.
+
+Only `python tool/local_backend.py --start` started/verified the preserved nine
+services/eight healthchecks and loopback bindings. No migration/reset/container
+or volume replacement occurred. Additional backend suites,
+independent exact-head review and hosted Quality/Android/Windows checks are
+recorded in this task PR's timeline; they must pass before guarded merge.
+Ignored evidence uses `.tools/account-command-*` and `.tools/account-commands-*`.
+Compilation and synthetic integration do not close installed-device, physical
+crash or backup-restoration acceptance gates.
+
+Next bounded 3.2 increment: account ordering, tags/memberships, views/preferences,
+exact-deletion restore and remaining dependency/whole-command projection, then
+bulk/undo and native materialization. Investigate native GitHub PKCE/secure
+persistence feasibility before app activation. Auth, recovery/export, adoption,
+worker/lifecycle, representation parity, capacity/scheduling, external/native
+acceptance and Phase 4 remain open. Production changes/releases remain unauthorized.
+
+Resume by refreshing Git/GitHub and preserving newer work; reuse this branch/PR
+until review/checks/merge finish. Read AGENTS.md, the delivery plan/backlog, this
+handoff, storage contract/recovery audit and the PR's final timeline. Follow
+sync-protocol, database-migrations, Supabase and finish-task. Preserve every
+SQLite snapshot, all backend migrations and containers/volumes; start the local
+stack only through the guarded helper. App account writes remain disabled.
+
+## Previous handoff — bounded incremental pull, updated 7 November 2026
 
 Refreshed clean Git/GitHub at PR23 merge
 `1fd12bfe1e7a4be6f80e8067028bb39b6aba25e5` and created

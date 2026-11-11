@@ -1,10 +1,70 @@
-# Account SQLite storage — updated 6 November 2026
+# Account SQLite storage — updated 12 November 2026
 
-This is the first bounded delivery-plan 3.2 increment. SQLite v2 adds separate
-account tables alongside every unchanged guest v1 table. Account commands, auth,
-transport, adoption and the worker remain disabled/unimplemented.
+SQLite v2 adds separate account tables alongside every unchanged guest v1 table.
+SQLite v3 adds local account command history and reminder-dirty intent. The
+bounded command API supports task create/edit/status/delete and milestone
+create/edit/delete. App activation, auth, transport, adoption and worker remain
+disabled/unimplemented. The filename is retained to preserve existing links.
+
+## Local command transactions (v3)
+
+`commitCommand` receives a caller-allocated operation UUID, explicit original
+field bases, exact parent dependencies and UTC provenance. It allocates the
+contiguous device sequence in a guarded SQLite transaction, retains the exact
+envelope/original identity, records before/after projection values in
+`account_command_history`, and increments `account_notification_dirty` for the
+kind-qualified entity and a milestone's task. The projection is derived from
+durable accepted records and original proposals; no native task row is fabricated.
+Local intent history is distinct from server-accepted status history and never
+claims acceptance. Dirty intent does not schedule notifications.
+
+Retrying the same UUID and arguments returns the original without another
+history/dirty/sequence write. Changed intent or a low-level retained operation
+without command history cannot reuse that UUID. Unsupported/invalid command
+shapes, NUL and unpaired Unicode are rejected without consuming a sequence or
+truncating content. Valid stale bases remain preserved with conflict/recovery
+projection decisions. The API does not infer bases from current values or
+translate guest journals. Receipt outcomes remain separate and immutable.
+
+Complete task/milestone creates project atomically only at an absent identity.
+Collisions never merge individual fields. Parent dependencies bind the exact
+earlier local device/sequence/entity/operation and a successful existence proposal
+or correlated receipt; uncertain, conflicted and closed work cannot authorize a
+child. Parent pending operations are evaluated before the child's sequence,
+while final visibility uses the current parent. Thus a later pending parent
+delete hides the child without undoing its earlier create or independent delete.
+Accepted downloads still dominate hidden-parent edits. Unrelated commands can
+continue when a dependency needs recovery.
+
+Observed bases can bind receipt values while pull is behind. An intervening
+pending field cannot be overwritten through an older observed/predecessor base;
+same-field chains must refer to their actual predecessor. No preview invents a
+server revision. Restore, ordering, tags, memberships, views/preferences, bulk
+commands and undo are outside this bounded command API. Their existing retained
+originals remain readable; unimplemented whole creates/restores/dependencies
+remain held. Native auth/secure persistence feasibility and representation gates
+remain prerequisites for enabling the app account path.
+
+Equivalence against accepted state does not create a pending field revision;
+equivalence against an existing pending value preserves that pending source.
+The displayed latest source and internal causal identity are separate. Equivalent
+operations share a causal identity so either may be named as predecessor; a later
+applied write invalidates both old references. Internal identities never become
+wire/server revisions, and receipts bind actual accepted revisions separately.
+Known conflicted/held predecessors keep descendants held, including edits/deletes
+of a milestone whose held create has no shadow yet. Missing children still cannot
+be manufactured by an absent-base edit. These previews are checked against real
+PostgreSQL outcomes before receipt application in the regression harness.
 
 ## Upgrade and ownership
+
+The additive v1→v3 and v2→v3 paths retain all old tables and bytes, including
+account originals, outcomes, archives, accepted records and in-progress snapshots.
+The v1 path includes the established nine v2 tables, then both new v3 tables;
+the v2 path creates only those two. DDL and `user_version = 3` commit together
+after the same pre-transaction WAL backup. Unexpected tables fail closed with
+rollback. The v1/v2 snapshots/helpers stay unchanged; v3 has its own snapshot
+and helper. The following v1→v2 description records the previous increment.
 
 The explicit v1→v2 migration creates nine tables and writes `user_version = 2`
 in the same transaction, so a failure after commit remains safely reopenable.
@@ -48,9 +108,9 @@ conflicts/held/recovery, uncertain receipts and closed groups cannot. Accepted
 receipt values bridge download lag only while the applied cursor and shadow are
 behind their revision; removed compacted fields cannot revive old receipts.
 Later accepted values supersede them without changing the original receipt.
-Unacknowledged complete creates, restores and parent-operation dependencies stay
-held pending command-level validation/binding. This is deliberately partial
-pending replay, not full account command or representation parity.
+Unacknowledged task/milestone creates and their exact parent dependencies now use
+the bounded command rules above. Other creates/restores/dependencies stay held.
+This remains partial pending replay, not full account command/representation parity.
 
 Visibility combines effective existence with a milestone's exact parent or both
 exact membership parents. A default-view reference is usable only while its view
@@ -116,7 +176,7 @@ staging survives pull; an older capture cannot install over a newer checkpoint.
 Projection reads accepted state and current proposals in one guarded transaction.
 Neither SQLite v1/v2 snapshots nor backend migrations change in this increment.
 
-Native materialized projection, account-aware commands,
+Native materialized projection, remaining account commands,
 auth/secure storage, adoption and the worker remain unfinished. Representation,
 external/native acceptance and Phase 4 gates stay open. No backend migration or
 production action is introduced. See the verification handoff for actual results.

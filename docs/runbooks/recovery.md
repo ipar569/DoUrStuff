@@ -1,5 +1,16 @@
 # Preservation and recovery
 
+9 November SQLite v3: retain both v1/v2 snapshots and all backend migrations.
+The additive v1/v2→v3 upgrade preserves every prior table and stages its two new
+account history/dirty tables with the version marker in one transaction after
+`VACUUM INTO`. Failed backup/upgrade still stops opening; never recreate the
+profile. Command retry uses the original caller UUID and exact arguments, so
+uncertain local completion cannot consume another sequence or duplicate history.
+Original bases, command history and pending work survive snapshot installation.
+These tests are not physical-crash or backup-restoration acceptance. Account
+activation, native recovery/export and notification scheduling remain disabled.
+Only use `python tool/local_backend.py --start` for the preserved local stack.
+
 4 November SQLite v2: an explicit additive v1→v2 upgrade backs up committed WAL
 with `VACUUM INTO` before creating account tables transactionally. Every legacy
 table and row remains; ambiguous legacy account data prevents store binding.

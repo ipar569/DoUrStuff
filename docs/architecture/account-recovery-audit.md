@@ -1,6 +1,15 @@
 # Account command and recovery audit — 27 October 2026
 
-Updated 6 November after PR #23 merged at `1fd12bfe1e7a4be6f80e8067028bb39b6aba25e5`.
+Updated 9 November after PR #24 merged at `2cf59e9c2416858799d5c9a2375f1988a8d59f1e`.
+The bounded v3 command increment adds task create/edit/status/delete and milestone
+create/edit/delete transactions, local intent history/dirty markers and atomic
+create/dependency projection with original-base/receipt binding. All app account
+writes remain disabled. Restore, ordering, tags/memberships, views/preferences,
+bulk/undo and native materialization still need command integration. See the
+[storage contract](account-local-storage-v2.md) and current verification for
+actual evidence; the historical inventory below is not an activation claim.
+
+Previous 6 November boundary:
 The first bounded [SQLite v2 foundation](account-local-storage-v2.md) now preserves
 v1 data and adds account originals/outcomes, durable snapshot staging/install and
 an accepted-state/proposal read model. The next bounded increment adds atomic
