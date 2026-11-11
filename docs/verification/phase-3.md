@@ -1,6 +1,28 @@
 # Phase 3 verification
 
-## Current handoff — bounded account commands, 9 November 2026
+## Current handoff — bounded account commands, updated 12 November 2026
+
+Resumed PR25 at unchanged clean head `a2fcc2be34a646a661d895e1066a28a7060fae69`
+and unchanged PR24 base. Hosted Quality/Android/Windows had all passed. The
+interrupted independent review reported two concrete projection defects: a local
+equivalent value invented a pending revision and blocked a subsequent valid edit;
+the missing-milestone guard ran before predecessor binding, turning transitive
+held edits/deletes into recovery. Both were reproduced with failing tests before
+the fixes. Equivalence now preserves the accepted revision, and missing-child
+predecessors bind first while successful/absent-base comparisons still cannot
+manufacture a child. The existing downloaded-conflict chain expectation now
+retains `held`, matching server semantics.
+
+The real SQLite-to-PostgreSQL harness adds `--scenario equivalent` (two commands,
+one pull page) and `--scenario held` (five commands, three pull pages). Both pass,
+comparing local previews to server field outcomes **before** storing receipts.
+The original seven-command/four-page chain also passes again. All three retain
+original bytes, duplicate receipts and snapshot-equivalent downloads. Docker was
+stopped on resume; the installed engine was launched and only the guarded starter
+started/verified the preserved services. No migration/container/volume was replaced.
+The revised full quality/build results, completed independent review and exact-head
+hosted checks must be recorded in PR25 before guarded merge. Its final timeline
+supersedes pending notes here. The initial implementation evidence follows.
 
 Refreshed clean local/remote main at PR24 merge
 `2cf59e9c2416858799d5c9a2375f1988a8d59f1e`; read its

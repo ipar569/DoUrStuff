@@ -1,4 +1,4 @@
-# Account SQLite storage — updated 9 November 2026
+# Account SQLite storage — updated 12 November 2026
 
 SQLite v2 adds separate account tables alongside every unchanged guest v1 table.
 SQLite v3 adds local account command history and reminder-dirty intent. The
@@ -44,6 +44,13 @@ commands and undo are outside this bounded command API. Their existing retained
 originals remain readable; unimplemented whole creates/restores/dependencies
 remain held. Native auth/secure persistence feasibility and representation gates
 remain prerequisites for enabling the app account path.
+
+Equivalence against accepted state does not create a pending field revision;
+equivalence against an existing pending value preserves that pending source.
+Known conflicted/held predecessors keep descendants held, including edits/deletes
+of a milestone whose held create has no shadow yet. Missing children still cannot
+be manufactured by an absent-base edit. These previews are checked against real
+PostgreSQL outcomes before receipt application in the regression harness.
 
 ## Upgrade and ownership
 

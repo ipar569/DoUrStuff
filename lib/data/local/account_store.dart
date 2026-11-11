@@ -976,6 +976,12 @@ final class AccountStore {
               !predecessor.operation.patches.containsKey(group) ||
               predecessor.closedGroups.contains(group)) {
             decision = FieldDisposition.held;
+          } else if (!predecessor.needsReconciliation &&
+              const [
+                FieldDisposition.conflict,
+                FieldDisposition.held,
+              ].contains(predecessor.projectedOutcomes[group])) {
+            decision = FieldDisposition.held;
           } else if (sources[group] == base.operationId &&
               _json(values[group]) == _json(base.value) &&
               [
@@ -1011,6 +1017,17 @@ final class AccountStore {
                 : FieldDisposition.conflict;
           }
         }
+        // Bind a missing milestone's causal chain first: held descendants stay
+        // held, but neither an absent base nor a successful field comparison can
+        // manufacture a child that its complete create has not projected.
+        if (operation.entity.kind == SyncEntityKind.milestone &&
+            !completeCreate &&
+            shadow == null &&
+            values.isEmpty &&
+            (decision == FieldDisposition.applied ||
+                decision == FieldDisposition.equivalent)) {
+          decision = FieldDisposition.recovery;
+        }
         decisions[group] = decision;
       }
       // A create is one command: never project a title or existence independently
@@ -1036,7 +1053,9 @@ final class AccountStore {
             decision == FieldDisposition.equivalent) {
           values[group] = operation.patches[group]!.value;
           sources[group] = operation.operationId;
-          pending.add(group);
+          // Equivalence against accepted state preserves its revision. Keep an
+          // existing pending marker, but do not invent one for a no-op.
+          if (decision == FieldDisposition.applied) pending.add(group);
         }
       }
       seen[operation.operationId] = proposal;
@@ -1111,7 +1130,9 @@ final class AccountStore {
     if (!operation.command.endsWith('.create') &&
         shadow == null &&
         values.isEmpty) {
-      return FieldDisposition.recovery;
+      return operation.entity.kind == SyncEntityKind.milestone
+          ? null
+          : FieldDisposition.recovery;
     }
     if (operation.entity.kind != SyncEntityKind.milestone) return null;
     // Independent child deletion survives a hidden/deleted parent.

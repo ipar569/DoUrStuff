@@ -599,7 +599,7 @@ void main() {
     );
     expect(
       projected.proposals.last.projectedOutcomes['title'],
-      FieldDisposition.recovery,
+      FieldDisposition.held,
     );
     expect(projected.proposals.map((p) => p.operation.payloadIdentity), [
       first.payloadIdentity,

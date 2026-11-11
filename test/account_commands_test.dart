@@ -604,6 +604,116 @@ void main() {
     },
   );
 
+  test(
+    'equivalent accepted values do not invent a pending field revision',
+    () async {
+      await download([
+        ShadowRecord(
+          entity: task,
+          fields: {
+            'existence': AcceptedField(6, true),
+            'title': AcceptedField(6, 'A'),
+          },
+        ),
+      ]);
+      await store.commitCommand(
+        operationId: id(10),
+        entity: task,
+        command: 'task.edit',
+        patches: {'title': FieldPatch(ObservedBase(5, 'Old'), 'A')},
+        occurredAtUtc: now,
+      );
+      await store.commitCommand(
+        operationId: id(11),
+        entity: task,
+        command: 'task.edit',
+        patches: {'title': FieldPatch(ObservedBase(6, 'A'), 'B')},
+        occurredAtUtc: now,
+      );
+      final result = await store.projection(task);
+      expect(
+        result.proposals.first.projectedOutcomes['title'],
+        FieldDisposition.equivalent,
+      );
+      expect(
+        result.proposals.last.projectedOutcomes['title'],
+        FieldDisposition.applied,
+      );
+      expect(result.values['title'], 'B');
+    },
+  );
+
+  test(
+    'held milestone creation keeps edit and delete descendants held',
+    () async {
+      final parent = await create();
+      final step = await milestone(parent);
+      final edit = await store.commitCommand(
+        operationId: id(12),
+        entity: child,
+        command: 'milestone.edit',
+        patches: {
+          'title': FieldPatch(
+            PredecessorBase(step.operationId, 2, 'Step'),
+            'First edit',
+          ),
+        },
+        occurredAtUtc: now,
+      );
+      await store.commitCommand(
+        operationId: id(13),
+        entity: child,
+        command: 'milestone.edit',
+        patches: {
+          'title': FieldPatch(
+            PredecessorBase(edit.operationId, 3, 'First edit'),
+            'Second edit',
+          ),
+        },
+        occurredAtUtc: now,
+      );
+      await store.commitCommand(
+        operationId: id(14),
+        entity: child,
+        command: 'milestone.delete',
+        patches: {
+          'existence': FieldPatch(
+            PredecessorBase(step.operationId, 2, true),
+            false,
+          ),
+        },
+        occurredAtUtc: now,
+      );
+      await acknowledge(parent, conflict: true);
+      final result = await store.projection(child);
+      expect(result.values, isEmpty);
+      expect(
+        result.proposals.expand((p) => p.projectedOutcomes.values),
+        everyElement(FieldDisposition.held),
+      );
+      expect(await count('account_command_history'), 5);
+    },
+  );
+
+  test(
+    'an absent milestone cannot be fabricated by an absent-base edit',
+    () async {
+      await store.commitCommand(
+        operationId: id(10),
+        entity: child,
+        command: 'milestone.edit',
+        patches: {'title': FieldPatch(const AbsentBase(), 'Orphan')},
+        occurredAtUtc: now,
+      );
+      final result = await store.projection(child);
+      expect(result.values, isEmpty);
+      expect(
+        result.proposals.single.projectedOutcomes['title'],
+        FieldDisposition.recovery,
+      );
+    },
+  );
+
   test('pending milestone edits retain their validated parent chain', () async {
     final parent = await create();
     final step = await milestone(parent);

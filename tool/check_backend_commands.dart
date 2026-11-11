@@ -33,6 +33,7 @@ Future<void> main(List<String> args) async {
     final child = SyncEntity(SyncEntityKind.milestone, [
       fixture['child'] as String,
     ]);
+    final scenario = fixture['scenario'] as String? ?? 'chain';
     if (args[0] == 'prepare') {
       final now = DateTime.parse(fixture['checked_at_utc'] as String);
       final m = (recoveryBeginSnapshotCodec.decodeReply(
@@ -77,58 +78,81 @@ Future<void> main(List<String> args) async {
         PredecessorBase(op.operationId, op.sequence, op.patches[group]!.value),
         value,
       );
-      final creation = await commit('task.create', task, {
-        'title': absent('SQLite task'),
-        'priority': absent('none'),
-        'existence': absent(true),
-        'status_group': absent({'status': 'todo', 'completed_at': null}),
-      });
-      final step = await commit(
-        'milestone.create',
-        child,
-        {
-          'title': absent('SQLite step'),
-          'parent': absent(task.key.single),
-          'completion': absent(null),
+      if (fixture['proposals'] case final List proposals) {
+        for (final raw in proposals) {
+          final op = decodeAccountOperation(raw);
+          final committed = await store.commitCommand(
+            operationId: op.operationId,
+            entity: op.entity,
+            command: op.command,
+            patches: op.patches,
+            dependencies: op.dependencies,
+            occurredAtUtc: DateTime.fromMillisecondsSinceEpoch(
+              op.provenance['occurred_at'] as int,
+              isUtc: true,
+            ),
+          );
+          if (committed.payloadIdentity != op.payloadIdentity) {
+            throw StateError(
+              'SQLite command did not preserve the proposed original.',
+            );
+          }
+          ops.add(committed);
+        }
+      } else {
+        final creation = await commit('task.create', task, {
+          'title': absent('SQLite task'),
+          'priority': absent('none'),
           'existence': absent(true),
-        },
-        [
-          OperationDependency(
-            entity: task,
-            operationId: creation.operationId,
-            sequence: creation.sequence,
-          ),
-        ],
-      );
-      await commit('task.status', task, {
-        'status_group': predecessor(creation, 'status_group', {
-          'status': 'completed',
-          'completed_at': 100,
-        }),
-      });
-      await commit('milestone.edit', child, {
-        'title': predecessor(step, 'title', 'Edited step'),
-      });
-      await commit('task.edit', task, {
-        'title': predecessor(creation, 'title', 'Edited task'),
-      });
-      await commit('task.delete', task, {
-        'existence': predecessor(creation, 'existence', false),
-      });
-      await commit('milestone.delete', child, {
-        'existence': predecessor(step, 'existence', false),
-      });
-      final local = await store.projection(child);
-      if (local.visible ||
-          local.values['existence'] != false ||
-          local.values['title'] != 'Edited step') {
-        throw StateError('Local dependency/deletion projection mismatch.');
+          'status_group': absent({'status': 'todo', 'completed_at': null}),
+        });
+        final step = await commit(
+          'milestone.create',
+          child,
+          {
+            'title': absent('SQLite step'),
+            'parent': absent(task.key.single),
+            'completion': absent(null),
+            'existence': absent(true),
+          },
+          [
+            OperationDependency(
+              entity: task,
+              operationId: creation.operationId,
+              sequence: creation.sequence,
+            ),
+          ],
+        );
+        await commit('task.status', task, {
+          'status_group': predecessor(creation, 'status_group', {
+            'status': 'completed',
+            'completed_at': 100,
+          }),
+        });
+        await commit('milestone.edit', child, {
+          'title': predecessor(step, 'title', 'Edited step'),
+        });
+        await commit('task.edit', task, {
+          'title': predecessor(creation, 'title', 'Edited task'),
+        });
+        await commit('task.delete', task, {
+          'existence': predecessor(creation, 'existence', false),
+        });
+        await commit('milestone.delete', child, {
+          'existence': predecessor(step, 'existence', false),
+        });
+        final local = await store.projection(child);
+        if (local.visible ||
+            local.values['existence'] != false ||
+            local.values['title'] != 'Edited step') {
+          throw StateError('Local dependency/deletion projection mismatch.');
+        }
       }
       File(args[3]).writeAsStringSync(
         jsonEncode(ApplyRequest(cursor: m.at, operations: ops).toJson()),
       );
       stdout.writeln(
-        'PASS: seven commands committed in SQLite with explicit bases/dependency',
+        'PASS: ${ops.length} $scenario commands committed in SQLite with explicit bases/dependency',
       );
     } else {
       final request = applyCodec.decodeRequest(fixture['request']);
@@ -143,6 +167,24 @@ Future<void> main(List<String> args) async {
       final result = (applyCodec.decodeReply(
         fixture['receipt'],
       ) as SyncSuccess<ApplyResult>).value;
+      if (scenario != 'chain') {
+        // Compare the pre-acknowledgement SQLite preview to actual PostgreSQL
+        // outcomes, before any receipt/download can conceal a preview defect.
+        for (var i = 0; i < request.operations.length; i++) {
+          final op = request.operations[i];
+          final projection = await store.projection(op.entity);
+          final proposal = projection.proposals.singleWhere(
+            (p) => p.operation.operationId == op.operationId,
+          );
+          for (final field in (result.results[i] as OperationReceipt).fields) {
+            if (proposal.projectedOutcomes[field.group] != field.disposition) {
+              throw StateError(
+                'Local $scenario projection disagrees with PostgreSQL.',
+              );
+            }
+          }
+        }
+      }
       await store.retainApplyResult(request, result);
       await store.retainApplyResult(request, result);
       for (final raw in fixture['downloads'] as List) {
@@ -154,9 +196,10 @@ Future<void> main(List<String> args) async {
         );
       }
       final projected = await store.projection(child);
-      if (projected.visible ||
-          projected.values['existence'] != false ||
-          projected.values['title'] != 'Edited step') {
+      if (scenario == 'chain' &&
+          (projected.visible ||
+              projected.values['existence'] != false ||
+              projected.values['title'] != 'Edited step')) {
         throw StateError('Accepted projection mismatch.');
       }
       final current = await db
@@ -195,9 +238,11 @@ Future<void> main(List<String> args) async {
       final history = await db
           .customSelect('SELECT * FROM account_command_history')
           .get();
-      if (history.length != 7) throw StateError('Local history mismatch.');
+      if (history.length != request.operations.length) {
+        throw StateError('Local history mismatch.');
+      }
       stdout.writeln(
-        'PASS: seven real receipts, duplicate acknowledgement, original bytes and snapshot-equivalent pull',
+        'PASS: ${request.operations.length} $scenario real receipts, duplicate acknowledgement, original bytes and snapshot-equivalent pull',
       );
     }
   } finally {
