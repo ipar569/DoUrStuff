@@ -31,7 +31,7 @@ flutter build apk --debug
 flutter build windows --release
 ```
 
-Use `dart run drift_dev schema dump lib/data/local/database.dart drift_schemas/drift_schema_v2.json`
+Use `dart run drift_dev schema dump lib/data/local/database.dart drift_schemas/drift_schema_v3.json`
 after a schema change. Verify the exact pinned tool help if its CLI changes.
 Run relevant SQLite/domain/widget checks after changes, then the quality suite.
 Native compilation is not device or notification verification. Report exact
