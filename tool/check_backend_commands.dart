@@ -167,6 +167,16 @@ Future<void> main(List<String> args) async {
       final result = (applyCodec.decodeReply(
         fixture['receipt'],
       ) as SyncSuccess<ApplyResult>).value;
+      Future<void> checkOrder() async {
+        if (fixture['visible_order'] case final List expectedOrder) {
+          if (jsonEncode(await store.visibleMilestoneOrder(task)) !=
+              jsonEncode(expectedOrder)) {
+            throw StateError('Local visible order disagrees with PostgreSQL.');
+          }
+        }
+      }
+
+      await checkOrder();
       if (scenario != 'chain') {
         // Compare the pre-acknowledgement SQLite preview to actual PostgreSQL
         // outcomes, before any receipt/download can conceal a preview defect.
@@ -187,6 +197,7 @@ Future<void> main(List<String> args) async {
       }
       await store.retainApplyResult(request, result);
       await store.retainApplyResult(request, result);
+      await checkOrder();
       for (final raw in fixture['downloads'] as List) {
         await store.applyPull(
           recoveryPullCodec.decodeRequest(raw['request']),
@@ -196,6 +207,7 @@ Future<void> main(List<String> args) async {
         );
       }
       final projected = await store.projection(child);
+      await checkOrder();
       if (scenario == 'chain' &&
           (projected.visible ||
               projected.values['existence'] != false ||

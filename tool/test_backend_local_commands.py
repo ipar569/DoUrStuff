@@ -10,6 +10,8 @@ from test_backend_apply import uid, observed, predecessor
 from test_backend_task_create import TaskFixture
 from test_backend_milestone_create import milestone
 from test_backend_resolution import begin, page, pull
+from local_order_scenarios import SCENARIOS, prepare as prepare_order
+from test_backend_milestone_order import projected
 
 
 def main():
@@ -17,7 +19,7 @@ def main():
     parser.add_argument('--supabase', default='supabase')
     parser.add_argument('--dart', default='dart')
     parser.add_argument('--output', type=Path, required=True)
-    parser.add_argument('--scenario', choices=['chain', 'equivalent', 'held', 'causal'], default='chain')
+    parser.add_argument('--scenario', choices=['chain', 'equivalent', 'held', 'causal'] + SCENARIOS, default='chain')
     args = parser.parse_args()
     if Path(args.dart).is_file():
         args.dart = str(Path(args.dart).resolve())
@@ -29,7 +31,10 @@ def main():
     try:
         f = TaskFixture(backend, sql('select server_epoch from sync_private.backend_state;'))
         proposals = None
-        if args.scenario != 'chain':
+        order_expected = None
+        if args.scenario in SCENARIOS:
+            proposals, order_expected = prepare_order(f, args.scenario)
+        elif args.scenario != 'chain':
             f.apply(f.create(title='Old'))
             if args.scenario == 'equivalent':
                 f.apply(f.op(2, 'A', observed(1, 'Old')))
@@ -71,6 +76,8 @@ def main():
         expected = ['conflict', 'held', 'held', 'held', 'held'] if args.scenario == 'held' else ['applied'] * len(request['operations'])
         if args.scenario == 'causal':
             expected = ['applied', 'applied', 'applied', 'conflict']
+        if order_expected is not None:
+            expected = order_expected
         require([r['disposition'] for r in response['result']['results']] == expected,
                 'Expected SQLite command outcomes')
         require(backend.rpc('apply', f.token, request) == response, 'Dropped-response retry is immutable')
@@ -85,6 +92,8 @@ def main():
         terminal = begin(f)
         fixture.update(request=request, receipt=response, downloads=downloads,
                        terminal_pages=[page(f, terminal, i) for i in range(terminal['page_count'])])
+        if args.scenario in SCENARIOS:
+            fixture['visible_order'] = projected(f)
         args.output.write_text(json.dumps(fixture), encoding='utf-8')
         subprocess.run([args.dart, 'run', 'tool/check_backend_commands.dart', 'verify',
                         str(args.output), str(db), str(commands)], check=True)

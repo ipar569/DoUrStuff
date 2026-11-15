@@ -39,7 +39,7 @@ continue when a dependency needs recovery.
 Observed bases can bind receipt values while pull is behind. An intervening
 pending field cannot be overwritten through an older observed/predecessor base;
 same-field chains must refer to their actual predecessor. No preview invents a
-server revision. Restore, ordering, tags, memberships, views/preferences, bulk
+server revision. Restore, tags, memberships, views/preferences, bulk
 commands and undo are outside this bounded command API. Their existing retained
 originals remain readable; unimplemented whole creates/restores/dependencies
 remain held. Native auth/secure persistence feasibility and representation gates
@@ -55,6 +55,20 @@ Known conflicted/held predecessors keep descendants held, including edits/delete
 of a milestone whose held create has no shadow yet. Missing children still cannot
 be manufactured by an absent-base edit. These previews are checked against real
 PostgreSQL outcomes before receipt application in the regression harness.
+
+`task.milestone_order` uses this same atomic command transaction. Its only patch
+is the validated ordered-ID group; dependencies can name this task and listed
+milestones once each. Child dependencies must prove the exact same-parent create.
+Missing proof takes precedence over a held dependency. An independent child
+tombstone remains a valid order reference; no live child is invented from a held
+create. Causal cutoffs prevent later local operations from authorizing earlier
+orders, and per-read memoization avoids repeatedly evaluating those prefixes.
+
+`visibleMilestoneOrder` reads the task and its effective children transactionally,
+filters deleted/hidden children and appends unlisted live children by UUID.
+It leaves the accepted/proposed ordered list, original bases, history and receipts
+unchanged. Receipt values bridge pull lag and yield to newer accepted revisions.
+No schema, protocol version, migration or native account UI change is needed.
 
 ## Upgrade and ownership
 
