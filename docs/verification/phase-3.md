@@ -1,6 +1,95 @@
 # Phase 3 verification
 
-## Current handoff — bounded account commands, updated 12 November 2026
+## Current handoff — bounded account ordering, 16 November 2026
+
+PR26 independent review of initial head `a2dbc641113a96e3f3eacccf021dd4893e4715d0`
+found one P2: a downloaded recovery closure suppressed a dependency's retained
+receipt evidence, producing local `recovery` where PostgreSQL returns `held`.
+Two new SQLite tests (task and milestone creates) and a real `order-closed`
+scenario reproduced the failure before the fix. Dependency classification now
+uses retained receipt outcomes even for closed proposals; closure still suppresses
+replay and never invents missing proof. The regression passes with **six local
+commands / four pull pages**, including two original create collisions, two
+remote-device discard closures and four later reorders. Original envelopes and
+history remain intact. Focused tests now pass **95**; final full/build/scenario
+reruns, exact-head re-review and hosted checks are recorded in PR26's timeline.
+The initial head's Quality/Android/Windows checks passed, but do not substitute
+for updated-head review/checks. Earlier implementation evidence follows.
+
+Refreshed clean local/remote main at PR25 merge
+`9efc6f82add2c428a3e17c31d7910d9a52bd650e` and read its
+[final handoff](https://github.com/ipar569/DoUrStuff/pull/25#issuecomment-6888217796).
+That timeline closes PR25's older pending review/CI notes below. This increment
+uses branch `codex/phase-3-account-ordering` and preserves newer/unrelated work.
+
+`task.milestone_order` now validates and commits through `commitCommand`, keeping
+its exact original base, dependencies, envelope, sequence, local before/after
+intent history and reminder-dirty state atomic. Dependency projection checks
+same-device operation/sequence and immutable child parent identity, distinguishes
+held from missing proof and keeps original reorder conflicts. Per-read causal
+prefix caching avoids recursive repeated work. `visibleMilestoneOrder` filters
+hidden/deleted children and appends unlisted live children by UUID without
+rewriting accepted or proposed order. No native account activation or scheduler
+is introduced; local intent history is not accepted status history.
+
+Local checks on the implementation:
+
+- Pinned `flutter pub get --enforce-lockfile`, `dart run build_runner build`,
+  `dart format --output=none --set-exit-if-changed lib test tool` passed.
+  `flutter analyze`: no issues. `flutter test --reporter expanded`: **216 passed**.
+- `flutter test test/account_order_commands_test.dart test/account_commands_test.dart
+  test/account_pull_test.dart test/account_store_test.dart test/schema_test.dart
+  test/local_database_test.dart test/domain_test.dart --reporter expanded`:
+  **93 passed**, including 11 new ordering tests for rollback at both final writes,
+  immutable retry/reopen, invalid commands, conflicting/held chains, exact
+  dependency proof, a 32-command chain, tombstones/additions and receipt/snapshot lag.
+- `python tool/test_backend_http.py`, `python tool/test_local_backend.py`,
+  `python tool/test_retention_runner.py`: **3 / 3 / 4 passed**.
+- `dart run drift_dev schema dump lib/data/local/database.dart
+  .tools/account-ordering-schema-v3.json`: byte-identical to the committed v3
+  snapshot. Generated Dart, all v1/v2/v3 snapshots/helpers, lockfile and all **26**
+  backend migrations are unchanged. No upgrade or backend migration was needed.
+- `flutter build windows --release`: passed in **23.1 seconds**. Android's
+  documented process-only Java 21 Gradle build and final backend regression totals
+  are recorded below or in this PR's final timeline when completed.
+
+The SQLite-to-PostgreSQL harness adds `ordering`, `order-held`, `order-causal`
+and `order-recovery` scenarios: **23 commands / 12 whole-revision pull pages**.
+All four pass on the revised implementation. They compare field decisions and
+visible order **before** receipt application against real PostgreSQL, then check
+duplicate submission/acknowledgement, receipt-lag order, unchanged original bytes,
+local intent history and snapshot-equivalent pull. The four prior command
+scenarios and foundation/apply/ordering/retention/snapshot regressions also run
+sequentially; final totals and exact-head independent review/CI/merge evidence
+belong in this increment's PR timeline. Do not infer success for pending checks.
+
+Docker's engine was stopped; the installed engine was launched and only
+`python tool/local_backend.py --start` started/verified the preserved nine
+services/eight healthchecks and loopback bindings. Containers, volumes and stopped
+backups remain. Synthetic accounts are cleaned up by each harness. Initial
+sandboxed SDK checks failed on telemetry permissions; authorized runs passed.
+One harness caught a source file between two edits and failed compilation; the
+syntax was corrected and the complete scenario set rerun. No failed check is
+counted as passing. Supabase changelog and current RPC docs were consulted; no
+SDK/CLI/dependency upgrade occurred. Ignored logs/captures use `.tools/account-ordering-*`.
+
+Next bounded 3.2 increment: atomic account tags and task/tag memberships with
+exact dependency/normalized-name collision projection and real PostgreSQL parity;
+then views/preferences, exact-deletion restore, bulk/undo and native materialization.
+Keep native OAuth/secure persistence feasibility on the plan before activation.
+Auth, recovery/export, adoption, worker/lifecycle, representation parity,
+capacity/scheduling, external/native acceptance and Phase 4 remain open.
+Compilation is not installed-device, notification, physical-crash or restored-
+backup acceptance. Production changes, releases and store distribution remain
+unauthorized.
+
+Resume by refreshing Git/GitHub, preserving newer work and checking this PR's final
+timeline. Reuse this branch/PR until independent review, applicable checks and
+expected-head guarded merge finish. Follow AGENTS.md, sync-protocol,
+database-migrations, Supabase and finish-task. Preserve snapshots, all 26 backend
+migrations and containers/volumes; start only through the guarded helper.
+
+## Previous handoff — bounded account commands, updated 12 November 2026
 
 Resumed PR25 at unchanged clean head `a2fcc2be34a646a661d895e1066a28a7060fae69`
 and unchanged PR24 base. Hosted Quality/Android/Windows had all passed. The

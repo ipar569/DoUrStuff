@@ -358,6 +358,20 @@ activation; native materialization, recovery/export, adoption and worker/lifecyc
 remain unfinished. Representation, external/native acceptance and Phase 4 stay
 open. No production changes or releases are authorized.
 
+16 November bounded 3.2 ordering increment: account milestone reorders now use
+the atomic intent/envelope/history/dirty transaction with exact task/child-create
+dependencies, causal reorder chains and pending-safe visible order. Deleted
+children filter out and independent additions append by UUID without rewriting
+original order candidates. SQLite v3, retained snapshots and all 26 backend
+migrations remain unchanged. PR25 merged at
+`9efc6f82add2c428a3e17c31d7910d9a52bd650e`; its final timeline closes prior pending
+notes. See the current verification handoff and this increment's PR timeline.
+Next bounded command increment: tags and task/tag memberships, then
+views/preferences, exact-deletion restore and bulk/undo. Native OAuth/secure
+persistence feasibility, materialization, recovery/export, adoption and
+worker/lifecycle remain unfinished. App activation, representation/native gates
+and Phase 4 stay open; production changes and releases remain unauthorized.
+
 ## Phase 4: recurrence, calendar and reminders
 
 Bounded deterministic generation/history; immutable future segments and offline

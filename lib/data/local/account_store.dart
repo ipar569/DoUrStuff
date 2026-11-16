@@ -4,6 +4,7 @@ import 'package:drift/drift.dart';
 
 import '../../domain/account_sync.dart';
 import '../../domain/account_sync_codec.dart';
+import '../../domain/account_sync_policy.dart';
 import '../../domain/account_sync_rpc.dart';
 import 'database.dart' hide AccountOperation;
 import 'account_command_validation.dart';
@@ -818,10 +819,71 @@ final class AccountStore {
   Future<AccountProjection> projection(SyncEntity entity) =>
       db.transaction(() => _projection(entity));
 
+  /// Visibility is derived separately; filtering and concurrent additions never
+  /// rewrite the versioned order, its original base, or local intent history.
+  Future<List<String>> visibleMilestoneOrder(SyncEntity task) =>
+      db.transaction(() async {
+        if (task.kind != SyncEntityKind.task) {
+          throw ArgumentError('Expected a task.');
+        }
+        final cache = <(String, int?, bool), AccountProjection>{};
+        final parent = await _projection(task, cache: cache);
+        if (!parent.visible) return const [];
+        final rows = await db
+            .customSelect(
+              "SELECT record_key AS entity_key FROM account_records WHERE record_kind='records' "
+              "AND json_extract(record_json,'\$.entity.kind')='milestone' "
+              'UNION SELECT entity_key FROM account_operations '
+              "WHERE json_extract(envelope_json,'\$.entity.kind')='milestone'",
+            )
+            .get();
+        final visible = <String>{};
+        for (final row in rows) {
+          final key = jsonDecode(row.read<String>('entity_key')) as Map;
+          final child = SyncEntity(
+            SyncEntityKind.milestone,
+            (key['key'] as List).cast<String>(),
+          );
+          final projection = await _projection(
+            child,
+            parentVisibility: false,
+            cache: cache,
+          );
+          if (projection.visible &&
+              projection.values['parent'] == task.key.single) {
+            visible.add(child.key.single);
+          }
+        }
+        return List.unmodifiable(
+          projectMilestoneOrder(parent.values['milestone_order'], visible),
+        );
+      });
+
   Future<AccountProjection> _projection(
     SyncEntity entity, {
     int? beforeSequence,
+    bool parentVisibility = true,
+    Map<(String, int?, bool), AccountProjection>? cache,
   }) async {
+    // Reuse only within this read transaction, keyed by the causal cutoff.
+    // Parent/child ordering dependencies otherwise revisit the same prefixes
+    // exponentially. Before/after command reads always get separate caches.
+    final memo = cache ?? <(String, int?, bool), AccountProjection>{};
+    final key = (entity.identity, beforeSequence, parentVisibility);
+    return memo[key] ??= await _project(
+      entity,
+      beforeSequence,
+      parentVisibility,
+      memo,
+    );
+  }
+
+  Future<AccountProjection> _project(
+    SyncEntity entity,
+    int? beforeSequence,
+    bool parentVisibility,
+    Map<(String, int?, bool), AccountProjection> cache,
+  ) async {
     final state = await _guard();
     final rows = await db
         .customSelect(
@@ -927,7 +989,12 @@ final class AccountStore {
       final completeCreate =
           operation.command == 'task.create' ||
           operation.command == 'milestone.create';
-      final wholeDecision = await _commandDecision(operation, shadow, values);
+      final wholeDecision = await _commandDecision(
+        operation,
+        shadow,
+        values,
+        cache,
+      );
       final decisions = <String, FieldDisposition>{};
       for (final entry in operation.patches.entries) {
         final group = entry.key;
@@ -1092,12 +1159,14 @@ final class AccountStore {
           (await _projection(
             SyncEntity(SyncEntityKind.task, [entity.key[0]]),
             beforeSequence: beforeSequence,
+            cache: cache,
           )).visible &&
           (await _projection(
             SyncEntity(SyncEntityKind.tag, [entity.key[1]]),
             beforeSequence: beforeSequence,
+            cache: cache,
           )).visible;
-    } else if (entity.kind == SyncEntityKind.milestone) {
+    } else if (entity.kind == SyncEntityKind.milestone && parentVisibility) {
       final parent = values['parent'];
       visible =
           visible &&
@@ -1105,6 +1174,7 @@ final class AccountStore {
           (await _projection(
             SyncEntity(SyncEntityKind.task, [parent]),
             beforeSequence: beforeSequence,
+            cache: cache,
           )).visible;
     } else if (entity.kind == SyncEntityKind.preference) {
       final view = values['value'];
@@ -1114,6 +1184,7 @@ final class AccountStore {
               (await _projection(
                 SyncEntity(SyncEntityKind.view, [view]),
                 beforeSequence: beforeSequence,
+                cache: cache,
               )).visible);
     }
     return AccountProjection(
@@ -1130,12 +1201,14 @@ final class AccountStore {
     AccountOperation operation,
     ShadowRecord? shadow,
     Map<String, Object?> values,
+    Map<(String, int?, bool), AccountProjection> cache,
   ) async {
     final supported = const {
       'task.create',
       'task.edit',
       'task.status',
       'task.delete',
+      'task.milestone_order',
       'milestone.create',
       'milestone.edit',
       'milestone.delete',
@@ -1159,6 +1232,10 @@ final class AccountStore {
           ? null
           : FieldDisposition.recovery;
     }
+    if (operation.command == 'task.milestone_order') {
+      if (values['existence'] == false) return FieldDisposition.recovery;
+      return _orderDecision(operation, cache);
+    }
     if (operation.entity.kind != SyncEntityKind.milestone) return null;
     // Independent child deletion survives a hidden/deleted parent.
     if (operation.command == 'milestone.delete') return null;
@@ -1167,6 +1244,7 @@ final class AccountStore {
     final parent = await _projection(
       SyncEntity(SyncEntityKind.task, [parentId]),
       beforeSequence: operation.sequence,
+      cache: cache,
     );
     if (operation.dependencies.isEmpty) {
       // Unproven pending parents cannot authorize a child. The caller must name
@@ -1209,6 +1287,81 @@ final class AccountStore {
       return null;
     }
     return FieldDisposition.held;
+  }
+
+  Future<FieldDisposition?> _orderDecision(
+    AccountOperation operation,
+    Map<(String, int?, bool), AccountProjection> cache,
+  ) async {
+    final taskId = operation.entity.key.single;
+    final ids =
+        ((operation.patches['milestone_order']!.value as Map)['ordered_ids']
+                as List)
+            .cast<String>();
+    final children = <String, AccountProjection>{};
+    Future<AccountProjection> child(String id) async =>
+        children[id] ??= await _projection(
+          SyncEntity(SyncEntityKind.milestone, [id]),
+          beforeSequence: operation.sequence,
+          parentVisibility: false,
+          cache: cache,
+        );
+    var missing = false;
+    var waiting = false;
+    final heldChildren = <String>{};
+    for (final dep in operation.dependencies) {
+      final projection = dep.entity.kind == SyncEntityKind.milestone
+          ? await child(dep.entity.key.single)
+          : await _projection(
+              dep.entity,
+              beforeSequence: operation.sequence,
+              cache: cache,
+            );
+      final source = projection.proposals
+          .where((p) => p.operation.operationId == dep.operationId)
+          .firstOrNull;
+      if (source == null ||
+          source.needsReconciliation ||
+          source.operation.sequence != dep.sequence ||
+          source.operation.deviceEpoch != operation.deviceEpoch ||
+          source.operation.entity.identity != dep.entity.identity ||
+          source.operation.patches['existence']?.value != true ||
+          (dep.entity.kind == SyncEntityKind.milestone &&
+              (source.operation.command != 'milestone.create' ||
+                  source.operation.patches['parent']?.value != taskId))) {
+        missing = true;
+        continue;
+      }
+      // Closure suppresses proposal replay, not immutable receipt evidence.
+      // The server still holds dependencies on a discarded create conflict
+      // while its original receipt is retained. Never infer proof from closure.
+      final receipt = source.outcomes['existence'];
+      final outcome = receipt == null
+          ? source.projectedOutcomes['existence']
+          : FieldDisposition.values.byName(receipt);
+      if (outcome == FieldDisposition.conflict ||
+          outcome == FieldDisposition.held) {
+        waiting = true;
+        if (dep.entity.kind == SyncEntityKind.milestone) {
+          heldChildren.add(dep.entity.key.single);
+        }
+      } else if (outcome != FieldDisposition.applied &&
+          outcome != FieldDisposition.equivalent) {
+        missing = true;
+      }
+    }
+    for (final id in ids) {
+      final projection = await child(id);
+      // A tombstone still proves membership; a held create supplies only the
+      // named dependency, never a canonical child. Missing evidence wins over
+      // waiting, just as in the server's command-level decision.
+      if (projection.values['parent'] != taskId && !heldChildren.contains(id)) {
+        missing = true;
+      }
+    }
+    if (missing) return FieldDisposition.recovery;
+    if (waiting) return FieldDisposition.held;
+    return null;
   }
 
   Future<void> _clearStaging() async {

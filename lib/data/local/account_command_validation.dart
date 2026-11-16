@@ -10,18 +10,20 @@ bool validLocalAccountCommand(AccountOperation operation) {
   final task = operation.entity.kind == SyncEntityKind.task;
   final create = command.endsWith('.create');
   final delete = command.endsWith('.delete');
+  final ordering = command == 'task.milestone_order';
   if (!const {
     'task.create',
     'task.edit',
     'task.status',
     'task.delete',
+    'task.milestone_order',
     'milestone.create',
     'milestone.edit',
     'milestone.delete',
   }.contains(command)) {
     return false;
   }
-  if (task && operation.dependencies.isNotEmpty) return false;
+  if (task && !ordering && operation.dependencies.isNotEmpty) return false;
   if (!task &&
       (!create && operation.dependencies.isNotEmpty ||
           operation.dependencies.length > 1)) {
@@ -38,7 +40,12 @@ bool validLocalAccountCommand(AccountOperation operation) {
         }
       : {'title', 'completion'};
   if (create) allowed.addAll(task ? {'existence'} : {'existence', 'parent'});
-  if (delete) {
+  if (ordering) {
+    if (patches.length != 1 ||
+        !validAccountMilestoneOrder(patches['milestone_order']?.value)) {
+      return false;
+    }
+  } else if (delete) {
     if (patches.length != 1 || patches['existence']?.value != false) {
       return false;
     }
@@ -88,6 +95,7 @@ bool validLocalAccountCommand(AccountOperation operation) {
               r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
             ).hasMatch(value),
       'existence' => value is bool,
+      'milestone_order' => validAccountMilestoneOrder(value),
       _ => false,
     };
     if (!valid) return false;
@@ -95,8 +103,18 @@ bool validLocalAccountCommand(AccountOperation operation) {
   // PostgreSQL JSONB cannot represent NUL, including in original bases. Reject
   // locally without truncating or altering the caller's immutable proposal.
   if (!_postgresStrings(operation.toJson())) return false;
+  final seen = <String>{};
   for (final dep in operation.dependencies) {
-    if (dep.entity.kind != SyncEntityKind.task ||
+    if (ordering) {
+      final ids =
+          (patches['milestone_order']!.value as Map)['ordered_ids'] as List;
+      if (!seen.add(dep.entity.identity) ||
+          !(dep.entity.identity == operation.entity.identity ||
+              dep.entity.kind == SyncEntityKind.milestone &&
+                  ids.contains(dep.entity.key.single))) {
+        return false;
+      }
+    } else if (dep.entity.kind != SyncEntityKind.task ||
         dep.entity.key.single != patches['parent']?.value) {
       return false;
     }
