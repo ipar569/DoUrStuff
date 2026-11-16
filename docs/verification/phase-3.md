@@ -2,6 +2,20 @@
 
 ## Current handoff — bounded account ordering, 16 November 2026
 
+PR26 independent review of initial head `a2dbc641113a96e3f3eacccf021dd4893e4715d0`
+found one P2: a downloaded recovery closure suppressed a dependency's retained
+receipt evidence, producing local `recovery` where PostgreSQL returns `held`.
+Two new SQLite tests (task and milestone creates) and a real `order-closed`
+scenario reproduced the failure before the fix. Dependency classification now
+uses retained receipt outcomes even for closed proposals; closure still suppresses
+replay and never invents missing proof. The regression passes with **six local
+commands / four pull pages**, including two original create collisions, two
+remote-device discard closures and four later reorders. Original envelopes and
+history remain intact. Focused tests now pass **95**; final full/build/scenario
+reruns, exact-head re-review and hosted checks are recorded in PR26's timeline.
+The initial head's Quality/Android/Windows checks passed, but do not substitute
+for updated-head review/checks. Earlier implementation evidence follows.
+
 Refreshed clean local/remote main at PR25 merge
 `9efc6f82add2c428a3e17c31d7910d9a52bd650e` and read its
 [final handoff](https://github.com/ipar569/DoUrStuff/pull/25#issuecomment-6888217796).

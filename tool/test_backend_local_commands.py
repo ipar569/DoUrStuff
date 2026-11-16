@@ -10,7 +10,7 @@ from test_backend_apply import uid, observed, predecessor
 from test_backend_task_create import TaskFixture
 from test_backend_milestone_create import milestone
 from test_backend_resolution import begin, page, pull
-from local_order_scenarios import SCENARIOS, prepare as prepare_order
+from local_order_scenarios import SCENARIOS, prepare as prepare_order, close_sources
 from test_backend_milestone_order import projected
 
 
@@ -65,6 +65,9 @@ def main():
                        scenario=args.scenario,
                        operations=[uid() for _ in range(7)], manifest=initial, pages=pages,
                        checked_at_utc=backend.wire[-1]['checked_at_utc'])
+        if args.scenario == 'order-closed':
+            fixture['seed'], proposals = close_sources(f, proposals, initial)
+            order_expected = ['held', 'held', 'held', 'applied']
         if proposals is not None:
             fixture['proposals'] = proposals
         args.output.write_text(json.dumps(fixture), encoding='utf-8')
@@ -81,7 +84,9 @@ def main():
         require([r['disposition'] for r in response['result']['results']] == expected,
                 'Expected SQLite command outcomes')
         require(backend.rpc('apply', f.token, request) == response, 'Dropped-response retry is immutable')
-        cursor, downloads = initial['at']['revision'], []
+        cursor = (fixture['seed']['downloads'][-1]['reply']['result']['through']['revision']
+                  if 'seed' in fixture else initial['at']['revision'])
+        downloads = []
         while True:
             result = pull(f, cursor, 2)
             require(result['status'] == 'success', 'Pull succeeds')
@@ -97,7 +102,10 @@ def main():
         args.output.write_text(json.dumps(fixture), encoding='utf-8')
         subprocess.run([args.dart, 'run', 'tool/check_backend_commands.dart', 'verify',
                         str(args.output), str(db), str(commands)], check=True)
-        print(f'PASS: SQLite-to-PostgreSQL command chain and {len(downloads)} pull pages', flush=True)
+        seed = fixture.get('seed', {})
+        command_count = len(request['operations']) + len(seed.get('request', {}).get('operations', []))
+        page_count = len(downloads) + len(seed.get('downloads', []))
+        print(f'PASS: SQLite-to-PostgreSQL {command_count} local commands and {page_count} pull pages', flush=True)
     finally:
         backend.cleanup()
 

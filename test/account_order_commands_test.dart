@@ -315,6 +315,106 @@ void main() {
     );
   });
 
+  for (final kind in [SyncEntityKind.task, SyncEntityKind.milestone]) {
+    test(
+      'closed $kind create retains its receipt as reorder dependency evidence',
+      () async {
+        final source = kind == SyncEntityKind.task
+            ? await commit('task.create', task, createFields())
+            : await commit('milestone.create', a, {
+                'existence': FieldPatch(const AbsentBase(), true),
+                'parent': FieldPatch(const AbsentBase(), task.key.single),
+                'title': FieldPatch(const AbsentBase(), 'Collision'),
+                'completion': FieldPatch(const AbsentBase(), null),
+              });
+        final groups = source.patches.keys.toList();
+        final recovery = [
+          for (var i = 0; i < groups.length; i++)
+            RecoveryRecord(
+              id: id(100 + i),
+              revision: 6,
+              operation: source,
+              group: groups[i],
+              disposition: FieldDisposition.conflict,
+            ),
+        ];
+        await store.retainApplyResult(
+          ApplyRequest(cursor: at, operations: [source]),
+          ApplyResult(
+            cursor: (serverEpoch: id(99), revision: 6),
+            deviceHighWater: 1,
+            results: [
+              OperationReceipt(
+                operationId: source.operationId,
+                sequence: 1,
+                revision: 6,
+                disposition: ReceiptDisposition.conflict,
+                fields: [
+                  for (final r in recovery)
+                    FieldOutcome(
+                      group: r.group,
+                      disposition: r.disposition,
+                      recoveryId: r.id,
+                    ),
+                ],
+              ),
+            ],
+          ),
+        );
+        await store.applyPull(
+          PullRequest(at),
+          RecoveryPullResult(
+            HistoryPullResult(
+              through: (serverEpoch: id(99), revision: 7),
+              committedHighWater: 7,
+              hasMore: false,
+              groups: [
+                HistoryRevisionGroup(
+                  RevisionGroup(revision: 6, records: [], recovery: recovery),
+                  [],
+                ),
+                HistoryRevisionGroup(
+                  RevisionGroup(revision: 7, records: [], recovery: []),
+                  [],
+                ),
+              ],
+            ),
+            [
+              [],
+              [
+                for (final r in recovery)
+                  RecoveryResolution(
+                    conflictId: r.id,
+                    expectedConflictRevision: 6,
+                    revision: 7,
+                    operationId: id(80),
+                    deviceEpoch: id(81),
+                    sequence: 1,
+                    choice: RecoveryChoice.discard,
+                  ),
+              ],
+            ],
+          ),
+        );
+        expect(
+          (await store.projection(source.entity)).proposals.single.closedGroups,
+          contains('existence'),
+        );
+        final original = source.payloadIdentity;
+        final op = await reorder([id(3)], deps: [dep(source)]);
+        expect(await decision(op), FieldDisposition.held);
+        expect(
+          (await store.projection(source.entity))
+              .proposals
+              .first
+              .operation
+              .payloadIdentity,
+          original,
+        );
+      },
+    );
+  }
+
   test('tombstones filter and independent additions append without rewriting order', () async {
     final op = await reorder([id(4), id(3)]);
     await install([

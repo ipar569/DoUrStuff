@@ -1322,7 +1322,6 @@ final class AccountStore {
           .firstOrNull;
       if (source == null ||
           source.needsReconciliation ||
-          source.closedGroups.contains('existence') ||
           source.operation.sequence != dep.sequence ||
           source.operation.deviceEpoch != operation.deviceEpoch ||
           source.operation.entity.identity != dep.entity.identity ||
@@ -1333,7 +1332,13 @@ final class AccountStore {
         missing = true;
         continue;
       }
-      final outcome = source.projectedOutcomes['existence'];
+      // Closure suppresses proposal replay, not immutable receipt evidence.
+      // The server still holds dependencies on a discarded create conflict
+      // while its original receipt is retained. Never infer proof from closure.
+      final receipt = source.outcomes['existence'];
+      final outcome = receipt == null
+          ? source.projectedOutcomes['existence']
+          : FieldDisposition.values.byName(receipt);
       if (outcome == FieldDisposition.conflict ||
           outcome == FieldDisposition.held) {
         waiting = true;

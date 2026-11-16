@@ -78,26 +78,50 @@ Future<void> main(List<String> args) async {
         PredecessorBase(op.operationId, op.sequence, op.patches[group]!.value),
         value,
       );
+      Future<AccountOperation> commitOriginal(Object? raw) async {
+        final op = decodeAccountOperation(raw);
+        final committed = await store.commitCommand(
+          operationId: op.operationId,
+          entity: op.entity,
+          command: op.command,
+          patches: op.patches,
+          dependencies: op.dependencies,
+          occurredAtUtc: DateTime.fromMillisecondsSinceEpoch(
+            op.provenance['occurred_at'] as int,
+            isUtc: true,
+          ),
+        );
+        if (committed.payloadIdentity != op.payloadIdentity) {
+          throw StateError(
+            'SQLite command did not preserve the proposed original.',
+          );
+        }
+        return committed;
+      }
+
+      if (fixture['seed'] case final Map seed) {
+        final request = applyCodec.decodeRequest(seed['request']);
+        for (final op in request.operations) {
+          await commitOriginal(op.toJson());
+        }
+        await store.retainApplyResult(
+          request,
+          (applyCodec.decodeReply(
+            seed['receipt'],
+          ) as SyncSuccess<ApplyResult>).value,
+        );
+        for (final raw in seed['downloads'] as List) {
+          await store.applyPull(
+            recoveryPullCodec.decodeRequest(raw['request']),
+            (recoveryPullCodec.decodeReply(
+              raw['reply'],
+            ) as SyncSuccess<RecoveryPullResult>).value,
+          );
+        }
+      }
       if (fixture['proposals'] case final List proposals) {
         for (final raw in proposals) {
-          final op = decodeAccountOperation(raw);
-          final committed = await store.commitCommand(
-            operationId: op.operationId,
-            entity: op.entity,
-            command: op.command,
-            patches: op.patches,
-            dependencies: op.dependencies,
-            occurredAtUtc: DateTime.fromMillisecondsSinceEpoch(
-              op.provenance['occurred_at'] as int,
-              isUtc: true,
-            ),
-          );
-          if (committed.payloadIdentity != op.payloadIdentity) {
-            throw StateError(
-              'SQLite command did not preserve the proposed original.',
-            );
-          }
-          ops.add(committed);
+          ops.add(await commitOriginal(raw));
         }
       } else {
         final creation = await commit('task.create', task, {
@@ -149,7 +173,12 @@ Future<void> main(List<String> args) async {
         }
       }
       File(args[3]).writeAsStringSync(
-        jsonEncode(ApplyRequest(cursor: m.at, operations: ops).toJson()),
+        jsonEncode(
+          ApplyRequest(
+            cursor: (await store.checkpoint())!,
+            operations: ops,
+          ).toJson(),
+        ),
       );
       stdout.writeln(
         'PASS: ${ops.length} $scenario commands committed in SQLite with explicit bases/dependency',
@@ -250,7 +279,13 @@ Future<void> main(List<String> args) async {
       final history = await db
           .customSelect('SELECT * FROM account_command_history')
           .get();
-      if (history.length != request.operations.length) {
+      final seedCount = fixture['seed'] is Map
+          ? applyCodec
+                .decodeRequest((fixture['seed'] as Map)['request'])
+                .operations
+                .length
+          : 0;
+      if (history.length != request.operations.length + seedCount) {
         throw StateError('Local history mismatch.');
       }
       stdout.writeln(

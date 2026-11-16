@@ -59,8 +59,11 @@ PostgreSQL outcomes before receipt application in the regression harness.
 `task.milestone_order` uses this same atomic command transaction. Its only patch
 is the validated ordered-ID group; dependencies can name this task and listed
 milestones once each. Child dependencies must prove the exact same-parent create.
-Missing proof takes precedence over a held dependency. An independent child
-tombstone remains a valid order reference; no live child is invented from a held
+Missing proof takes precedence over a held dependency. A source receipt remains
+evidence after recovery closure: the closed proposal no longer replays, but its
+retained conflict receipt still holds a new dependent reorder, matching PostgreSQL.
+Closure alone never supplies proof. An independent child tombstone remains a
+valid order reference; no live child is invented from a held
 create. Causal cutoffs prevent later local operations from authorizing earlier
 orders, and per-read memoization avoids repeatedly evaluating those prefixes.
 
