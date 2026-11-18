@@ -277,6 +277,26 @@ void main() {
     expect(await db.customSelect('SELECT * FROM task_tags').get(), isEmpty);
   });
 
+  test(
+    'missing tag edits need recovery before normalized-name collision checks',
+    () async {
+      await tag(a, 'Work');
+      final edit = await commit('tag.edit', b, {
+        'name': FieldPatch(ObservedBase(2, name('Old')), name('Work')),
+      });
+      expect(await decision(edit), FieldDisposition.recovery);
+      expect((await store.projection(b)).values, isEmpty);
+      final deletion = await commit('tag.delete', b, {
+        'existence': FieldPatch(ObservedBase(2, true), false),
+      });
+      expect(await decision(deletion), FieldDisposition.recovery);
+      final successor = await commit('tag.edit', b, {
+        'name': FieldPatch(base(edit, 'name'), name('Next')),
+      });
+      expect(await decision(successor), FieldDisposition.recovery);
+    },
+  );
+
   test('normalized-name collision is whole-create and never aliases dependent pairs', () async {
     final t = await commit('task.create', task, createFields('Task'));
     await tag(a, 'Work');

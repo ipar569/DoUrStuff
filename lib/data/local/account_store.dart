@@ -1255,6 +1255,10 @@ final class AccountStore {
     if (!operation.command.endsWith('.create') &&
         shadow == null &&
         values.isEmpty) {
+      if (operation.entity.kind == SyncEntityKind.tag &&
+          operation.patches.values.every((p) => p.base is! PredecessorBase)) {
+        return FieldDisposition.recovery;
+      }
       return operation.entity.kind == SyncEntityKind.milestone ||
               operation.entity.kind == SyncEntityKind.tag
           ? null

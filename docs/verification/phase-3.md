@@ -4,7 +4,7 @@
 
 Base refreshed to PR26 merge `e4e729032c394ad5e04698f3df0496a3446480b4`;
 the primary checkout was clean. Work continues on
-`codex/phase-3-account-tags-memberships`. PR26's
+`codex/phase-3-account-tags-memberships`, draft [PR27](https://github.com/ipar569/DoUrStuff/pull/27). PR26's
 [final handoff](https://github.com/ipar569/DoUrStuff/pull/26#issuecomment-6906554884)
 supersedes its pending-review notes below.
 
@@ -19,8 +19,9 @@ Verification so far (pinned `.tools/flutter/bin` executables):
 - `flutter pub get --enforce-lockfile`, `dart run build_runner build` and
   `flutter analyze`: passed. Initial analysis reported five missing-brace lint
   findings, all fixed; final analysis has no issues.
-- `flutter test test/account_tag_membership_commands_test.dart`: **12 passed**.
-  Final `flutter test --reporter expanded`: **230 passed** (ignored log
+- `flutter test test/account_tag_membership_commands_test.dart`: **13 passed**.
+  Combined tag/domain/local-database/schema suite: **33 passed**.
+  Final `flutter test --reporter expanded`: **231 passed** (ignored log
   `.tools/account-tags-flutter-tests.log`). Earlier focused commands/order/tags
   suite: **48 passed**.
 - `dart format --output=none --set-exit-if-changed lib test tool`: passed,
@@ -37,6 +38,20 @@ Verification so far (pinned `.tools/flutter/bin` executables):
   android/gradlew.bat -p android assembleDebug -Ptarget-platform=android-arm64
   --no-daemon`: passed (**36s**), existing Gradle deprecation warnings retained.
   The direct Flutter Java-selection limitation is not claimed fixed.
+
+Independent review of initial head `6106b99e3fa706ce8389105695a7301bc4750eb6`
+found one P2: missing-tag edits/deletes using observed/absent bases could preview
+conflict rather than recovery, holding subsequent work incorrectly. The fix
+checks absent identity before collision comparison while retaining exact held
+predecessor behavior. SQLite covers missing edit/delete and successor; the real
+`tags-evidence` scenario includes those cases but remains unexecuted. The reviewer
+found no other actionable issue in the initial diff. Corrected-head re-review
+and hosted checks remain required; record their final status in the PR timeline.
+This is independent agent review, not another GitHub account's approval.
+
+Initial formatting returned a user telemetry-path permission error after editing;
+the authorized rerun and final no-change check passed. The GitHub connector
+returned 403 creating the draft; authenticated `gh pr create` succeeded.
 
 **Delivery blocked on real PostgreSQL verification.**
 `python tool/local_backend.py --start` fails at Docker version because the

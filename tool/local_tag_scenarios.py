@@ -58,7 +58,10 @@ def prepare(f, scenario):
     second['dependencies'] = [missing_task, dependency(loser)]
     missing_base = membership(f, original, 4, base=dict(kind='predecessor', operation_id=uid(), sequence=1, value=False))
     independent = membership(f, original, 5)
-    return [loser, first, second, missing_base, independent], ['conflict'] * 4 + ['applied']
+    missing_edit = edit(f, loser, 6, name('Work'), observed(2, name('Old')))
+    missing_delete = remove(f, loser, 7, observed(2, True))
+    successor = edit(f, loser, 8, name('Next'), predecessor(missing_edit, name('Work')))
+    return [loser, first, second, missing_base, independent, missing_edit, missing_delete, successor], ['conflict'] * 4 + ['applied'] + ['conflict'] * 3
 
 
 def close_sources(f, sources, initial):
