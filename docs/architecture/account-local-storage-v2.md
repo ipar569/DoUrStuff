@@ -1,9 +1,9 @@
-# Account SQLite storage — updated 12 November 2026
+# Account SQLite storage — updated 18 November 2026
 
 SQLite v2 adds separate account tables alongside every unchanged guest v1 table.
 SQLite v3 adds local account command history and reminder-dirty intent. The
 bounded command API supports task create/edit/status/delete and milestone
-create/edit/delete. App activation, auth, transport, adoption and worker remain
+create/edit/delete, tags and task/tag memberships. App activation, auth, transport, adoption and worker remain
 disabled/unimplemented. The filename is retained to preserve existing links.
 
 ## Local command transactions (v3)
@@ -39,7 +39,7 @@ continue when a dependency needs recovery.
 Observed bases can bind receipt values while pull is behind. An intervening
 pending field cannot be overwritten through an older observed/predecessor base;
 same-field chains must refer to their actual predecessor. No preview invents a
-server revision. Restore, tags, memberships, views/preferences, bulk
+server revision. Restore, views/preferences, bulk
 commands and undo are outside this bounded command API. Their existing retained
 originals remain readable; unimplemented whole creates/restores/dependencies
 remain held. Native auth/secure persistence feasibility and representation gates
@@ -72,6 +72,30 @@ filters deleted/hidden children and appends unlisted live children by UUID.
 It leaves the accepted/proposed ordered list, original bases, history and receipts
 unchanged. Receipt values bridge pull lag and yield to newer accepted revisions.
 No schema, protocol version, migration or native account UI change is needed.
+
+### Tags and memberships
+
+`tag.create`, `tag.edit`, `tag.delete` and `task.tag` use the same atomic
+original/sequence/history/dirty transaction. Names must already match the frozen
+display/normalized-name group; invalid input is rejected without rewriting it.
+The membership key remains the exact ordered task/tag UUID pair. Its dirty intent
+also invalidates the task. Neither command path writes guest rows.
+
+Tag collision previews compare live accepted and earlier effective pending tags,
+including receipt values while pull lags. Whole creates cannot partially merge;
+rename collisions preserve the old complete name. Strict sequence cutoffs and
+per-read memoization keep cross-tag checks causal. Later deletion frees the name
+for a distinct UUID but does not replay an earlier failed create or redirect its
+memberships. Same-field successors bind original evidence before name availability.
+
+Membership dependencies validate exact parent entity, operation, device and
+sequence. Missing proof wins over a held parent; retained conflict receipts remain
+evidence after closure, but closure alone supplies no proof. Both parents must
+exist, and additions require live parents at the command's causal cutoff.
+Explicit false removals survive parent tombstones. Final visibility additionally
+uses current parent state without changing the pair's value or original base.
+Absent and accepted false pairs are distinct. No implicit rebase or UUID alias is
+introduced. Real PostgreSQL verification is required before delivering this increment.
 
 ## Upgrade and ownership
 

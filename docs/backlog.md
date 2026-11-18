@@ -372,6 +372,16 @@ persistence feasibility, materialization, recovery/export, adoption and
 worker/lifecycle remain unfinished. App activation, representation/native gates
 and Phase 4 stay open; production changes and releases remain unauthorized.
 
+18 November tags/memberships increment in progress: the local account command
+surface now covers tag create/edit/delete and exact task/tag add/remove, with
+atomic history/dirty intent, causal normalized-name collision checks and parent
+dependency projection. No schema/migration change or app activation. Real
+PostgreSQL parity, independent review and final PR checks remain delivery gates;
+see [verification](verification/phase-3.md). Finish this increment before moving
+to views/preferences, exact-deletion restore and bulk/undo. Existing native,
+OAuth/secure persistence, materialization, recovery/export, adoption and
+worker/lifecycle gates stay open. Production changes/releases remain unauthorized.
+
 ## Phase 4: recurrence, calendar and reminders
 
 Bounded deterministic generation/history; immutable future segments and offline

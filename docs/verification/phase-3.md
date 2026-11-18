@@ -1,5 +1,63 @@
 # Phase 3 verification
 
+## Current handoff — account tags/memberships, 18 November 2026
+
+Base refreshed to PR26 merge `e4e729032c394ad5e04698f3df0496a3446480b4`;
+the primary checkout was clean. Work continues on
+`codex/phase-3-account-tags-memberships`. PR26's
+[final handoff](https://github.com/ipar569/DoUrStuff/pull/26#issuecomment-6906554884)
+supersedes its pending-review notes below.
+
+Local commands now support tag create/edit/delete and exact-pair membership
+add/remove through the existing atomic original/sequence/history/dirty transaction.
+Collision/dependency previews preserve whole creates, original bases, retained
+receipt evidence after closure, hidden-parent removals and UUID identity. No
+schema, wire version, migration, native UI or account activation change.
+
+Verification so far (pinned `.tools/flutter/bin` executables):
+
+- `flutter pub get --enforce-lockfile`, `dart run build_runner build` and
+  `flutter analyze`: passed. Initial analysis reported five missing-brace lint
+  findings, all fixed; final analysis has no issues.
+- `flutter test test/account_tag_membership_commands_test.dart`: **12 passed**.
+  Final `flutter test --reporter expanded`: **230 passed** (ignored log
+  `.tools/account-tags-flutter-tests.log`). Earlier focused commands/order/tags
+  suite: **48 passed**.
+- `dart format --output=none --set-exit-if-changed lib test tool`: passed,
+  **63 files unchanged**. `git diff --check`: passed.
+- `dart run drift_dev schema dump lib/data/local/database.dart
+  .tools/account-tags-schema-v3.json`: passed, hash equals committed v3 snapshot.
+  All retained snapshots/helpers/generated Dart, lockfile and **26 migrations**
+  remain unchanged.
+- `python tool/test_backend_http.py`, `python tool/test_local_backend.py`,
+  `python tool/test_retention_runner.py`: **3/3/4 passed**. Initial HTTP tests
+  failed under sandbox socket restrictions and passed with loopback permission.
+- `flutter build windows --release`: passed (**9.6s**).
+  `$env:JAVA_HOME=(Get-Content .tools/android-java-home.txt -Raw).Trim();
+  android/gradlew.bat -p android assembleDebug -Ptarget-platform=android-arm64
+  --no-daemon`: passed (**36s**), existing Gradle deprecation warnings retained.
+  The direct Flutter Java-selection limitation is not claimed fixed.
+
+**Delivery blocked on real PostgreSQL verification.**
+`python tool/local_backend.py --start` fails at Docker version because the
+engine is unavailable. Automatic approval review rejected launching installed
+Docker Desktop, interpreting the user's guarded-start rule as also prohibiting
+engine launch; a specific approval/engine-start request is pending. Do not bypass
+that rejection. No containers, volumes, backups or migrations were changed.
+The five new `tags-*` scenarios in `tool/test_backend_local_commands.py` are
+prepared but unexecuted; they compare pre-receipt decisions/values/visibility,
+duplicate submission/acknowledgement, originals, history and final snapshots.
+
+Once Docker is available, start only through `python tool/local_backend.py --start`.
+Run those five scenarios plus the existing nine, then tag/membership/foundation/
+apply/retention/snapshot backend suites with production Dart decoding. Obtain
+independent review of the final PR head and successful hosted checks before
+guarded merge. Keep this increment open until its real backend gate passes.
+Next after delivery: views/preferences, exact-deletion restore, bulk/undo.
+OAuth/secure persistence, materialization, recovery/export, adoption, worker/
+lifecycle, installed/native acceptance and Phase 4 remain open. Production
+changes and releases remain unauthorized.
+
 ## Current handoff — bounded account ordering, 16 November 2026
 
 PR26 independent review of initial head `a2dbc641113a96e3f3eacccf021dd4893e4715d0`

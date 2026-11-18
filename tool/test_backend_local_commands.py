@@ -12,6 +12,7 @@ from test_backend_milestone_create import milestone
 from test_backend_resolution import begin, page, pull
 from local_order_scenarios import SCENARIOS, prepare as prepare_order, close_sources
 from test_backend_milestone_order import projected
+from local_tag_scenarios import SCENARIOS as TAG_SCENARIOS, prepare as prepare_tags, close_sources as close_tags
 
 
 def main():
@@ -19,7 +20,7 @@ def main():
     parser.add_argument('--supabase', default='supabase')
     parser.add_argument('--dart', default='dart')
     parser.add_argument('--output', type=Path, required=True)
-    parser.add_argument('--scenario', choices=['chain', 'equivalent', 'held', 'causal'] + SCENARIOS, default='chain')
+    parser.add_argument('--scenario', choices=['chain', 'equivalent', 'held', 'causal'] + SCENARIOS + TAG_SCENARIOS, default='chain')
     args = parser.parse_args()
     if Path(args.dart).is_file():
         args.dart = str(Path(args.dart).resolve())
@@ -32,7 +33,9 @@ def main():
         f = TaskFixture(backend, sql('select server_epoch from sync_private.backend_state;'))
         proposals = None
         order_expected = None
-        if args.scenario in SCENARIOS:
+        if args.scenario in TAG_SCENARIOS:
+            proposals, order_expected = prepare_tags(f, args.scenario)
+        elif args.scenario in SCENARIOS:
             proposals, order_expected = prepare_order(f, args.scenario)
         elif args.scenario != 'chain':
             f.apply(f.create(title='Old'))
@@ -68,6 +71,9 @@ def main():
         if args.scenario == 'order-closed':
             fixture['seed'], proposals = close_sources(f, proposals, initial)
             order_expected = ['held', 'held', 'held', 'applied']
+        elif args.scenario == 'tags-closed':
+            fixture['seed'], proposals = close_tags(f, proposals, initial)
+            order_expected = ['held', 'held', 'held', 'conflict']
         if proposals is not None:
             fixture['proposals'] = proposals
         args.output.write_text(json.dumps(fixture), encoding='utf-8')

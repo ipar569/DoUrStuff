@@ -205,7 +205,58 @@ Future<void> main(List<String> args) async {
         }
       }
 
+      Future<void> checkTags() async {
+        if (!scenario.startsWith('tags-')) return;
+        final shadows = <String, ShadowRecord>{};
+        for (final p in fixture['terminal_pages'] as List) {
+          for (final raw in p['records'] as List) {
+            final shadow = decodeAccountShadow(raw);
+            shadows[shadow.entity.identity] = shadow;
+          }
+        }
+        final entities = <String, SyncEntity>{
+          for (final op in request.operations)
+            if (op.entity.kind == SyncEntityKind.tag ||
+                op.entity.kind == SyncEntityKind.membership)
+              op.entity.identity: op.entity,
+        };
+        for (final entity in entities.values) {
+          final expected = shadows[entity.identity];
+          final values = {
+            for (final entry
+                in expected?.fields.entries ??
+                    <MapEntry<String, AcceptedField>>[])
+              entry.key: entry.value.value,
+          };
+          final local = await store.projection(entity);
+          var visible = values['existence'] == true;
+          if (entity.kind == SyncEntityKind.membership) {
+            visible =
+                values['membership'] == true &&
+                shadows[SyncEntity(SyncEntityKind.task, [
+                          entity.key[0],
+                        ]).identity]
+                        ?.fields['existence']
+                        ?.value ==
+                    true &&
+                shadows[SyncEntity(SyncEntityKind.tag, [
+                          entity.key[1],
+                        ]).identity]
+                        ?.fields['existence']
+                        ?.value ==
+                    true;
+          }
+          if (canonicalSyncJson(local.values) != canonicalSyncJson(values) ||
+              local.visible != visible) {
+            throw StateError(
+              'Local $scenario ${entity.kind.name} values/visibility disagree with PostgreSQL.',
+            );
+          }
+        }
+      }
+
       await checkOrder();
+      await checkTags();
       if (scenario != 'chain') {
         // Compare the pre-acknowledgement SQLite preview to actual PostgreSQL
         // outcomes, before any receipt/download can conceal a preview defect.
@@ -218,7 +269,8 @@ Future<void> main(List<String> args) async {
           for (final field in (result.results[i] as OperationReceipt).fields) {
             if (proposal.projectedOutcomes[field.group] != field.disposition) {
               throw StateError(
-                'Local $scenario projection disagrees with PostgreSQL.',
+                'Local $scenario operation $i ${field.group}: '
+                '${proposal.projectedOutcomes[field.group]} != ${field.disposition}.',
               );
             }
           }
@@ -227,6 +279,7 @@ Future<void> main(List<String> args) async {
       await store.retainApplyResult(request, result);
       await store.retainApplyResult(request, result);
       await checkOrder();
+      await checkTags();
       for (final raw in fixture['downloads'] as List) {
         await store.applyPull(
           recoveryPullCodec.decodeRequest(raw['request']),
@@ -237,6 +290,7 @@ Future<void> main(List<String> args) async {
       }
       final projected = await store.projection(child);
       await checkOrder();
+      await checkTags();
       if (scenario == 'chain' &&
           (projected.visible ||
               projected.values['existence'] != false ||
