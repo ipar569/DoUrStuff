@@ -1,9 +1,10 @@
-# Account SQLite storage — updated 18 November 2026
+# Account SQLite storage — updated 19 November 2026
 
 SQLite v2 adds separate account tables alongside every unchanged guest v1 table.
 SQLite v3 adds local account command history and reminder-dirty intent. The
 bounded command API supports task create/edit/status/delete and milestone
-create/edit/delete, tags and task/tag memberships. App activation, auth, transport, adoption and worker remain
+create/edit/delete, milestone ordering, tags, task/tag memberships, saved
+views and the shared default view. App activation, auth, transport, adoption and worker remain
 disabled/unimplemented. The filename is retained to preserve existing links.
 
 ## Local command transactions (v3)
@@ -39,7 +40,7 @@ continue when a dependency needs recovery.
 Observed bases can bind receipt values while pull is behind. An intervening
 pending field cannot be overwritten through an older observed/predecessor base;
 same-field chains must refer to their actual predecessor. No preview invents a
-server revision. Restore, views/preferences, bulk
+server revision. Restore, bulk
 commands and undo are outside this bounded command API. Their existing retained
 originals remain readable; unimplemented whole creates/restores/dependencies
 remain held. Native auth/secure persistence feasibility and representation gates
@@ -96,6 +97,24 @@ Explicit false removals survive parent tombstones. Final visibility additionally
 uses current parent state without changing the pair's value or original base.
 Absent and accepted false pairs are distinct. No implicit rebase or UUID alias is
 introduced. Real PostgreSQL verification is required before delivering this increment.
+
+### Saved views and shared defaults
+
+`view.create` requires an absent identity, a valid display name and a complete
+canonical query. `view.edit` compares name and query independently. A query
+conflict retains the entire filter specification. `preference.set` targets
+`default_view` and accepts a view UUID or an explicit null. An optional
+dependency binds the exact view existence operation at the selection's sequence.
+A collision holds the selection and its successors. References to missing or
+deleted views retain their originals for recovery.
+
+Deleting the selected view projects a null default before comparing subsequent
+preference operations. The deletion and preference dirty marker commit with the
+view's history, envelope and sequence. Deleting another view preserves the
+selection. The implicit clear has a local source for display, but supplies no
+same-field preference predecessor. A later pull installs both accepted shadows
+at the server's deletion revision. Explicit preference commands still carry
+their own immutable bases and receipts.
 
 ## Upgrade and ownership
 

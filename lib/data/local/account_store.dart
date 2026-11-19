@@ -198,6 +198,10 @@ final class AccountStore {
       return original;
     }
     final before = await _projection(entity);
+    final defaultView = SyncEntity(SyncEntityKind.preference, ['default_view']);
+    final deletesDefault =
+        command == 'view.delete' &&
+        (await _projection(defaultView)).values['value'] == entity.key.single;
     await retainOperation(jsonEncode(operation.toJson()));
     final after = await _projection(entity);
     await db.customStatement(
@@ -211,6 +215,9 @@ final class AccountStore {
       ],
     );
     final dirty = {entity.identity};
+    if (deletesDefault && before.visible && !after.visible) {
+      dirty.add(defaultView.identity);
+    }
     if (entity.kind == SyncEntityKind.membership) {
       dirty.add(SyncEntity(SyncEntityKind.task, [entity.key[0]]).identity);
     }
@@ -987,12 +994,35 @@ final class AccountStore {
     };
     final operationVersions = <String, Map<String, String>>{};
     final seen = <String, AccountProposal>{};
+    // A view deletion conditionally writes the default in the same server
+    // revision. Replay that side effect at its place in the local sequence,
+    // before comparing the next preference base. It has no preference receipt.
+    Future<void> clearDeletedDefault(int? cutoff) async {
+      final selected = values['value'];
+      if (selected is! String) return;
+      final parent = await _projection(
+        SyncEntity(SyncEntityKind.view, [selected]),
+        beforeSequence: cutoff,
+        cache: cache,
+      );
+      final deletion = parent.pendingSources['existence'];
+      if (parent.values['existence'] != false || deletion == null) return;
+      values['value'] = null;
+      sources['value'] = deletion;
+      pending.add('value');
+      fieldVersions['value'] = 'pending:$deletion';
+    }
+
     for (final proposal in proposals) {
       final operation = proposal.operation;
+      if (entity.kind == SyncEntityKind.preference) {
+        await clearDeletedDefault(operation.sequence);
+      }
       final completeCreate =
           operation.command == 'task.create' ||
           operation.command == 'milestone.create' ||
-          operation.command == 'tag.create';
+          operation.command == 'tag.create' ||
+          operation.command == 'view.create';
       final wholeDecision = await _commandDecision(
         operation,
         shadow,
@@ -1043,6 +1073,14 @@ final class AccountStore {
           continue;
         } else if (wholeDecision != null) {
           decision = wholeDecision;
+        } else if (entity.kind == SyncEntityKind.view &&
+            !completeCreate &&
+            shadow == null &&
+            values.isEmpty &&
+            patch.base is! PredecessorBase) {
+          // An independent edit to a missing view needs recovery even when
+          // another field in the same command names a predecessor.
+          decision = FieldDisposition.recovery;
         } else if ((!completeCreate && operation.command.endsWith('.create')) ||
             operation.command == 'task.restore') {
           // Complete creates and exact-deletion restore need command-level
@@ -1050,8 +1088,7 @@ final class AccountStore {
           decision = FieldDisposition.held;
         } else if (values['existence'] == false &&
             operation.command != 'task.delete' &&
-            operation.command != 'milestone.delete' &&
-            operation.command != 'view.delete') {
+            operation.command != 'milestone.delete') {
           decision = FieldDisposition.recovery;
         } else if (tagCollision && patch.base is! PredecessorBase) {
           decision = FieldDisposition.conflict;
@@ -1065,7 +1102,9 @@ final class AccountStore {
                   !predecessor.outcomes.containsKey(group))) {
             decision =
                 operation.entity.kind == SyncEntityKind.tag ||
-                    operation.entity.kind == SyncEntityKind.membership
+                    operation.entity.kind == SyncEntityKind.membership ||
+                    operation.entity.kind == SyncEntityKind.view ||
+                    operation.entity.kind == SyncEntityKind.preference
                 ? FieldDisposition.recovery
                 : FieldDisposition.held;
           } else if (!predecessor.needsReconciliation &&
@@ -1127,7 +1166,8 @@ final class AccountStore {
         // held, but neither an absent base nor a successful field comparison can
         // manufacture a child that its complete create has not projected.
         if ((operation.entity.kind == SyncEntityKind.milestone ||
-                operation.entity.kind == SyncEntityKind.tag) &&
+                operation.entity.kind == SyncEntityKind.tag ||
+                operation.entity.kind == SyncEntityKind.view) &&
             !completeCreate &&
             shadow == null &&
             values.isEmpty &&
@@ -1197,6 +1237,7 @@ final class AccountStore {
             cache: cache,
           )).visible;
     } else if (entity.kind == SyncEntityKind.preference) {
+      await clearDeletedDefault(beforeSequence);
       final view = values['value'];
       visible =
           view == null ||
@@ -1223,20 +1264,7 @@ final class AccountStore {
     Map<String, Object?> values,
     Map<(String, int?, bool), AccountProjection> cache,
   ) async {
-    final supported = const {
-      'task.create',
-      'task.edit',
-      'task.status',
-      'task.delete',
-      'task.milestone_order',
-      'milestone.create',
-      'milestone.edit',
-      'milestone.delete',
-      'tag.create',
-      'tag.edit',
-      'tag.delete',
-      'task.tag',
-    }.contains(operation.command);
+    final supported = localAccountCommands.contains(operation.command);
     if (supported && !validLocalAccountCommand(operation)) {
       return FieldDisposition.recovery;
     }
@@ -1245,6 +1273,20 @@ final class AccountStore {
     }
     if (operation.command == 'task.tag') {
       return _membershipDecision(operation, cache);
+    }
+    if (operation.command == 'preference.set') {
+      final selected = operation.patches['value']!.value;
+      if (selected == null) return null;
+      final view = await _projection(
+        SyncEntity(SyncEntityKind.view, [selected as String]),
+        beforeSequence: operation.sequence,
+        cache: cache,
+      );
+      for (final dep in operation.dependencies) {
+        final decision = _existenceDependency(operation, dep, view);
+        if (decision != null) return decision;
+      }
+      return view.visible ? null : FieldDisposition.recovery;
     }
     if (operation.command.endsWith('.create') &&
         (shadow != null || values.isNotEmpty)) {
@@ -1260,7 +1302,8 @@ final class AccountStore {
         return FieldDisposition.recovery;
       }
       return operation.entity.kind == SyncEntityKind.milestone ||
-              operation.entity.kind == SyncEntityKind.tag
+              operation.entity.kind == SyncEntityKind.tag ||
+              operation.entity.kind == SyncEntityKind.view
           ? null
           : FieldDisposition.recovery;
     }
@@ -1375,32 +1418,13 @@ final class AccountStore {
     }
     var waiting = false;
     for (final dep in operation.dependencies) {
-      final source = parents[dep.entity.identity]!.proposals
-          .where((p) => p.operation.operationId == dep.operationId)
-          .firstOrNull;
-      if (source == null ||
-          source.needsReconciliation ||
-          source.operation.sequence != dep.sequence ||
-          source.operation.deviceEpoch != operation.deviceEpoch ||
-          !source.operation.patches.containsKey('existence')) {
-        return FieldDisposition.recovery;
-      }
-      // A closed conflict still has immutable receipt evidence. Closure alone
-      // cannot supply a successful parent or authorize a new relationship.
-      final receipt = source.outcomes['existence'];
-      final outcome = receipt == null
-          ? source.projectedOutcomes['existence']
-          : FieldDisposition.values.byName(receipt);
-      if (outcome == FieldDisposition.conflict ||
-          outcome == FieldDisposition.held) {
-        waiting = true;
-      } else if (outcome != FieldDisposition.applied &&
-              outcome != FieldDisposition.equivalent ||
-          (source.acceptedFields['existence']?.value ??
-                  source.operation.patches['existence']?.value) !=
-              true) {
-        return FieldDisposition.recovery;
-      }
+      final decision = _existenceDependency(
+        operation,
+        dep,
+        parents[dep.entity.identity]!,
+      );
+      if (decision == FieldDisposition.recovery) return decision;
+      if (decision == FieldDisposition.held) waiting = true;
     }
     if (waiting) return FieldDisposition.held;
     final adding = operation.patches['membership']!.value == true;
@@ -1409,6 +1433,40 @@ final class AccountStore {
           adding && !parent.visible) {
         return FieldDisposition.recovery;
       }
+    }
+    return null;
+  }
+
+  FieldDisposition? _existenceDependency(
+    AccountOperation operation,
+    OperationDependency dep,
+    AccountProjection parent,
+  ) {
+    final source = parent.proposals
+        .where((p) => p.operation.operationId == dep.operationId)
+        .firstOrNull;
+    if (source == null ||
+        source.needsReconciliation ||
+        source.operation.sequence != dep.sequence ||
+        source.operation.deviceEpoch != operation.deviceEpoch ||
+        !source.operation.patches.containsKey('existence')) {
+      return FieldDisposition.recovery;
+    }
+    // Closing a conflict hides its projection but retains its receipt.
+    final receipt = source.outcomes['existence'];
+    final outcome = receipt == null
+        ? source.projectedOutcomes['existence']
+        : FieldDisposition.values.byName(receipt);
+    if (outcome == FieldDisposition.conflict ||
+        outcome == FieldDisposition.held) {
+      return FieldDisposition.held;
+    }
+    if ((outcome != FieldDisposition.applied &&
+            outcome != FieldDisposition.equivalent) ||
+        (source.acceptedFields['existence']?.value ??
+                source.operation.patches['existence']?.value) !=
+            true) {
+      return FieldDisposition.recovery;
     }
     return null;
   }

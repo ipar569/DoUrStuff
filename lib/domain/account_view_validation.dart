@@ -15,10 +15,7 @@ bool validAccountViewQuery(Object? value) {
   try {
     if (value is! Map || value['version'] is! int) return false;
     final query = TaskQuery.fromJson(value);
-    final uuid = RegExp(
-      r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
-    );
-    return query.tags.every(uuid.hasMatch) &&
+    return query.tags.every(isAccountUuid) &&
         canonicalSyncJson(value) == canonicalSyncJson(query.toJson());
   } on FormatException {
     return false;

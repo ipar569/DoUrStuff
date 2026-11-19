@@ -382,6 +382,14 @@ by exact-deletion restore and bulk/undo. Existing native,
 OAuth/secure persistence, materialization, recovery/export, adoption and
 worker/lifecycle gates stay open. Production changes/releases remain unauthorized.
 
+19 November account saved views and shared preferences. The local command
+transaction now supports view creation, independent name and whole-query edits,
+deletion and default selection or clearing. SQLite projection follows exact
+view dependencies and preserves the causal effect of deleting the selected
+view. See the [Phase 3 verification handoff](verification/phase-3.md).
+The next bounded Phase 3.2 increment is exact-deletion task restore, followed
+by bulk/undo. Account activation and native acceptance remain open.
+
 ## Phase 4: recurrence, calendar and reminders
 
 Bounded deterministic generation/history; immutable future segments and offline

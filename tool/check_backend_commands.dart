@@ -205,8 +205,10 @@ Future<void> main(List<String> args) async {
         }
       }
 
-      Future<void> checkTags() async {
-        if (!scenario.startsWith('tags-')) return;
+      Future<void> checkProjectedRecords() async {
+        if (!scenario.startsWith('tags-') && !scenario.startsWith('views-')) {
+          return;
+        }
         final shadows = <String, ShadowRecord>{};
         for (final p in fixture['terminal_pages'] as List) {
           for (final raw in p['records'] as List) {
@@ -215,9 +217,16 @@ Future<void> main(List<String> args) async {
           }
         }
         final entities = <String, SyncEntity>{
+          if (scenario.startsWith('views-'))
+            for (final record in shadows.values)
+              if (record.entity.kind == SyncEntityKind.preference ||
+                  record.entity.kind == SyncEntityKind.view)
+                record.entity.identity: record.entity,
           for (final op in request.operations)
             if (op.entity.kind == SyncEntityKind.tag ||
-                op.entity.kind == SyncEntityKind.membership)
+                op.entity.kind == SyncEntityKind.membership ||
+                op.entity.kind == SyncEntityKind.preference ||
+                op.entity.kind == SyncEntityKind.view)
               op.entity.identity: op.entity,
         };
         for (final entity in entities.values) {
@@ -246,6 +255,17 @@ Future<void> main(List<String> args) async {
                         ?.value ==
                     true;
           }
+          if (entity.kind == SyncEntityKind.preference) {
+            final selected = values['value'];
+            visible =
+                selected == null ||
+                shadows[SyncEntity(SyncEntityKind.view, [
+                          selected as String,
+                        ]).identity]
+                        ?.fields['existence']
+                        ?.value ==
+                    true;
+          }
           if (canonicalSyncJson(local.values) != canonicalSyncJson(values) ||
               local.visible != visible) {
             throw StateError(
@@ -256,7 +276,7 @@ Future<void> main(List<String> args) async {
       }
 
       await checkOrder();
-      await checkTags();
+      await checkProjectedRecords();
       if (scenario != 'chain') {
         // Compare the pre-acknowledgement SQLite preview to actual PostgreSQL
         // outcomes, before any receipt/download can conceal a preview defect.
@@ -279,7 +299,7 @@ Future<void> main(List<String> args) async {
       await store.retainApplyResult(request, result);
       await store.retainApplyResult(request, result);
       await checkOrder();
-      await checkTags();
+      await checkProjectedRecords();
       for (final raw in fixture['downloads'] as List) {
         await store.applyPull(
           recoveryPullCodec.decodeRequest(raw['request']),
@@ -287,10 +307,11 @@ Future<void> main(List<String> args) async {
             raw['reply'],
           ) as SyncSuccess<RecoveryPullResult>).value,
         );
+        if (scenario.startsWith('views-')) await checkProjectedRecords();
       }
       final projected = await store.projection(child);
       await checkOrder();
-      await checkTags();
+      await checkProjectedRecords();
       if (scenario == 'chain' &&
           (projected.visible ||
               projected.values['existence'] != false ||

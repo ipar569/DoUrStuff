@@ -1,37 +1,56 @@
 import '../../domain/account_sync.dart';
 import '../../domain/account_task_validation.dart';
+import '../../domain/account_view_validation.dart';
 import '../../domain/tag_normalization.dart';
 import '../time_policy.dart';
 
 /// Bounded local command surface. Wire decoding intentionally remains broader:
 /// invalid/unsupported retained originals must still be available for recovery.
+const localAccountCommands = {
+  'task.create',
+  'task.edit',
+  'task.status',
+  'task.delete',
+  'task.milestone_order',
+  'milestone.create',
+  'milestone.edit',
+  'milestone.delete',
+  'tag.create',
+  'tag.edit',
+  'tag.delete',
+  'task.tag',
+  'view.create',
+  'view.edit',
+  'view.delete',
+  'preference.set',
+};
+
 bool validLocalAccountCommand(AccountOperation operation) {
   final patches = operation.patches;
   final command = operation.command;
   final task = operation.entity.kind == SyncEntityKind.task;
   final tag = operation.entity.kind == SyncEntityKind.tag;
+  final view = operation.entity.kind == SyncEntityKind.view;
   final membership = operation.entity.kind == SyncEntityKind.membership;
   final create = command.endsWith('.create');
   final delete = command.endsWith('.delete');
   final ordering = command == 'task.milestone_order';
-  if (!const {
-    'task.create',
-    'task.edit',
-    'task.status',
-    'task.delete',
-    'task.milestone_order',
-    'milestone.create',
-    'milestone.edit',
-    'milestone.delete',
-    'tag.create',
-    'tag.edit',
-    'tag.delete',
-    'task.tag',
-  }.contains(command)) {
+  if (!localAccountCommands.contains(command)) {
     return false;
   }
   if (task && !ordering && operation.dependencies.isNotEmpty) return false;
-  if (tag && operation.dependencies.isNotEmpty) return false;
+  if ((tag || view) && operation.dependencies.isNotEmpty) return false;
+  if (command == 'preference.set') {
+    final value = patches['value']!.value;
+    return (value == null || isAccountUuid(value)) &&
+        operation.dependencies.length <= 1 &&
+        operation.dependencies.every(
+          (dep) =>
+              dep.entity.kind == SyncEntityKind.view &&
+              dep.entity.key.single == value,
+        ) &&
+        _postgresStrings(operation.toJson());
+  }
   if (membership) {
     if (patches.length != 1 ||
         patches['membership']?.value is! bool ||
@@ -62,11 +81,15 @@ bool validLocalAccountCommand(AccountOperation operation) {
         }
       : tag
       ? {'name'}
+      : view
+      ? {'name', 'query'}
       : membership
       ? {'membership'}
       : {'title', 'completion'};
   if (create) {
-    allowed.addAll(task || tag ? {'existence'} : {'existence', 'parent'});
+    allowed.addAll(
+      task || tag || view ? {'existence'} : {'existence', 'parent'},
+    );
   }
   if (ordering) {
     if (patches.length != 1 ||
@@ -96,6 +119,8 @@ bool validLocalAccountCommand(AccountOperation operation) {
                     ? {'existence', 'title', 'priority', 'status_group'}
                     : tag
                     ? {'existence', 'name'}
+                    : view
+                    ? {'existence', 'name', 'query'}
                     : {'existence', 'title', 'completion', 'parent'})
                 .every(patches.containsKey) ||
             patches['existence']!.value != true ||
@@ -126,7 +151,8 @@ bool validLocalAccountCommand(AccountOperation operation) {
             ).hasMatch(value),
       'existence' => value is bool,
       'milestone_order' => validAccountMilestoneOrder(value),
-      'name' => validAccountTagName(value),
+      'name' => view ? validAccountViewName(value) : validAccountTagName(value),
+      'query' => validAccountViewQuery(value),
       'membership' => value is bool,
       _ => false,
     };
