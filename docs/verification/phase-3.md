@@ -1,5 +1,53 @@
 # Phase 3 verification
 
+## Current handoff — local account saved views and preferences, 19 November 2026
+
+This increment starts from the verified [PR27 handoff](https://github.com/ipar569/DoUrStuff/pull/27#issuecomment-7002823000)
+and merge `a9148a7b4036deef07dcea4a830d2ed33436acc7`. SQLite v3 now commits
+`view.create`, `view.edit`, `view.delete` and `preference.set` on the existing
+account command path. Query edits compare the entire canonical query. Selecting
+a pending view can bind its exact existence operation. Deletion conditionally
+clears the effective default in sequence order and invalidates it atomically.
+See the [storage contract](../architecture/account-local-storage-v2.md#saved-views-and-shared-defaults).
+
+- Pinned Flutter 3.47.6. Locked dependency resolution and Drift generation
+  passed. A fresh schema dump matched the retained v3 snapshot byte for byte.
+  The v1/v2/v3 snapshots, generated helpers and 26 backend migrations are intact.
+- `flutter test test/account_view_commands_test.dart test/account_saved_views_test.dart
+  test/domain_test.dart test/local_database_test.dart test/schema_test.dart`
+  passed 26 tests, including rollback at the default dirty marker, idempotent
+  retry after reopen and guest/account status-filter compatibility.
+- The guarded starter verified nine pinned services and loopback bindings.
+  `python tool/test_backend_<suite>.py --supabase .tools/supabase/supabase.exe
+  --wire-output .tools/pr28-<suite>-wire.json` passed for saved_views (15 groups),
+  foundation (8), apply (11), retention (16) and snapshots (14).
+  `dart run tool/check_backend_wire.dart .tools/pr28-<suite>-wire.json` decoded
+  172, 10, 32, 65 and 84 real replies respectively.
+- Five new scenarios in `tool/test_backend_local_commands.py` exercised 24
+  SQLite commands across 13 PostgreSQL pull pages. They compare pre-acknowledgement
+  field decisions, effective view/default values, exact originals, duplicate
+  acknowledgements and the resulting snapshot. Run with `--supabase
+  .tools/supabase/supabase.exe --dart .tools/flutter/bin/dart.bat --scenario
+  <scenario> --output .tools/pr28-<scenario>.json`. Scenarios are `views-chain`,
+  `views-switch`, `views-clear`, `views-collision` and `views-query`.
+- Local Windows release and Java 21 Gradle Android debug compilation passed.
+  The default Flutter Android build selected Java 11 and failed. With process-local
+  `APPDATA` set to an ignored directory under `.tools`, `flutter config --jdk-dir`
+  pointed to the retained Java 21 SDK and `flutter build apk --debug` succeeded.
+  An early concurrent capture replay hit a Windows SQLite DLL lock. Sequential
+  runs check effective values before acknowledgement and after each pull page.
+- Independent review of `a9168916fffc9dd388e765ad3cd01fe93e4559d2` found that
+  a guest query's `inProgress` status would be rejected by PostgreSQL. Account
+  query encoding and validation now use `in_progress` and preserve stored guest
+  queries. The real `views-chain` scenario includes this filter. Final suite,
+  re-review, CI and merge evidence are in [PR28](https://github.com/ipar569/DoUrStuff/pull/28).
+
+Next bounded Phase 3.2 increment after merge is exact-deletion task restore,
+including its original deletion identity and dependency/visibility projection.
+Bulk/undo follows. OAuth/secure persistence, native materialization, recovery/
+export, adoption, sync worker and installed native acceptance remain open.
+Production changes and releases require separate authorization.
+
 ## Current handoff — account tags/memberships, 19 November 2026
 
 Base refreshed to PR26 merge `e4e729032c394ad5e04698f3df0496a3446480b4`;

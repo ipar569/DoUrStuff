@@ -38,9 +38,13 @@ Object? _freeze(
 String canonicalSyncJson(Object? value, {int maxDepth = maxSyncValueDepth}) =>
     jsonEncode(_freeze(value, 0, maxDepth));
 
+bool isAccountUuid(Object? value) =>
+    value is String &&
+    RegExp(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$')
+        .hasMatch(value);
+
 void _uuid(String value) {
-  if (!RegExp(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$')
-      .hasMatch(value)) {
+  if (!isAccountUuid(value)) {
     throw const FormatException('Expected a lowercase UUID.');
   }
 }
