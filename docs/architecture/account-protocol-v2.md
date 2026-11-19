@@ -341,9 +341,11 @@ with independent original bases. The full query is indivisible; competing
 filters never produce a hybrid specification. Same-name views may coexist.
 
 Name is cleaned display text with 1–80 UTF-16 units, using the frozen whitespace
-policy already shared with guest names. Query is exactly `TaskQuery.toJson()`
-version 1: all keys present, sorted unique status/priority/tag arrays, canonical
-UUID tag filters, valid civil dates and consistent undated/date filters. Search
+policy already shared with guest names. The version 1 query includes every
+`TaskQuery` key and uses account status tokens (`in_progress` for In progress).
+The local guest query retains its persisted `inProgress` spelling.
+Status/priority/tag arrays are sorted and unique. Tag filters use canonical
+UUIDs and date filters require valid civil dates and consistent undated rules. Search
 has the existing 2,000-UTF-16-unit limit. No defaults or normalization are applied
 to received values or original bases. Tag filters are retained UUID predicates,
 not parent mutations or aliases; missing/deleted tags need not destroy a view.

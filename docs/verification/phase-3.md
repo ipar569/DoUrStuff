@@ -15,8 +15,8 @@ See the [storage contract](../architecture/account-local-storage-v2.md#saved-vie
   The v1/v2/v3 snapshots, generated helpers and 26 backend migrations are intact.
 - `flutter test test/account_view_commands_test.dart test/account_saved_views_test.dart
   test/domain_test.dart test/local_database_test.dart test/schema_test.dart`
-  passed 25 tests, including rollback at the default dirty marker and idempotent
-  retry after reopen. The full suite passed 233 tests.
+  passed 26 tests, including rollback at the default dirty marker, idempotent
+  retry after reopen and guest/account status-filter compatibility.
 - The guarded starter verified nine pinned services and loopback bindings.
   `python tool/test_backend_<suite>.py --supabase .tools/supabase/supabase.exe
   --wire-output .tools/pr28-<suite>-wire.json` passed for saved_views (15 groups),
@@ -31,9 +31,16 @@ See the [storage contract](../architecture/account-local-storage-v2.md#saved-vie
   <scenario> --output .tools/pr28-<scenario>.json`. Scenarios are `views-chain`,
   `views-switch`, `views-clear`, `views-collision` and `views-query`.
 - Local Windows release and Java 21 Gradle Android debug compilation passed.
-  The default Flutter Android build selected Java 11 and failed. A concurrent
-  Dart capture replay also hit a Windows SQLite DLL lock. Final reruns and
-  independent review are recorded in this increment's PR timeline.
+  The default Flutter Android build selected Java 11 and failed. With process-local
+  `APPDATA` set to an ignored directory under `.tools`, `flutter config --jdk-dir`
+  pointed to the retained Java 21 SDK and `flutter build apk --debug` succeeded.
+  An early concurrent capture replay hit a Windows SQLite DLL lock. Sequential
+  runs check effective values before acknowledgement and after each pull page.
+- Independent review of `a9168916fffc9dd388e765ad3cd01fe93e4559d2` found that
+  a guest query's `inProgress` status would be rejected by PostgreSQL. Account
+  query encoding and validation now use `in_progress` and preserve stored guest
+  queries. The real `views-chain` scenario includes this filter. Final suite,
+  re-review, CI and merge evidence are in [PR28](https://github.com/ipar569/DoUrStuff/pull/28).
 
 Next bounded Phase 3.2 increment after merge is exact-deletion task restore,
 including its original deletion identity and dependency/visibility projection.

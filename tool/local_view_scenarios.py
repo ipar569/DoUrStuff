@@ -12,7 +12,8 @@ def prepare(f, scenario):
     if scenario == 'views-chain':
         select = preference(f, 2, aid, parent=a)
         rename = edit(f, a, 3, base=predecessor(a, 'Work'))
-        spec = edit(f, a, 4, query(search='Focus'), predecessor(a, query()), 'query')
+        spec = edit(f, a, 4, query(search='Focus', statuses=['completed', 'in_progress']),
+                    predecessor(a, query()), 'query')
         clear = preference(f, 5, None, predecessor(select, aid))
         again = preference(f, 6, aid, predecessor(clear, None))
         remove = delete(f, a, 7, predecessor(a, True))

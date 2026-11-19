@@ -7,6 +7,7 @@ import 'package:dourstuff/domain/account_sync_policy.dart';
 import 'package:dourstuff/domain/account_sync_rpc.dart';
 import 'package:dourstuff/domain/account_view_validation.dart';
 import 'package:dourstuff/domain/query.dart';
+import 'package:dourstuff/domain/task.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -15,6 +16,20 @@ void main() {
         .readAsStringSync(),
   );
   final request = applyCodec.decodeRequest(fixture);
+  test('stored guest status filters round-trip and account commands use wire tokens', () {
+    final guest = {
+      ...TaskQuery().toJson(),
+      'statuses': ['completed', 'inProgress'],
+    };
+    final query = TaskQuery.fromJson(guest);
+    expect(query.statuses, {TaskStatus.completed, TaskStatus.inProgress});
+    final account = encodeAccountViewQuery(query);
+    expect(account['statuses'], ['completed', 'in_progress']);
+    expect(validAccountViewQuery(account), isTrue);
+    expect(validAccountViewQuery(guest), isFalse);
+    expect(query.toJson(), guest);
+  });
+
   test(
     'saved views retain atomic queries and exact reference dependencies',
     () {
