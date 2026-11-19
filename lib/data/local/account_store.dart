@@ -211,6 +211,9 @@ final class AccountStore {
       ],
     );
     final dirty = {entity.identity};
+    if (entity.kind == SyncEntityKind.membership) {
+      dirty.add(SyncEntity(SyncEntityKind.task, [entity.key[0]]).identity);
+    }
     if (entity.kind == SyncEntityKind.milestone) {
       final parents = before.proposals
           .map((p) => p.operation.patches['parent']?.value)
@@ -988,7 +991,8 @@ final class AccountStore {
       final operation = proposal.operation;
       final completeCreate =
           operation.command == 'task.create' ||
-          operation.command == 'milestone.create';
+          operation.command == 'milestone.create' ||
+          operation.command == 'tag.create';
       final wholeDecision = await _commandDecision(
         operation,
         shadow,
@@ -996,6 +1000,10 @@ final class AccountStore {
         cache,
       );
       final decisions = <String, FieldDisposition>{};
+      final tagCollision =
+          operation.entity.kind == SyncEntityKind.tag &&
+          operation.patches.containsKey('name') &&
+          await _tagNameCollision(operation, cache);
       for (final entry in operation.patches.entries) {
         final group = entry.key;
         final patch = entry.value;
@@ -1043,22 +1051,31 @@ final class AccountStore {
         } else if (values['existence'] == false &&
             operation.command != 'task.delete' &&
             operation.command != 'milestone.delete' &&
-            operation.command != 'tag.delete' &&
             operation.command != 'view.delete') {
           decision = FieldDisposition.recovery;
+        } else if (tagCollision && patch.base is! PredecessorBase) {
+          decision = FieldDisposition.conflict;
         } else if (patch.base case PredecessorBase base) {
           final predecessor = seen[base.operationId];
           if (predecessor == null ||
               predecessor.operation.sequence != base.sequence ||
               predecessor.operation.deviceEpoch != operation.deviceEpoch ||
               !predecessor.operation.patches.containsKey(group) ||
-              predecessor.closedGroups.contains(group)) {
-            decision = FieldDisposition.held;
+              (predecessor.closedGroups.contains(group) &&
+                  !predecessor.outcomes.containsKey(group))) {
+            decision =
+                operation.entity.kind == SyncEntityKind.tag ||
+                    operation.entity.kind == SyncEntityKind.membership
+                ? FieldDisposition.recovery
+                : FieldDisposition.held;
           } else if (!predecessor.needsReconciliation &&
-              const [
-                FieldDisposition.conflict,
-                FieldDisposition.held,
-              ].contains(predecessor.projectedOutcomes[group])) {
+              const [FieldDisposition.conflict, FieldDisposition.held].contains(
+                predecessor.outcomes[group] == null
+                    ? predecessor.projectedOutcomes[group]
+                    : FieldDisposition.values.byName(
+                        predecessor.outcomes[group]!,
+                      ),
+              )) {
             decision = FieldDisposition.held;
           } else if (operationVersions[base.operationId]?[group]
               case final String version) {
@@ -1067,6 +1084,8 @@ final class AccountStore {
                 : predecessor.operation.patches[group]!.value;
             if (_json(base.value) != _json(predecessorValue)) {
               decision = FieldDisposition.recovery;
+            } else if (tagCollision) {
+              decision = FieldDisposition.conflict;
             } else if (version == fieldVersions[group]) {
               decision = FieldDisposition.applied;
             } else {
@@ -1107,7 +1126,8 @@ final class AccountStore {
         // Bind a missing milestone's causal chain first: held descendants stay
         // held, but neither an absent base nor a successful field comparison can
         // manufacture a child that its complete create has not projected.
-        if (operation.entity.kind == SyncEntityKind.milestone &&
+        if ((operation.entity.kind == SyncEntityKind.milestone ||
+                operation.entity.kind == SyncEntityKind.tag) &&
             !completeCreate &&
             shadow == null &&
             values.isEmpty &&
@@ -1212,12 +1232,19 @@ final class AccountStore {
       'milestone.create',
       'milestone.edit',
       'milestone.delete',
+      'tag.create',
+      'tag.edit',
+      'tag.delete',
+      'task.tag',
     }.contains(operation.command);
     if (supported && !validLocalAccountCommand(operation)) {
       return FieldDisposition.recovery;
     }
     if (!supported) {
       return operation.dependencies.isEmpty ? null : FieldDisposition.held;
+    }
+    if (operation.command == 'task.tag') {
+      return _membershipDecision(operation, cache);
     }
     if (operation.command.endsWith('.create') &&
         (shadow != null || values.isNotEmpty)) {
@@ -1228,7 +1255,12 @@ final class AccountStore {
     if (!operation.command.endsWith('.create') &&
         shadow == null &&
         values.isEmpty) {
-      return operation.entity.kind == SyncEntityKind.milestone
+      if (operation.entity.kind == SyncEntityKind.tag &&
+          operation.patches.values.every((p) => p.base is! PredecessorBase)) {
+        return FieldDisposition.recovery;
+      }
+      return operation.entity.kind == SyncEntityKind.milestone ||
+              operation.entity.kind == SyncEntityKind.tag
           ? null
           : FieldDisposition.recovery;
     }
@@ -1287,6 +1319,98 @@ final class AccountStore {
       return null;
     }
     return FieldDisposition.held;
+  }
+
+  Future<bool> _tagNameCollision(
+    AccountOperation operation,
+    Map<(String, int?, bool), AccountProjection> cache,
+  ) async {
+    final name = operation.patches['name']?.value;
+    if (name is! Map) return false;
+    final rows = await db
+        .customSelect(
+          "SELECT record_key AS entity_key FROM account_records WHERE record_kind='records' "
+          "AND json_extract(record_json,'\$.entity.kind')='tag' "
+          "UNION SELECT entity_key FROM account_operations WHERE json_extract(envelope_json,'\$.entity.kind')='tag'",
+        )
+        .get();
+    for (final row in rows) {
+      final key = row.read<String>('entity_key');
+      if (key == operation.entity.identity) continue;
+      final tag = SyncEntity(
+        SyncEntityKind.tag,
+        (jsonDecode(key)['key'] as List).cast<String>(),
+      );
+      // Strictly decreasing sequence cutoffs make mutually colliding pending
+      // names deterministic without cycles or a name-to-UUID alias.
+      final other = await _projection(
+        tag,
+        beforeSequence: operation.sequence,
+        cache: cache,
+      );
+      final otherName = other.values['name'];
+      if (other.visible &&
+          otherName is Map &&
+          otherName['normalized_name'] == name['normalized_name']) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  Future<FieldDisposition?> _membershipDecision(
+    AccountOperation operation,
+    Map<(String, int?, bool), AccountProjection> cache,
+  ) async {
+    final parents = <String, AccountProjection>{};
+    for (final entity in [
+      SyncEntity(SyncEntityKind.task, [operation.entity.key[0]]),
+      SyncEntity(SyncEntityKind.tag, [operation.entity.key[1]]),
+    ]) {
+      parents[entity.identity] = await _projection(
+        entity,
+        beforeSequence: operation.sequence,
+        cache: cache,
+      );
+    }
+    var waiting = false;
+    for (final dep in operation.dependencies) {
+      final source = parents[dep.entity.identity]!.proposals
+          .where((p) => p.operation.operationId == dep.operationId)
+          .firstOrNull;
+      if (source == null ||
+          source.needsReconciliation ||
+          source.operation.sequence != dep.sequence ||
+          source.operation.deviceEpoch != operation.deviceEpoch ||
+          !source.operation.patches.containsKey('existence')) {
+        return FieldDisposition.recovery;
+      }
+      // A closed conflict still has immutable receipt evidence. Closure alone
+      // cannot supply a successful parent or authorize a new relationship.
+      final receipt = source.outcomes['existence'];
+      final outcome = receipt == null
+          ? source.projectedOutcomes['existence']
+          : FieldDisposition.values.byName(receipt);
+      if (outcome == FieldDisposition.conflict ||
+          outcome == FieldDisposition.held) {
+        waiting = true;
+      } else if (outcome != FieldDisposition.applied &&
+              outcome != FieldDisposition.equivalent ||
+          (source.acceptedFields['existence']?.value ??
+                  source.operation.patches['existence']?.value) !=
+              true) {
+        return FieldDisposition.recovery;
+      }
+    }
+    if (waiting) return FieldDisposition.held;
+    final adding = operation.patches['membership']!.value == true;
+    for (final parent in parents.values) {
+      if (!parent.values.containsKey('existence') ||
+          adding && !parent.visible) {
+        return FieldDisposition.recovery;
+      }
+    }
+    return null;
   }
 
   Future<FieldDisposition?> _orderDecision(

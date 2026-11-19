@@ -1,5 +1,83 @@
 # Phase 3 verification
 
+## Current handoff — account tags/memberships, 19 November 2026
+
+Base refreshed to PR26 merge `e4e729032c394ad5e04698f3df0496a3446480b4`;
+the primary checkout was clean. Work continues on
+`codex/phase-3-account-tags-memberships`, [PR27](https://github.com/ipar569/DoUrStuff/pull/27). PR26's
+[final handoff](https://github.com/ipar569/DoUrStuff/pull/26#issuecomment-6906554884)
+supersedes its pending-review notes below.
+
+Local commands now support tag create/edit/delete and exact-pair membership
+add/remove through the existing atomic original/sequence/history/dirty transaction.
+Collision/dependency previews preserve whole creates, original bases, retained
+receipt evidence after closure, hidden-parent removals and UUID identity. No
+schema, wire version, migration, native UI or account activation change.
+
+Verification so far (pinned `.tools/flutter/bin` executables):
+
+- `flutter pub get --enforce-lockfile`, `dart run build_runner build` and
+  `flutter analyze`: passed. Initial analysis reported five missing-brace lint
+  findings, all fixed; final analysis has no issues.
+- `flutter test test/account_tag_membership_commands_test.dart`: **13 passed**.
+  Combined tag/domain/local-database/schema suite: **33 passed**.
+  Final `flutter test --reporter expanded`: **231 passed** (ignored log
+  `.tools/account-tags-flutter-tests.log`). Earlier focused commands/order/tags
+  suite: **48 passed**.
+- `dart format --output=none --set-exit-if-changed lib test tool`: passed,
+  **63 files unchanged**. `git diff --check`: passed.
+- `dart run drift_dev schema dump lib/data/local/database.dart
+  .tools/account-tags-schema-v3.json`: passed, hash equals committed v3 snapshot.
+  All retained snapshots/helpers/generated Dart, lockfile and **26 migrations**
+  remain unchanged.
+- `python tool/test_backend_http.py`, `python tool/test_local_backend.py`,
+  `python tool/test_retention_runner.py`: **3/3/4 passed**. Initial HTTP tests
+  failed under sandbox socket restrictions and passed with loopback permission.
+- `flutter build windows --release`: passed (**9.6s**).
+  `$env:JAVA_HOME=(Get-Content .tools/android-java-home.txt -Raw).Trim();
+  android/gradlew.bat -p android assembleDebug -Ptarget-platform=android-arm64
+  --no-daemon`: passed (**36s**), existing Gradle deprecation warnings retained.
+  The direct Flutter Java-selection limitation is not claimed fixed.
+
+Independent review of initial head `6106b99e3fa706ce8389105695a7301bc4750eb6`
+found one P2: missing-tag edits/deletes using observed/absent bases could preview
+conflict rather than recovery, holding subsequent work incorrectly. The fix
+checks absent identity before collision comparison while retaining exact held
+predecessor behavior. The real `tags-evidence` regression confirmed that missing
+edits, deletes and successors need recovery. Independent re-review of code head
+`0decbb857a2cdeb387dbf34871a20d4ad033d849` found no remaining actionable
+findings. Hosted Quality, Android and Windows checks passed on that head.
+[Review and final local build evidence](https://github.com/ipar569/DoUrStuff/pull/27#issuecomment-6967187459).
+
+The user authorized launching Docker Desktop on 19 November. Only
+`python tool/local_backend.py --start` started the backend. It verified nine
+pinned services, eight passing health checks and loopback-only port bindings.
+
+Five SQLite-to-PostgreSQL scenarios passed on the reviewed implementation:
+
+| Scenario | Local commands | Pull pages |
+| --- | ---: | ---: |
+| tags-chain | 9 | 5 |
+| tags-collision | 7 | 4 |
+| tags-causal | 8 | 4 |
+| tags-evidence | 8 | 4 |
+| tags-closed | 6 | 4 |
+
+Run each with `python tool/test_backend_local_commands.py --supabase
+.tools/supabase/supabase.exe --dart .tools/flutter/bin/dart.bat --scenario
+<scenario> --output .tools/pr27-reviewed-<scenario>.json`. Before acknowledging
+receipts, the harness compared field decisions, effective tag names, exact pair
+values and parent visibility with real PostgreSQL. It also checked retries,
+duplicate acknowledgements, original bytes, local history and convergence with a
+fresh snapshot. The closure scenario includes two source creates and their real
+receipts before the four successor commands. See the PR timeline for the final
+regression counts, reviewed head, hosted checks and merge status.
+
+Next after delivery: views/preferences, exact-deletion restore, bulk/undo.
+OAuth/secure persistence, materialization, recovery/export, adoption, worker/
+lifecycle, installed/native acceptance and Phase 4 remain open. Production
+changes and releases remain unauthorized.
+
 ## Current handoff — bounded account ordering, 16 November 2026
 
 PR26 independent review of initial head `a2dbc641113a96e3f3eacccf021dd4893e4715d0`

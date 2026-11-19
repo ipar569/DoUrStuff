@@ -372,6 +372,16 @@ persistence feasibility, materialization, recovery/export, adoption and
 worker/lifecycle remain unfinished. App activation, representation/native gates
 and Phase 4 stay open; production changes and releases remain unauthorized.
 
+19 November tags/memberships increment: the local account command
+surface now covers tag create/edit/delete and exact task/tag add/remove, with
+atomic history/dirty intent, causal normalized-name collision checks and parent
+dependency projection. No schema/migration change or app activation. Five real SQLite-to-PostgreSQL scenarios passed with 38 local commands across
+21 pull pages. See [verification](verification/phase-3.md) and [PR27](https://github.com/ipar569/DoUrStuff/pull/27)
+for final review and delivery. Next bounded increment: views/preferences, followed
+by exact-deletion restore and bulk/undo. Existing native,
+OAuth/secure persistence, materialization, recovery/export, adoption and
+worker/lifecycle gates stay open. Production changes/releases remain unauthorized.
+
 ## Phase 4: recurrence, calendar and reminders
 
 Bounded deterministic generation/history; immutable future segments and offline

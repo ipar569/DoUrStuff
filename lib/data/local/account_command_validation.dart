@@ -1,5 +1,6 @@
 import '../../domain/account_sync.dart';
 import '../../domain/account_task_validation.dart';
+import '../../domain/tag_normalization.dart';
 import '../time_policy.dart';
 
 /// Bounded local command surface. Wire decoding intentionally remains broader:
@@ -8,6 +9,8 @@ bool validLocalAccountCommand(AccountOperation operation) {
   final patches = operation.patches;
   final command = operation.command;
   final task = operation.entity.kind == SyncEntityKind.task;
+  final tag = operation.entity.kind == SyncEntityKind.tag;
+  final membership = operation.entity.kind == SyncEntityKind.membership;
   final create = command.endsWith('.create');
   final delete = command.endsWith('.delete');
   final ordering = command == 'task.milestone_order';
@@ -20,11 +23,30 @@ bool validLocalAccountCommand(AccountOperation operation) {
     'milestone.create',
     'milestone.edit',
     'milestone.delete',
+    'tag.create',
+    'tag.edit',
+    'tag.delete',
+    'task.tag',
   }.contains(command)) {
     return false;
   }
   if (task && !ordering && operation.dependencies.isNotEmpty) return false;
+  if (tag && operation.dependencies.isNotEmpty) return false;
+  if (membership) {
+    if (patches.length != 1 ||
+        patches['membership']?.value is! bool ||
+        operation.dependencies.length > 2) {
+      return false;
+    }
+    final base = patches['membership']!.base;
+    if (base is ObservedBase && base.value is! bool ||
+        base is PredecessorBase && base.value is! bool) {
+      return false;
+    }
+  }
   if (!task &&
+      !tag &&
+      !membership &&
       (!create && operation.dependencies.isNotEmpty ||
           operation.dependencies.length > 1)) {
     return false;
@@ -38,8 +60,14 @@ bool validLocalAccountCommand(AccountOperation operation) {
           'due',
           'status_group',
         }
+      : tag
+      ? {'name'}
+      : membership
+      ? {'membership'}
       : {'title', 'completion'};
-  if (create) allowed.addAll(task ? {'existence'} : {'existence', 'parent'});
+  if (create) {
+    allowed.addAll(task || tag ? {'existence'} : {'existence', 'parent'});
+  }
   if (ordering) {
     if (patches.length != 1 ||
         !validAccountMilestoneOrder(patches['milestone_order']?.value)) {
@@ -66,6 +94,8 @@ bool validLocalAccountCommand(AccountOperation operation) {
     if (create &&
         (!(task
                     ? {'existence', 'title', 'priority', 'status_group'}
+                    : tag
+                    ? {'existence', 'name'}
                     : {'existence', 'title', 'completion', 'parent'})
                 .every(patches.containsKey) ||
             patches['existence']!.value != true ||
@@ -96,6 +126,8 @@ bool validLocalAccountCommand(AccountOperation operation) {
             ).hasMatch(value),
       'existence' => value is bool,
       'milestone_order' => validAccountMilestoneOrder(value),
+      'name' => validAccountTagName(value),
+      'membership' => value is bool,
       _ => false,
     };
     if (!valid) return false;
@@ -105,7 +137,15 @@ bool validLocalAccountCommand(AccountOperation operation) {
   if (!_postgresStrings(operation.toJson())) return false;
   final seen = <String>{};
   for (final dep in operation.dependencies) {
-    if (ordering) {
+    if (membership) {
+      if (!seen.add(dep.entity.identity) ||
+          !(dep.entity.kind == SyncEntityKind.task &&
+                  dep.entity.key.single == operation.entity.key[0] ||
+              dep.entity.kind == SyncEntityKind.tag &&
+                  dep.entity.key.single == operation.entity.key[1])) {
+        return false;
+      }
+    } else if (ordering) {
       final ids =
           (patches['milestone_order']!.value as Map)['ordered_ids'] as List;
       if (!seen.add(dep.entity.identity) ||
