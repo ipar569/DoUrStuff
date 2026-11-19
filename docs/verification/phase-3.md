@@ -1,10 +1,10 @@
 # Phase 3 verification
 
-## Current handoff — account tags/memberships, 18 November 2026
+## Current handoff — account tags/memberships, 19 November 2026
 
 Base refreshed to PR26 merge `e4e729032c394ad5e04698f3df0496a3446480b4`;
 the primary checkout was clean. Work continues on
-`codex/phase-3-account-tags-memberships`, draft [PR27](https://github.com/ipar569/DoUrStuff/pull/27). PR26's
+`codex/phase-3-account-tags-memberships`, [PR27](https://github.com/ipar569/DoUrStuff/pull/27). PR26's
 [final handoff](https://github.com/ipar569/DoUrStuff/pull/26#issuecomment-6906554884)
 supersedes its pending-review notes below.
 
@@ -43,31 +43,36 @@ Independent review of initial head `6106b99e3fa706ce8389105695a7301bc4750eb6`
 found one P2: missing-tag edits/deletes using observed/absent bases could preview
 conflict rather than recovery, holding subsequent work incorrectly. The fix
 checks absent identity before collision comparison while retaining exact held
-predecessor behavior. SQLite covers missing edit/delete and successor; the real
-`tags-evidence` scenario includes those cases but remains unexecuted. The reviewer
-found no other actionable issue in the initial diff. Corrected-head re-review
-and hosted checks remain required; record their final status in the PR timeline.
-This is independent agent review, not another GitHub account's approval.
+predecessor behavior. The real `tags-evidence` regression confirmed that missing
+edits, deletes and successors need recovery. Independent re-review of code head
+`0decbb857a2cdeb387dbf34871a20d4ad033d849` found no remaining actionable
+findings. Hosted Quality, Android and Windows checks passed on that head.
+[Review and final local build evidence](https://github.com/ipar569/DoUrStuff/pull/27#issuecomment-6967187459).
 
-Initial formatting returned a user telemetry-path permission error after editing;
-the authorized rerun and final no-change check passed. The GitHub connector
-returned 403 creating the draft; authenticated `gh pr create` succeeded.
+The user authorized launching Docker Desktop on 19 November. Only
+`python tool/local_backend.py --start` started the backend. It verified nine
+pinned services, eight passing health checks and loopback-only port bindings.
 
-**Delivery blocked on real PostgreSQL verification.**
-`python tool/local_backend.py --start` fails at Docker version because the
-engine is unavailable. Automatic approval review rejected launching installed
-Docker Desktop, interpreting the user's guarded-start rule as also prohibiting
-engine launch; a specific approval/engine-start request is pending. Do not bypass
-that rejection. No containers, volumes, backups or migrations were changed.
-The five new `tags-*` scenarios in `tool/test_backend_local_commands.py` are
-prepared but unexecuted; they compare pre-receipt decisions/values/visibility,
-duplicate submission/acknowledgement, originals, history and final snapshots.
+Five SQLite-to-PostgreSQL scenarios passed on the reviewed implementation:
 
-Once Docker is available, start only through `python tool/local_backend.py --start`.
-Run those five scenarios plus the existing nine, then tag/membership/foundation/
-apply/retention/snapshot backend suites with production Dart decoding. Obtain
-independent review of the final PR head and successful hosted checks before
-guarded merge. Keep this increment open until its real backend gate passes.
+| Scenario | Local commands | Pull pages |
+| --- | ---: | ---: |
+| tags-chain | 9 | 5 |
+| tags-collision | 7 | 4 |
+| tags-causal | 8 | 4 |
+| tags-evidence | 8 | 4 |
+| tags-closed | 6 | 4 |
+
+Run each with `python tool/test_backend_local_commands.py --supabase
+.tools/supabase/supabase.exe --dart .tools/flutter/bin/dart.bat --scenario
+<scenario> --output .tools/pr27-reviewed-<scenario>.json`. Before acknowledging
+receipts, the harness compared field decisions, effective tag names, exact pair
+values and parent visibility with real PostgreSQL. It also checked retries,
+duplicate acknowledgements, original bytes, local history and convergence with a
+fresh snapshot. The closure scenario includes two source creates and their real
+receipts before the four successor commands. See the PR timeline for the final
+regression counts, reviewed head, hosted checks and merge status.
+
 Next after delivery: views/preferences, exact-deletion restore, bulk/undo.
 OAuth/secure persistence, materialization, recovery/export, adoption, worker/
 lifecycle, installed/native acceptance and Phase 4 remain open. Production
