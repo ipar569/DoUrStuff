@@ -151,6 +151,7 @@ final class AccountStore {
     required String command,
     required Map<String, FieldPatch> patches,
     List<OperationDependency> dependencies = const [],
+    RestorePrecondition? restore,
     required DateTime occurredAtUtc,
   }) => db.transaction(() async {
     await _guard();
@@ -177,6 +178,7 @@ final class AccountStore {
       command: command,
       patches: patches,
       dependencies: dependencies,
+      restore: restore,
       provenance: {'occurred_at': occurredAtUtc.millisecondsSinceEpoch},
     );
     if (!validLocalAccountCommand(operation)) {
@@ -985,6 +987,7 @@ final class AccountStore {
     final sources = <String, String>{};
     final pending = <String>{};
     final comparisonFields = <String, AcceptedField>{...?shadow?.fields};
+    var deleteOperationId = shadow?.deleteOperationId;
     // Ephemeral causal identities, never serialized or presented as server
     // revisions. Equivalent operations share an identity; applied writes replace
     // it. Keep each operation's identity so either equivalent predecessor binds.
@@ -1063,6 +1066,11 @@ final class AccountStore {
             sources[group] = operation.operationId;
             pending.remove(group);
             comparisonFields[group] = accepted;
+            if (group == 'existence' &&
+                operation.command == 'task.delete' &&
+                outcome == 'applied') {
+              deleteOperationId = operation.operationId;
+            }
             fieldVersions[group] = 'accepted:${accepted.revision}';
           }
           decision = FieldDisposition.values.byName(outcome!);
@@ -1081,13 +1089,26 @@ final class AccountStore {
           // An independent edit to a missing view needs recovery even when
           // another field in the same command names a predecessor.
           decision = FieldDisposition.recovery;
-        } else if ((!completeCreate && operation.command.endsWith('.create')) ||
-            operation.command == 'task.restore') {
-          // Complete creates and exact-deletion restore need command-level
-          // validation; individual field equivalence cannot authorize them.
+        } else if (operation.restore case final expected?) {
+          // Only a downloaded tombstone or an applied deletion receipt proves
+          // its revision. The server checks its ledger and clock at apply time.
+          final existence = comparisonFields['existence'];
+          decision =
+              !pending.contains('existence') &&
+                  values['existence'] == false &&
+                  existence?.value == false &&
+                  existence?.revision == expected.revision &&
+                  deleteOperationId == expected.deleteOperationId &&
+                  const [
+                    'title',
+                    'priority',
+                    'status_group',
+                  ].every(comparisonFields.containsKey)
+              ? FieldDisposition.applied
+              : FieldDisposition.recovery;
+        } else if (!completeCreate && operation.command.endsWith('.create')) {
           decision = FieldDisposition.held;
         } else if (values['existence'] == false &&
-            operation.command != 'task.delete' &&
             operation.command != 'milestone.delete') {
           decision = FieldDisposition.recovery;
         } else if (tagCollision && patch.base is! PredecessorBase) {
@@ -1324,10 +1345,17 @@ final class AccountStore {
     if (operation.dependencies.isEmpty) {
       // Unproven pending parents cannot authorize a child. The caller must name
       // their exact earlier create/restore operation, not just its UUID.
-      return parent.visible &&
-              (parent.accepted?.fields['existence']?.value == true ||
-                  (operation.command != 'milestone.create' &&
-                      values['existence'] == true))
+      if (!parent.visible) return FieldDisposition.recovery;
+      final source = parent.pendingSources['existence'];
+      final acceptedExistence = source == null
+          ? parent.accepted?.fields['existence']
+          : parent.proposals
+                .where((p) => p.operation.operationId == source)
+                .firstOrNull
+                ?.acceptedFields['existence'];
+      return acceptedExistence?.value == true ||
+              (operation.command != 'milestone.create' &&
+                  values['existence'] == true)
           ? null
           : FieldDisposition.recovery;
     }

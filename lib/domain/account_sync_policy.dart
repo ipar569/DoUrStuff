@@ -129,17 +129,7 @@ RestoreDisposition checkRestore({
     throw const FormatException('Expected valid server deletion time.');
   }
   final expected = operation.restore;
-  final existence = operation.patches['existence'];
-  if (operation.command != 'task.restore' ||
-      expected == null ||
-      operation.patches.length != 1 ||
-      existence == null ||
-      existence.value != true ||
-      existence.base is! ObservedBase) {
-    return RestoreDisposition.invalidCommand;
-  }
-  final base = existence.base as ObservedBase;
-  if (base.value != false || base.revision != expected.revision) {
+  if (expected == null || !operation.hasExactRestorePatch) {
     return RestoreDisposition.invalidCommand;
   }
   if (!isDeleted ||

@@ -132,6 +132,136 @@ void main() {
     ),
   );
 
+  Future<AccountOperation> restore(
+    int op,
+    RestorePrecondition target, {
+    Map<String, FieldPatch>? patches,
+    List<OperationDependency> dependencies = const [],
+  }) => store.commitCommand(
+    operationId: id(op),
+    entity: task,
+    command: 'task.restore',
+    restore: target,
+    patches:
+        patches ??
+        {'existence': FieldPatch(ObservedBase(target.revision, false), true)},
+    dependencies: dependencies,
+    occurredAtUtc: now,
+  );
+
+  test('restore shape rejects mismatched revisions, bases, extra fields and dependencies atomically', () async {
+    final target = RestorePrecondition(id(40), 5);
+    for (final fields in [
+      {'existence': FieldPatch(ObservedBase(4, false), true)},
+      {'existence': FieldPatch(ObservedBase(5, true), true)},
+      {'existence': FieldPatch(ObservedBase(5, false), false)},
+      {'existence': FieldPatch(const AbsentBase(), true)},
+      {
+        'existence': FieldPatch(ObservedBase(5, false), true),
+        'title': FieldPatch(const AbsentBase(), 'Replacement'),
+      },
+    ]) {
+      await expectLater(
+        restore(12, target, patches: fields),
+        throwsFormatException,
+      );
+    }
+    expect(await next(), 1);
+    expect(await count('account_command_history'), 0);
+    expect(await count('account_notification_dirty'), 0);
+    final op = await create();
+    await expectLater(
+      restore(
+        12,
+        target,
+        patches: {
+          'existence': FieldPatch(
+            PredecessorBase(op.operationId, op.sequence, false),
+            true,
+          ),
+        },
+      ),
+      throwsFormatException,
+    );
+    await expectLater(
+      restore(
+        12,
+        target,
+        dependencies: [
+          OperationDependency(
+            entity: task,
+            operationId: op.operationId,
+            sequence: op.sequence,
+          ),
+        ],
+      ),
+      throwsFormatException,
+    );
+    expect(await next(), 2);
+  });
+
+  test('restore binds an applied delete receipt before pull and retains exact retry identity', () async {
+    final m = manifest(token: 71);
+    await store.beginSnapshot(m, now);
+    await store.stagePage(
+      page(
+        m,
+        records: [
+          ShadowRecord(
+            entity: task,
+            fields: {
+              for (final p in createFields().entries)
+                p.key: AcceptedField(5, p.value.value),
+            },
+          ),
+        ],
+      ),
+      now,
+    );
+    await store.installSnapshot(now);
+    final deletion = await store.commitCommand(
+      operationId: id(11),
+      entity: task,
+      command: 'task.delete',
+      patches: {'existence': FieldPatch(ObservedBase(5, true), false)},
+      occurredAtUtc: now,
+    );
+    final target = RestorePrecondition(deletion.operationId, 6);
+    final undo = await restore(12, target);
+    expect((await store.projection(task)).visible, isFalse);
+    await acknowledge(deletion);
+    expect(
+      (await store.projection(task)).pendingSources['existence'],
+      undo.operationId,
+    );
+    await db.close();
+    db = AppDatabase.file(File('${dir.path}/profile.sqlite'));
+    store = await AccountStore.open(db, id(1));
+    expect((await restore(12, target)).payloadIdentity, undo.payloadIdentity);
+    await expectLater(
+      restore(12, RestorePrecondition(id(40), 6)),
+      throwsStateError,
+    );
+    expect((await store.projection(task)).visible, isTrue);
+    expect(await next(), 3);
+    expect(await count('account_command_history'), 2);
+    // The downloaded parent was live, but the receipt and unacknowledged
+    // restore now supersede it. This child needs an explicit dependency.
+    await store.commitCommand(
+      operationId: id(13),
+      entity: child,
+      command: 'milestone.create',
+      occurredAtUtc: now,
+      patches: {
+        'title': FieldPatch(const AbsentBase(), 'Step'),
+        'completion': FieldPatch(const AbsentBase(), null),
+        'existence': FieldPatch(const AbsentBase(), true),
+        'parent': FieldPatch(const AbsentBase(), task.key.single),
+      },
+    );
+    expect((await store.projection(child)).visible, isFalse);
+  });
+
   test('complete task and dependent child survive reopen with atomic history and dirty intent', () async {
     final parent = await create();
     final step = await milestone(parent);

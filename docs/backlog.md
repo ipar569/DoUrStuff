@@ -390,6 +390,12 @@ view. See the [Phase 3 verification handoff](verification/phase-3.md).
 The next bounded Phase 3.2 increment is exact-deletion task restore, followed
 by bulk/undo. Account activation and native acceptance remain open.
 
+21 November account task restore. SQLite commits the original deletion UUID
+and revision and projects task, child, membership and order visibility. The
+next bounded Phase 3.2 increment is bulk/undo with immutable per-task targets,
+transactional intent and PostgreSQL recovery verification. Account activation
+and native gates remain open. See the [verification handoff](verification/phase-3.md).
+
 ## Phase 4: recurrence, calendar and reminders
 
 Bounded deterministic generation/history; immutable future segments and offline
