@@ -55,7 +55,9 @@ visible task or compacted core yields recovery in the preview.
 
 For a matching tombstone with retained core fields, SQLite previews visibility
 and evaluates subsequent milestone, order and membership dependencies. An
-independent child deletion or membership removal still applies. Restoration
+acknowledged restore proves a milestone's parent even while pull is behind.
+A locally pending restore requires the milestone create to name its exact
+parent dependency. An independent child deletion or membership removal still applies. Restoration
 never replays a rejected edit. Only PostgreSQL has the deletion ledger and
 trusted clock for the 720-hour limit. An expiry rejection withdraws the preview
 and preserves the restore and its dependents for recovery. A downloaded newer

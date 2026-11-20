@@ -327,11 +327,18 @@ Future<void> main(List<String> args) async {
           final proposal = projection.proposals.singleWhere(
             (p) => p.operation.operationId == op.operationId,
           );
-          for (final field in (result.results[i] as OperationReceipt).fields) {
-            if (proposal.projectedOutcomes[field.group] != field.disposition) {
+          final receipt = result.results[i] as OperationReceipt;
+          final expectedOutcomes = {
+            if (receipt.disposition == ReceiptDisposition.rejected)
+              for (final group in op.patches.keys)
+                group: FieldDisposition.recovery,
+            for (final field in receipt.fields) field.group: field.disposition,
+          };
+          for (final field in expectedOutcomes.entries) {
+            if (proposal.projectedOutcomes[field.key] != field.value) {
               throw StateError(
-                'Local $scenario operation $i ${field.group}: '
-                '${proposal.projectedOutcomes[field.group]} != ${field.disposition}.',
+                'Local $scenario operation $i ${field.key}: '
+                '${proposal.projectedOutcomes[field.key]} != ${field.value}.',
               );
             }
           }

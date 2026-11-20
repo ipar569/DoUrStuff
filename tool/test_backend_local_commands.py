@@ -80,6 +80,13 @@ def main():
         elif args.scenario == 'tags-closed':
             fixture['seed'], proposals = close_tags(f, proposals, initial)
             order_expected = ['held', 'held', 'held', 'conflict']
+        elif args.scenario == 'restore-receipt':
+            undo, child = proposals
+            request = f.request(undo)
+            receipt = backend.rpc('apply', f.token, request)
+            require(receipt['result']['results'][0]['disposition'] == 'applied', 'Restore acknowledged')
+            fixture['seed'] = dict(request=request, receipt=receipt, downloads=[])
+            proposals = [child]
         if proposals is not None:
             fixture['proposals'] = proposals
         args.output.write_text(json.dumps(fixture), encoding='utf-8')
@@ -101,13 +108,14 @@ def main():
         require([r['disposition'] for r in response['result']['results']] == expected,
                 'Expected SQLite command outcomes')
         if args.scenario in RESTORE_SCENARIOS:
-            rejected = next(r for r in response['result']['results'] if r['disposition'] == 'rejected')
             code = ('restore_content_expired' if args.scenario in ('restore-expired', 'restore-compacted')
                     else 'stale_deletion')
-            require(rejected['rejection_code'] == code, 'Restore rejected for the expected reason')
+            for r in response['result']['results']:
+                if r['disposition'] == 'rejected':
+                    require(r['rejection_code'] == code, 'Restore rejected for the expected reason')
         require(backend.rpc('apply', f.token, request) == response, 'Dropped-response retry is immutable')
         cursor = (fixture['seed']['downloads'][-1]['reply']['result']['through']['revision']
-                  if 'seed' in fixture else initial['at']['revision'])
+                  if fixture.get('seed', {}).get('downloads') else initial['at']['revision'])
         downloads = []
         if 'intervening_pull' in fixture:
             cursor = fixture['intervening_pull']['reply']['result']['through']['revision']

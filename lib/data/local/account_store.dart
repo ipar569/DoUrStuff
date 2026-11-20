@@ -1345,10 +1345,17 @@ final class AccountStore {
     if (operation.dependencies.isEmpty) {
       // Unproven pending parents cannot authorize a child. The caller must name
       // their exact earlier create/restore operation, not just its UUID.
-      return parent.visible &&
-              (parent.accepted?.fields['existence']?.value == true ||
-                  (operation.command != 'milestone.create' &&
-                      values['existence'] == true))
+      if (!parent.visible) return FieldDisposition.recovery;
+      final source = parent.pendingSources['existence'];
+      final acceptedExistence = source == null
+          ? parent.accepted?.fields['existence']
+          : parent.proposals
+                .where((p) => p.operation.operationId == source)
+                .firstOrNull
+                ?.acceptedFields['existence'];
+      return acceptedExistence?.value == true ||
+              (operation.command != 'milestone.create' &&
+                  values['existence'] == true)
           ? null
           : FieldDisposition.recovery;
     }

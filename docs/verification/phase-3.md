@@ -25,12 +25,21 @@ and the server's exclusive 720-hour cutoff.
 - `python tool/test_backend_local_commands.py --supabase .tools/supabase/supabase.exe
   --dart .tools/flutter/bin/dart.bat --scenario <scenario> --output .tools/pr29-<scenario>.json`
   passed for `restore-visible`, `restore-cycle`, `restore-stale`,
-  `restore-expired` and `restore-compacted` (20 commands, 11 pull pages).
+  `restore-expired`, `restore-compacted` and `restore-receipt` (22 commands,
+  12 pull pages).
   Checks cover exact-ID and exact-revision mismatches, repeated restore, dependent
   commands, independent hidden children/removals, an unresolved late edit,
   a second device replacing the deletion after local commit, server-only expiry
   and compacted content. Retry bytes, receipt overlays, page projections and
   final snapshot/recovery records were checked against PostgreSQL.
+- Independent review of `5e14e41e921a1fc236dc19d0c087ecda241614a2`
+  identified a dependency-free child hidden between restore acknowledgement
+  and pull, and a parity assertion that skipped terminal rejection receipts.
+  The child now uses the effective accepted existence evidence. The harness
+  verifies recovery for each rejected patch, including wrong-ID and wrong-
+  revision restores on the same task. The server-only expiry case checks the
+  provisional preview separately. Follow [PR 29](https://github.com/ipar569/DoUrStuff/pull/29)
+  for the final review and checks.
 - `python tool/test_backend_<suite>.py --supabase .tools/supabase/supabase.exe
   --wire-output .tools/pr29-<suite>-wire.json` passed for task_restore,
   foundation, apply, retention and snapshots (8/8/11/16/14 groups).

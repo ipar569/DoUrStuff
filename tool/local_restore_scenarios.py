@@ -11,7 +11,8 @@ from test_backend_task_delete import deletion
 from test_backend_task_restore import restore
 
 
-SCENARIOS = ['restore-visible', 'restore-cycle', 'restore-stale', 'restore-expired', 'restore-compacted']
+SCENARIOS = ['restore-visible', 'restore-cycle', 'restore-stale', 'restore-expired', 'restore-compacted',
+             'restore-receipt']
 
 
 def prepare(f, scenario):
@@ -55,6 +56,8 @@ def prepare(f, scenario):
         return [wrong_id, wrong_revision, exact, again, stale, milestone(f, 6, dependency=exact)], (
             ['rejected', 'rejected', 'applied', 'applied', 'rejected', 'conflict'])
     undo = restore(f, tombstone, 1)
+    if scenario == 'restore-receipt':
+        return [undo, milestone(f, 2)], ['applied']
     return [undo, milestone(f, 2, dependency=undo)], ['rejected', 'conflict']
 
 

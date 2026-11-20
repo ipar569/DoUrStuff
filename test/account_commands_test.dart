@@ -245,6 +245,21 @@ void main() {
     expect((await store.projection(task)).visible, isTrue);
     expect(await next(), 3);
     expect(await count('account_command_history'), 2);
+    // The downloaded parent was live, but the receipt and unacknowledged
+    // restore now supersede it. This child needs an explicit dependency.
+    await store.commitCommand(
+      operationId: id(13),
+      entity: child,
+      command: 'milestone.create',
+      occurredAtUtc: now,
+      patches: {
+        'title': FieldPatch(const AbsentBase(), 'Step'),
+        'completion': FieldPatch(const AbsentBase(), null),
+        'existence': FieldPatch(const AbsentBase(), true),
+        'parent': FieldPatch(const AbsentBase(), task.key.single),
+      },
+    );
+    expect((await store.projection(child)).visible, isFalse);
   });
 
   test('complete task and dependent child survive reopen with atomic history and dirty intent', () async {
