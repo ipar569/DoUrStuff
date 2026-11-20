@@ -11,6 +11,7 @@ const localAccountCommands = {
   'task.edit',
   'task.status',
   'task.delete',
+  'task.restore',
   'task.milestone_order',
   'milestone.create',
   'milestone.edit',
@@ -96,6 +97,8 @@ bool validLocalAccountCommand(AccountOperation operation) {
         !validAccountMilestoneOrder(patches['milestone_order']?.value)) {
       return false;
     }
+  } else if (operation.restore != null) {
+    if (!operation.hasExactRestorePatch) return false;
   } else if (delete) {
     if (patches.length != 1 || patches['existence']?.value != false) {
       return false;

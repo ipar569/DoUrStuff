@@ -14,6 +14,7 @@ from local_order_scenarios import SCENARIOS, prepare as prepare_order, close_sou
 from test_backend_milestone_order import projected
 from local_tag_scenarios import SCENARIOS as TAG_SCENARIOS, prepare as prepare_tags, close_sources as close_tags
 from local_view_scenarios import SCENARIOS as VIEW_SCENARIOS, prepare as prepare_views
+from local_restore_scenarios import SCENARIOS as RESTORE_SCENARIOS, prepare as prepare_restore, supersede
 
 
 def main():
@@ -21,7 +22,7 @@ def main():
     parser.add_argument('--supabase', default='supabase')
     parser.add_argument('--dart', default='dart')
     parser.add_argument('--output', type=Path, required=True)
-    parser.add_argument('--scenario', choices=['chain', 'equivalent', 'held', 'causal'] + SCENARIOS + TAG_SCENARIOS + VIEW_SCENARIOS, default='chain')
+    parser.add_argument('--scenario', choices=['chain', 'equivalent', 'held', 'causal'] + SCENARIOS + TAG_SCENARIOS + VIEW_SCENARIOS + RESTORE_SCENARIOS, default='chain')
     args = parser.parse_args()
     if Path(args.dart).is_file():
         args.dart = str(Path(args.dart).resolve())
@@ -34,7 +35,9 @@ def main():
         f = TaskFixture(backend, sql('select server_epoch from sync_private.backend_state;'))
         proposals = None
         order_expected = None
-        if args.scenario in VIEW_SCENARIOS:
+        if args.scenario in RESTORE_SCENARIOS:
+            proposals, order_expected = prepare_restore(f, args.scenario)
+        elif args.scenario in VIEW_SCENARIOS:
             proposals, order_expected = prepare_views(f, args.scenario)
         elif args.scenario in TAG_SCENARIOS:
             proposals, order_expected = prepare_tags(f, args.scenario)
@@ -83,6 +86,11 @@ def main():
         subprocess.run([args.dart, 'run', 'tool/check_backend_commands.dart', 'prepare',
                         str(args.output), str(db), str(commands)], check=True)
         request = json.loads(commands.read_text(encoding='utf-8'))
+        if args.scenario == 'restore-stale':
+            supersede(f, request['operations'][0])
+            remote = pull(f, initial['at']['revision'], 2)
+            require(remote['result']['through']['revision'] == 4, 'New deletion downloaded')
+            fixture['intervening_pull'] = backend.wire[-1]
         response = backend.rpc('apply', f.token, request)
         require(response['status'] == 'success', 'Apply succeeds')
         expected = ['conflict', 'held', 'held', 'held', 'held'] if args.scenario == 'held' else ['applied'] * len(request['operations'])
@@ -92,10 +100,17 @@ def main():
             expected = order_expected
         require([r['disposition'] for r in response['result']['results']] == expected,
                 'Expected SQLite command outcomes')
+        if args.scenario in RESTORE_SCENARIOS:
+            rejected = next(r for r in response['result']['results'] if r['disposition'] == 'rejected')
+            code = ('restore_content_expired' if args.scenario in ('restore-expired', 'restore-compacted')
+                    else 'stale_deletion')
+            require(rejected['rejection_code'] == code, 'Restore rejected for the expected reason')
         require(backend.rpc('apply', f.token, request) == response, 'Dropped-response retry is immutable')
         cursor = (fixture['seed']['downloads'][-1]['reply']['result']['through']['revision']
                   if 'seed' in fixture else initial['at']['revision'])
         downloads = []
+        if 'intervening_pull' in fixture:
+            cursor = fixture['intervening_pull']['reply']['result']['through']['revision']
         while True:
             result = pull(f, cursor, 2)
             require(result['status'] == 'success', 'Pull succeeds')
@@ -106,14 +121,14 @@ def main():
         terminal = begin(f)
         fixture.update(request=request, receipt=response, downloads=downloads,
                        terminal_pages=[page(f, terminal, i) for i in range(terminal['page_count'])])
-        if args.scenario in SCENARIOS:
+        if args.scenario in SCENARIOS or args.scenario == 'restore-visible':
             fixture['visible_order'] = projected(f)
         args.output.write_text(json.dumps(fixture), encoding='utf-8')
         subprocess.run([args.dart, 'run', 'tool/check_backend_commands.dart', 'verify',
                         str(args.output), str(db), str(commands)], check=True)
         seed = fixture.get('seed', {})
         command_count = len(request['operations']) + len(seed.get('request', {}).get('operations', []))
-        page_count = len(downloads) + len(seed.get('downloads', []))
+        page_count = len(downloads) + len(seed.get('downloads', [])) + int('intervening_pull' in fixture)
         print(f'PASS: SQLite-to-PostgreSQL {command_count} local commands and {page_count} pull pages', flush=True)
     finally:
         backend.cleanup()

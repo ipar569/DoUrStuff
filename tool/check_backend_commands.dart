@@ -86,6 +86,7 @@ Future<void> main(List<String> args) async {
           command: op.command,
           patches: op.patches,
           dependencies: op.dependencies,
+          restore: op.restore,
           occurredAtUtc: DateTime.fromMillisecondsSinceEpoch(
             op.provenance['occurred_at'] as int,
             isUtc: true,
@@ -122,6 +123,19 @@ Future<void> main(List<String> args) async {
       if (fixture['proposals'] case final List proposals) {
         for (final raw in proposals) {
           ops.add(await commitOriginal(raw));
+        }
+        if (scenario == 'restore-stale' || scenario == 'restore-expired') {
+          for (final op in ops) {
+            final local = await store.projection(op.entity);
+            if (!local.visible ||
+                local.proposals.last.projectedOutcomes.values.any(
+                  (d) => d != FieldDisposition.applied,
+                )) {
+              throw StateError(
+                'Exact restore and dependent child must preview before rejection.',
+              );
+            }
+          }
         }
       } else {
         final creation = await commit('task.create', task, {
@@ -196,6 +210,15 @@ Future<void> main(List<String> args) async {
       final result = (applyCodec.decodeReply(
         fixture['receipt'],
       ) as SyncSuccess<ApplyResult>).value;
+      Future<void> applyPage(Map raw) => store.applyPull(
+        recoveryPullCodec.decodeRequest(raw['request']),
+        (recoveryPullCodec.decodeReply(
+          raw['reply'],
+        ) as SyncSuccess<RecoveryPullResult>).value,
+      );
+      if (fixture['intervening_pull'] case final Map raw) {
+        await applyPage(raw);
+      }
       Future<void> checkOrder() async {
         if (fixture['visible_order'] case final List expectedOrder) {
           if (jsonEncode(await store.visibleMilestoneOrder(task)) !=
@@ -206,7 +229,10 @@ Future<void> main(List<String> args) async {
       }
 
       Future<void> checkProjectedRecords() async {
-        if (!scenario.startsWith('tags-') && !scenario.startsWith('views-')) {
+        final restore = scenario.startsWith('restore-');
+        if (!restore &&
+            !scenario.startsWith('tags-') &&
+            !scenario.startsWith('views-')) {
           return;
         }
         final shadows = <String, ShadowRecord>{};
@@ -217,13 +243,17 @@ Future<void> main(List<String> args) async {
           }
         }
         final entities = <String, SyncEntity>{
+          if (restore)
+            for (final shadow in shadows.values)
+              shadow.entity.identity: shadow.entity,
           if (scenario.startsWith('views-'))
             for (final record in shadows.values)
               if (record.entity.kind == SyncEntityKind.preference ||
                   record.entity.kind == SyncEntityKind.view)
                 record.entity.identity: record.entity,
           for (final op in request.operations)
-            if (op.entity.kind == SyncEntityKind.tag ||
+            if (restore ||
+                op.entity.kind == SyncEntityKind.tag ||
                 op.entity.kind == SyncEntityKind.membership ||
                 op.entity.kind == SyncEntityKind.preference ||
                 op.entity.kind == SyncEntityKind.view)
@@ -239,6 +269,15 @@ Future<void> main(List<String> args) async {
           };
           final local = await store.projection(entity);
           var visible = values['existence'] == true;
+          if (entity.kind == SyncEntityKind.milestone && visible) {
+            visible =
+                shadows[SyncEntity(SyncEntityKind.task, [
+                      values['parent'] as String,
+                    ]).identity]
+                    ?.fields['existence']
+                    ?.value ==
+                true;
+          }
           if (entity.kind == SyncEntityKind.membership) {
             visible =
                 values['membership'] == true &&
@@ -276,8 +315,10 @@ Future<void> main(List<String> args) async {
       }
 
       await checkOrder();
-      await checkProjectedRecords();
-      if (scenario != 'chain') {
+      // The deletion ledger's trusted clock is only available to PostgreSQL.
+      // prepare checked the provisional preview; the rejection below must undo it.
+      if (scenario != 'restore-expired') await checkProjectedRecords();
+      if (scenario != 'chain' && scenario != 'restore-expired') {
         // Compare the pre-acknowledgement SQLite preview to actual PostgreSQL
         // outcomes, before any receipt/download can conceal a preview defect.
         for (var i = 0; i < request.operations.length; i++) {
@@ -301,13 +342,11 @@ Future<void> main(List<String> args) async {
       await checkOrder();
       await checkProjectedRecords();
       for (final raw in fixture['downloads'] as List) {
-        await store.applyPull(
-          recoveryPullCodec.decodeRequest(raw['request']),
-          (recoveryPullCodec.decodeReply(
-            raw['reply'],
-          ) as SyncSuccess<RecoveryPullResult>).value,
-        );
-        if (scenario.startsWith('views-')) await checkProjectedRecords();
+        await applyPage(raw as Map);
+        if (scenario.startsWith('views-') || scenario.startsWith('restore-')) {
+          await checkProjectedRecords();
+          await checkOrder();
+        }
       }
       final projected = await store.projection(child);
       await checkOrder();

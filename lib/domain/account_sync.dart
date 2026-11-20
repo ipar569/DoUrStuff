@@ -269,6 +269,17 @@ final class AccountOperation {
   final Map<String, Object?> provenance;
   final RestorePrecondition? restore;
 
+  bool get hasExactRestorePatch {
+    final patch = patches['existence'];
+    final base = patch?.base;
+    return restore != null &&
+        patches.length == 1 &&
+        patch?.value == true &&
+        base is ObservedBase &&
+        base.value == false &&
+        base.revision == restore!.revision;
+  }
+
   Map<String, Object?> toJson() => {
     'protocol_version': accountSyncProtocolVersion,
     'operation_id': operationId,

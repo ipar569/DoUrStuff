@@ -1,5 +1,51 @@
 # Phase 3 verification
 
+## Current handoff — exact-deletion task restore, 21 November 2026
+
+Based on the [PR 28 handoff](https://github.com/ipar569/DoUrStuff/pull/28#issuecomment-7003233772)
+and merge `777967d0e61669d31cac1d8a4d27774eb70d548b`. Account SQLite v3
+commits protocol v2 `task.restore` with the caller's original deletion UUID
+and revision. The [storage contract](../architecture/account-local-storage-v2.md#exact-deletion-task-restore)
+describes receipt-backed and downloaded deletion evidence, dependent visibility
+and the server's exclusive 720-hour cutoff.
+
+- Pinned Flutter 3.47.6. `flutter pub get --enforce-lockfile`,
+  `dart run build_runner build`, `dart format --output=none --set-exit-if-changed lib test tool`,
+  `flutter analyze` and `git diff --check` passed. `flutter test
+  test/account_commands_test.dart test/domain_test.dart test/local_database_test.dart
+  test/schema_test.dart --reporter expanded` passed 48 tests. The full
+  `flutter test --reporter expanded` passed 236. Android debug and Windows
+  release compilation passed with `flutter build apk --debug` (process-local
+  Java 21 Flutter config) and `flutter build windows --release`.
+- `python tool/local_backend.py --start` verified nine pinned services after
+  starting Docker Desktop's engine. `supabase migration list --local` matched
+  all 26 retained SQL files. A fresh `dart run drift_dev schema dump
+  lib/data/local/database.dart .tools/pr29-v3.json` matched the v3 snapshot
+  byte for byte. All snapshots, migrations, containers and volumes were retained.
+- `python tool/test_backend_local_commands.py --supabase .tools/supabase/supabase.exe
+  --dart .tools/flutter/bin/dart.bat --scenario <scenario> --output .tools/pr29-<scenario>.json`
+  passed for `restore-visible`, `restore-cycle`, `restore-stale`,
+  `restore-expired` and `restore-compacted` (20 commands, 11 pull pages).
+  Checks cover exact-ID and exact-revision mismatches, repeated restore, dependent
+  commands, independent hidden children/removals, an unresolved late edit,
+  a second device replacing the deletion after local commit, server-only expiry
+  and compacted content. Retry bytes, receipt overlays, page projections and
+  final snapshot/recovery records were checked against PostgreSQL.
+- `python tool/test_backend_<suite>.py --supabase .tools/supabase/supabase.exe
+  --wire-output .tools/pr29-<suite>-wire.json` passed for task_restore,
+  foundation, apply, retention and snapshots (8/8/11/16/14 groups).
+  `dart run tool/check_backend_wire.dart .tools/pr29-<suite>-wire.json` validated
+  57/10/32/65/84 actual replies. The HTTP (3), binding guard (3) and retention
+  runner (4) Python tests passed. The sandbox blocked loopback in the first HTTP
+  unit run and access to Flutter telemetry in the first dependency run. Both
+  passed with local environment access.
+
+Next bounded Phase 3.2 increment is bulk/undo. Bind each selected task to its
+original bases or exact deletion proof, preserve atomic local intent and check
+partial/stale outcomes against PostgreSQL. Account activation, native
+materialization, installed-device verification and Phase 4 gates remain open.
+Production changes and releases require separate authorization.
+
 ## Current handoff — local account saved views and preferences, 19 November 2026
 
 This increment starts from the verified [PR27 handoff](https://github.com/ipar569/DoUrStuff/pull/27#issuecomment-7002823000)

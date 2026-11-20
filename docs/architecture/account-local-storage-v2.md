@@ -1,8 +1,8 @@
-# Account SQLite storage — updated 19 November 2026
+# Account SQLite storage — updated 21 November 2026
 
 SQLite v2 adds separate account tables alongside every unchanged guest v1 table.
 SQLite v3 adds local account command history and reminder-dirty intent. The
-bounded command API supports task create/edit/status/delete and milestone
+bounded command API supports task create/edit/status/delete/restore and milestone
 create/edit/delete, milestone ordering, tags, task/tag memberships, saved
 views and the shared default view. App activation, auth, transport, adoption and worker remain
 disabled/unimplemented. The filename is retained to preserve existing links.
@@ -40,11 +40,26 @@ continue when a dependency needs recovery.
 Observed bases can bind receipt values while pull is behind. An intervening
 pending field cannot be overwritten through an older observed/predecessor base;
 same-field chains must refer to their actual predecessor. No preview invents a
-server revision. Restore, bulk
-commands and undo are outside this bounded command API. Their existing retained
-originals remain readable; unimplemented whole creates/restores/dependencies
-remain held. Native auth/secure persistence feasibility and representation gates
+server revision. Bulk commands and undo remain outside this bounded command API.
+Native auth/secure persistence feasibility and representation gates
 remain prerequisites for enabling the app account path.
+
+### Exact-deletion task restore
+
+`task.restore` takes the original deletion UUID and its accepted revision. Its
+single existence patch observes false at that same revision and proposes true.
+The transaction preserves both parts of the target across retry and reopen.
+A current downloaded tombstone or a correlated applied delete receipt can prove
+the target. A pending delete has no accepted revision. A different deletion,
+visible task or compacted core yields recovery in the preview.
+
+For a matching tombstone with retained core fields, SQLite previews visibility
+and evaluates subsequent milestone, order and membership dependencies. An
+independent child deletion or membership removal still applies. Restoration
+never replays a rejected edit. Only PostgreSQL has the deletion ledger and
+trusted clock for the 720-hour limit. An expiry rejection withdraws the preview
+and preserves the restore and its dependents for recovery. A downloaded newer
+deletion withdraws the stale preview even before its receipt arrives.
 
 Equivalence against accepted state does not create a pending field revision;
 equivalence against an existing pending value preserves that pending source.
@@ -169,7 +184,7 @@ receipt values bridge download lag only while the applied cursor and shadow are
 behind their revision; removed compacted fields cannot revive old receipts.
 Later accepted values supersede them without changing the original receipt.
 Unacknowledged task/milestone creates and their exact parent dependencies now use
-the bounded command rules above. Other creates/restores/dependencies stay held.
+the bounded command rules above, including the exact-deletion restore checks.
 This remains partial pending replay, not full account command/representation parity.
 
 Visibility combines effective existence with a milestone's exact parent or both
