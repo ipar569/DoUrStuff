@@ -240,6 +240,27 @@ void main() {
   );
 
   test(
+    'fresh status no-op gets no inverse even with an applied receipt',
+    () async {
+      final creation = await create();
+      final current = creation.patches['status_group']!.value;
+      final original = (await store.commitBulk(
+        batchId: id(33),
+        targets: [
+          BulkTaskTarget.status(
+            task.key.single,
+            PredecessorBase(creation.operationId, creation.sequence, current),
+            current,
+          ),
+        ],
+        occurredAtUtc: now,
+      )).single;
+      await acknowledge(original);
+      expect(await store.undoTarget(original), isNull);
+    },
+  );
+
+  test(
     'delete undo accepts a matching downloaded deletion before its receipt',
     () async {
       final original = (await store.commitBulk(

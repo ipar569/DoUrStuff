@@ -8,18 +8,21 @@ The [storage contract](../architecture/account-local-storage-v2.md#bulk-task-sta
 describes selection identity, local atomicity and per-task undo proof.
 
 - With Flutter 3.47.6, locked dependency resolution, Drift generation, format,
-  analysis and `flutter test --reporter expanded` passed (239 tests).
+  analysis and `flutter test --reporter expanded` passed (240 tests).
   The focused `flutter test test/account_commands_test.dart test/domain_test.dart
   test/local_database_test.dart test/schema_test.dart --reporter expanded`
-  passed 51. Tests inject a second-member failure at the dirty write, assert
+  passed 52. Tests inject a second-member failure at the dirty write, assert
   rollback of both members and the sequence, reopen the database, reject
   changed retries and check captured pending predecessor values. An initial
   test exposed strict UUID namespace parsing for valid protocol IDs. Subsequent
   member IDs now derive from a fixed v5 namespace and the batch UUID/index.
 - Run `python tool/test_backend_local_commands.py --supabase .tools/supabase/supabase.exe
   --dart .tools/flutter/bin/dart.bat --scenario <scenario> --output .tools/pr30-final-<scenario>.json`
-  sequentially on Windows. `bulk-status` and `bulk-delete` each drive three
-  forward commands and two inverse commands through SQLite and real PostgreSQL.
+  sequentially on Windows. `bulk-status` drives four forward commands and two
+  inverses. `bulk-delete` drives three forward commands and two inverses.
+  Independent review identified an already-completed task with a fresh base
+  that receives an applied status receipt. The real PostgreSQL regression
+  confirms that this task receives no inverse.
   A second device wins the third task, then supersedes the first inverse target.
   Checks cover mixed outcomes, the exact prior status/completion, the original
   deletion UUID/revision, retry identity, durable recovery originals, pre-ack
@@ -29,6 +32,17 @@ describes selection identity, local atomicity and per-task undo proof.
   26 retained migration IDs. A separate `dart run drift_dev schema dump
   lib/data/local/database.dart .tools/pr30-v3.json` matched the committed v3
   snapshot byte for byte. The existing v2 wire vocabulary carries all members.
+- `python tool/test_backend_<suite>.py --supabase .tools/supabase/supabase.exe
+  --wire-output .tools/pr30-<suite>-wire.json` passed 74 groups across
+  foundation, apply, task_create, task_delete, task_restore, retention and
+  snapshots. `dart run tool/check_backend_wire.dart .tools/pr30-<suite>-wire.json`
+  validated all 419 replies. The HTTP, local binding guard and retention runner
+  Python suites passed 3, 3 and 4 tests respectively.
+- The existing `restore-stale` and `chain` SQLite regression scenarios passed
+  two and seven commands respectively. The first chain run received HTTP 400
+  from snapshot_begin during the backend snapshot suite. The isolated rerun
+  passed all four pull pages. Run snapshot fault-injection and client harnesses
+  at different times on the shared stack.
 
 Next bounded Phase 3.2 work is GitHub PKCE and secure session/verifier storage
 feasibility for Android and Windows. Inspect the native callback and profile

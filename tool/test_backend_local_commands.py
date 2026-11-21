@@ -37,7 +37,7 @@ def main():
         proposals = None
         order_expected = None
         if args.scenario in bulk.SCENARIOS:
-            selection = bulk.prepare(f)
+            selection = bulk.prepare(f, args.scenario)
         elif args.scenario in RESTORE_SCENARIOS:
             proposals, order_expected = prepare_restore(f, args.scenario)
         elif args.scenario in VIEW_SCENARIOS:

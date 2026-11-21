@@ -59,7 +59,8 @@ and `bulk_count` so a shorter, extended or reordered retry fails atomically.
 PostgreSQL processes ordinary per-task commands. Receipt dispositions, recovery
 and bounded upload pages remain per the existing protocol. To undo an applied
 status change, `undoTarget` proposes that task's original status/completion
-pair against the accepted transition's own revision. A pending or equivalent
+pair against the accepted transition's own revision. If the original pair
+already matched, even an applied receipt produces no inverse. A pending or equivalent
 status change supplies no evidence that this operation changed the field.
 For delete undo, the caller needs the winning deletion UUID and revision from
 its applied receipt or matching downloaded tombstone. A locally pending delete

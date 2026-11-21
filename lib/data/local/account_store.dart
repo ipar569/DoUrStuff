@@ -7,10 +7,10 @@ import '../../domain/account_sync.dart';
 import '../../domain/account_sync_codec.dart';
 import '../../domain/account_sync_policy.dart';
 import '../../domain/account_sync_rpc.dart';
-import 'database.dart' hide AccountOperation;
-import 'account_command_validation.dart';
-import 'account_bulk.dart';
 import '../../domain/account_task_validation.dart';
+import 'account_bulk.dart';
+import 'account_command_validation.dart';
+import 'database.dart' hide AccountOperation;
 
 /// A read model for recovery/projection work, not a native task or an upload.
 /// Original operations remain separate from accepted state; no implicit rebase.
@@ -261,7 +261,10 @@ final class AccountStore {
       );
     }
     final before = BulkTaskTarget.baseValue(original.patches[group]!.base);
-    if (!validAccountStatusGroup(before)) return null;
+    if (!validAccountStatusGroup(before) ||
+        canonicalSyncJson(before) == canonicalSyncJson(accepted.value)) {
+      return null;
+    }
     return BulkTaskTarget.status(
       taskId,
       ObservedBase(accepted.revision, accepted.value),

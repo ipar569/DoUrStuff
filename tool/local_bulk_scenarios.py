@@ -10,12 +10,14 @@ from test_backend_task_restore import restore
 SCENARIOS = ['bulk-status', 'bulk-delete']
 
 
-def prepare(f):
+def prepare(f, scenario):
     creations = [f.create(initial=status('cancelled')),
                  f.create(2, task=uid(), initial=status('in_progress')),
                  f.create(3, task=uid())]
+    if scenario == 'bulk-status':
+        creations.append(f.create(4, task=uid(), initial=status('completed', 100)))
     require(all(r['disposition'] == 'applied' for r in f.apply(*creations)['result']['results']),
-            'Three independently versioned tasks created')
+            'Independently versioned tasks created')
     f.device = uid()
     f.register(f.device)
     return [op['entity']['key'][0] for op in creations]
@@ -23,7 +25,8 @@ def prepare(f):
 
 def apply_forward(f, scenario, request, initial):
     operations = request['operations']
-    require(len(operations) == 3, 'One forward operation per selected task')
+    changing_status = scenario == 'bulk-status'
+    require(len(operations) == (4 if changing_status else 3), 'One forward operation per selected task')
     # A peer wins the third transition after SQLite records the selection.
     peer = uid()
     f.register(peer)
@@ -32,21 +35,22 @@ def apply_forward(f, scenario, request, initial):
     require(f.apply(other)['result']['results'][0]['disposition'] == 'applied', 'Peer wins third task')
     receipt = f.backend.rpc('apply', f.token, request)
     results = receipt['result']['results']
-    group = 'status_group' if scenario == 'bulk-status' else 'existence'
-    require([r['fields'][0]['disposition'] for r in results] ==
-            ['applied', 'applied', 'equivalent' if scenario == 'bulk-status' else 'recovery'],
-            'Mixed forward field outcomes')
+    group = 'status_group' if changing_status else 'existence'
+    # The fourth status write is already at the requested value and still gets
+    # an applied receipt because its base is current.
+    expected = ['applied', 'applied'] + (['equivalent', 'applied'] if changing_status else ['recovery'])
+    require([r['fields'][0]['disposition'] for r in results] == expected, 'Mixed forward field outcomes')
     require(f.backend.rpc('apply', f.token, request) == receipt, 'Forward retry returns identical reply')
-    require([op['patches'][group]['base']['revision'] for op in operations] == [1, 2, 3],
+    require([op['patches'][group]['base']['revision'] for op in operations] == list(range(1, len(expected) + 1)),
             'Each operation retained its own selection base')
     pull(f, initial['at']['revision'])
     return dict(request=request, receipt=receipt, downloads=[f.backend.wire[-1]])
 
 
 def race_undo(f, scenario, seed, undo):
-    first, second, _ = seed['request']['operations']
+    first, second = seed['request']['operations'][:2]
     require([op['entity'] for op in undo] == [first['entity'], second['entity']],
-            'Undo only targets the two original winners')
+            'Undo only targets the two tasks this batch changed')
     peer = uid()
     f.register(peer)
     if scenario == 'bulk-status':
