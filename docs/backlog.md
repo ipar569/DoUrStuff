@@ -396,6 +396,14 @@ next bounded Phase 3.2 increment is bulk/undo with immutable per-task targets,
 transactional intent and PostgreSQL recovery verification. Account activation
 and native gates remain open. See the [verification handoff](verification/phase-3.md).
 
+21 November account bulk/undo. SQLite now commits the selected tasks' status
+or deletion intents together and binds undo to each winning operation. Real
+PostgreSQL verification covers partial success, competing status changes and
+replacement tombstones. Next Phase 3.2 work is the Android/Windows GitHub PKCE
+and secure session/verifier storage feasibility check before activation. Native
+materialization, recovery/export, adoption, worker and installed acceptance
+remain open. See the [verification handoff](verification/phase-3.md).
+
 ## Phase 4: recurrence, calendar and reminders
 
 Bounded deterministic generation/history; immutable future segments and offline

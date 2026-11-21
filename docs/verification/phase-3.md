@@ -1,5 +1,41 @@
 # Phase 3 verification
 
+## Current handoff — account bulk status, delete and undo, 21 November 2026
+
+This increment builds on [PR 29](https://github.com/ipar569/DoUrStuff/pull/29#issuecomment-7051521612)
+at merge `199fcbe82c15eba13fa62f6775c0fa270090addb`.
+The [storage contract](../architecture/account-local-storage-v2.md#bulk-task-status-delete-and-undo)
+describes selection identity, local atomicity and per-task undo proof.
+
+- With Flutter 3.47.6, locked dependency resolution, Drift generation, format,
+  analysis and `flutter test --reporter expanded` passed (239 tests).
+  The focused `flutter test test/account_commands_test.dart test/domain_test.dart
+  test/local_database_test.dart test/schema_test.dart --reporter expanded`
+  passed 51. Tests inject a second-member failure at the dirty write, assert
+  rollback of both members and the sequence, reopen the database, reject
+  changed retries and check captured pending predecessor values. An initial
+  test exposed strict UUID namespace parsing for valid protocol IDs. Subsequent
+  member IDs now derive from a fixed v5 namespace and the batch UUID/index.
+- Run `python tool/test_backend_local_commands.py --supabase .tools/supabase/supabase.exe
+  --dart .tools/flutter/bin/dart.bat --scenario <scenario> --output .tools/pr30-final-<scenario>.json`
+  sequentially on Windows. `bulk-status` and `bulk-delete` each drive three
+  forward commands and two inverse commands through SQLite and real PostgreSQL.
+  A second device wins the third task, then supersedes the first inverse target.
+  Checks cover mixed outcomes, the exact prior status/completion, the original
+  deletion UUID/revision, retry identity, durable recovery originals, pre-ack
+  projections and terminal pull/snapshot parity across six total pull pages.
+- `python tool/local_backend.py --start` verified nine local services and
+  loopback bindings. Supabase CLI 2.120.0 `migration list --local` matched all
+  26 retained migration IDs. A separate `dart run drift_dev schema dump
+  lib/data/local/database.dart .tools/pr30-v3.json` matched the committed v3
+  snapshot byte for byte. The existing v2 wire vocabulary carries all members.
+
+Next bounded Phase 3.2 work is GitHub PKCE and secure session/verifier storage
+feasibility for Android and Windows. Inspect the native callback and profile
+lifecycle before enabling account mode. Native materialization, installed-device
+acceptance, recovery/export, adoption, the worker and Phase 4 gates remain open.
+Production changes and releases require separate authorization.
+
 ## Current handoff — exact-deletion task restore, 21 November 2026
 
 Based on the [PR 28 handoff](https://github.com/ipar569/DoUrStuff/pull/28#issuecomment-7003233772)

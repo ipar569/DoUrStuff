@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:dourstuff/data/local/account_bulk.dart';
 import 'package:dourstuff/data/local/account_store.dart';
 import 'package:dourstuff/data/local/database.dart' hide AccountOperation;
 import 'package:dourstuff/domain/account_sync.dart';
@@ -15,8 +16,10 @@ Map<String, Object?> reply(Object? value) => {
 
 /// Synthetic owner-correlated integration only; credentials stay in Python.
 Future<void> main(List<String> args) async {
-  if (args.length != 4 || !{'prepare', 'verify'}.contains(args[0])) {
-    throw ArgumentError('Expected prepare|verify fixture database output.');
+  if (args.length != 4 || !{'prepare', 'undo', 'verify'}.contains(args[0])) {
+    throw ArgumentError(
+      'Expected prepare|undo|verify fixture database output.',
+    );
   }
   final fixture = jsonDecode(File(args[1]).readAsStringSync()) as Map;
   final owner = fixture['owner'] as String;
@@ -34,21 +37,24 @@ Future<void> main(List<String> args) async {
       fixture['child'] as String,
     ]);
     final scenario = fixture['scenario'] as String? ?? 'chain';
-    if (args[0] == 'prepare') {
+    final bulk = scenario.startsWith('bulk-');
+    if (args[0] != 'verify') {
       final now = DateTime.parse(fixture['checked_at_utc'] as String);
-      final m = (recoveryBeginSnapshotCodec.decodeReply(
-        reply(fixture['manifest']),
-      ) as SyncSuccess<SnapshotManifest>).value;
-      await store.beginSnapshot(m, now);
-      for (final p in fixture['pages'] as List) {
-        await store.stagePage(
-          (recoverySnapshotPageCodec.decodeReply(
-            reply(p),
-          ) as SyncSuccess<RecoverySnapshotPage>).value,
-          now,
-        );
+      if (args[0] == 'prepare') {
+        final m = (recoveryBeginSnapshotCodec.decodeReply(
+          reply(fixture['manifest']),
+        ) as SyncSuccess<SnapshotManifest>).value;
+        await store.beginSnapshot(m, now);
+        for (final p in fixture['pages'] as List) {
+          await store.stagePage(
+            (recoverySnapshotPageCodec.decodeReply(
+              reply(p),
+            ) as SyncSuccess<RecoverySnapshotPage>).value,
+            now,
+          );
+        }
+        await store.installSnapshot(now);
       }
-      await store.installSnapshot(now);
       final ids = (fixture['operations'] as List).cast<String>();
       final ops = <AccountOperation>[];
       Future<AccountOperation> commit(
@@ -102,8 +108,10 @@ Future<void> main(List<String> args) async {
 
       if (fixture['seed'] case final Map seed) {
         final request = applyCodec.decodeRequest(seed['request']);
-        for (final op in request.operations) {
-          await commitOriginal(op.toJson());
+        if (!bulk) {
+          for (final op in request.operations) {
+            await commitOriginal(op.toJson());
+          }
         }
         await store.retainApplyResult(
           request,
@@ -120,7 +128,54 @@ Future<void> main(List<String> args) async {
           );
         }
       }
-      if (fixture['proposals'] case final List proposals) {
+      if (bulk) {
+        final targets = <BulkTaskTarget>[];
+        if (args[0] == 'undo') {
+          final seed = applyCodec.decodeRequest(
+            (fixture['seed'] as Map)['request'],
+          );
+          for (final original in seed.operations) {
+            final inverse = await store.undoTarget(original);
+            if (inverse != null) targets.add(inverse);
+          }
+        } else {
+          final deleting = scenario == 'bulk-delete';
+          for (final taskId in (fixture['selection'] as List).cast<String>()) {
+            final selected = await store.projection(
+              SyncEntity(SyncEntityKind.task, [taskId]),
+            );
+            final field = selected
+                .accepted!
+                .fields[deleting ? 'existence' : 'status_group']!;
+            final base = ObservedBase(field.revision, field.value);
+            targets.add(
+              deleting
+                  ? BulkTaskTarget.delete(taskId, base)
+                  : BulkTaskTarget.status(taskId, base, {
+                      'status': 'completed',
+                      'completed_at': 100,
+                    }),
+            );
+          }
+        }
+        final batchId = args[0] == 'prepare' ? ids.first : ids[1];
+        ops.addAll(
+          await store.commitBulk(
+            batchId: batchId,
+            targets: targets,
+            occurredAtUtc: now,
+          ),
+        );
+        final retry = await store.commitBulk(
+          batchId: batchId,
+          targets: targets,
+          occurredAtUtc: now,
+        );
+        if (jsonEncode(retry.map((op) => op.toJson()).toList()) !=
+            jsonEncode(ops.map((op) => op.toJson()).toList())) {
+          throw StateError('Bulk retry changed an original operation.');
+        }
+      } else if (fixture['proposals'] case final List proposals) {
         for (final raw in proposals) {
           ops.add(await commitOriginal(raw));
         }
@@ -231,6 +286,7 @@ Future<void> main(List<String> args) async {
       Future<void> checkProjectedRecords() async {
         final restore = scenario.startsWith('restore-');
         if (!restore &&
+            !bulk &&
             !scenario.startsWith('tags-') &&
             !scenario.startsWith('views-')) {
           return;
@@ -243,7 +299,7 @@ Future<void> main(List<String> args) async {
           }
         }
         final entities = <String, SyncEntity>{
-          if (restore)
+          if (restore || bulk)
             for (final shadow in shadows.values)
               shadow.entity.identity: shadow.entity,
           if (scenario.startsWith('views-'))
@@ -350,7 +406,9 @@ Future<void> main(List<String> args) async {
       await checkProjectedRecords();
       for (final raw in fixture['downloads'] as List) {
         await applyPage(raw as Map);
-        if (scenario.startsWith('views-') || scenario.startsWith('restore-')) {
+        if (scenario.startsWith('views-') ||
+            scenario.startsWith('restore-') ||
+            bulk) {
           await checkProjectedRecords();
           await checkOrder();
         }
