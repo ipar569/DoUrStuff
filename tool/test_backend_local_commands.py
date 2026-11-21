@@ -15,6 +15,7 @@ from test_backend_milestone_order import projected
 from local_tag_scenarios import SCENARIOS as TAG_SCENARIOS, prepare as prepare_tags, close_sources as close_tags
 from local_view_scenarios import SCENARIOS as VIEW_SCENARIOS, prepare as prepare_views
 from local_restore_scenarios import SCENARIOS as RESTORE_SCENARIOS, prepare as prepare_restore, supersede
+import local_bulk_scenarios as bulk
 
 
 def main():
@@ -22,7 +23,7 @@ def main():
     parser.add_argument('--supabase', default='supabase')
     parser.add_argument('--dart', default='dart')
     parser.add_argument('--output', type=Path, required=True)
-    parser.add_argument('--scenario', choices=['chain', 'equivalent', 'held', 'causal'] + SCENARIOS + TAG_SCENARIOS + VIEW_SCENARIOS + RESTORE_SCENARIOS, default='chain')
+    parser.add_argument('--scenario', choices=['chain', 'equivalent', 'held', 'causal'] + SCENARIOS + TAG_SCENARIOS + VIEW_SCENARIOS + RESTORE_SCENARIOS + bulk.SCENARIOS, default='chain')
     args = parser.parse_args()
     if Path(args.dart).is_file():
         args.dart = str(Path(args.dart).resolve())
@@ -35,7 +36,9 @@ def main():
         f = TaskFixture(backend, sql('select server_epoch from sync_private.backend_state;'))
         proposals = None
         order_expected = None
-        if args.scenario in RESTORE_SCENARIOS:
+        if args.scenario in bulk.SCENARIOS:
+            selection = bulk.prepare(f, args.scenario)
+        elif args.scenario in RESTORE_SCENARIOS:
             proposals, order_expected = prepare_restore(f, args.scenario)
         elif args.scenario in VIEW_SCENARIOS:
             proposals, order_expected = prepare_views(f, args.scenario)
@@ -74,7 +77,9 @@ def main():
                        scenario=args.scenario,
                        operations=[uid() for _ in range(7)], manifest=initial, pages=pages,
                        checked_at_utc=backend.wire[-1]['checked_at_utc'])
-        if args.scenario == 'order-closed':
+        if args.scenario in bulk.SCENARIOS:
+            fixture['selection'] = selection
+        elif args.scenario == 'order-closed':
             fixture['seed'], proposals = close_sources(f, proposals, initial)
             order_expected = ['held', 'held', 'held', 'applied']
         elif args.scenario == 'tags-closed':
@@ -93,7 +98,16 @@ def main():
         subprocess.run([args.dart, 'run', 'tool/check_backend_commands.dart', 'prepare',
                         str(args.output), str(db), str(commands)], check=True)
         request = json.loads(commands.read_text(encoding='utf-8'))
-        if args.scenario == 'restore-stale':
+        if args.scenario in bulk.SCENARIOS:
+            seed = bulk.apply_forward(f, args.scenario, request, initial)
+            fixture['seed'] = seed
+            args.output.write_text(json.dumps(fixture), encoding='utf-8')
+            subprocess.run([args.dart, 'run', 'tool/check_backend_commands.dart', 'undo',
+                            str(args.output), str(db), str(commands)], check=True)
+            request = json.loads(commands.read_text(encoding='utf-8'))
+            order_expected, fixture['intervening_pull'] = bulk.race_undo(
+                f, args.scenario, seed, request['operations'])
+        elif args.scenario == 'restore-stale':
             supersede(f, request['operations'][0])
             remote = pull(f, initial['at']['revision'], 2)
             require(remote['result']['through']['revision'] == 4, 'New deletion downloaded')
@@ -107,7 +121,7 @@ def main():
             expected = order_expected
         require([r['disposition'] for r in response['result']['results']] == expected,
                 'Expected SQLite command outcomes')
-        if args.scenario in RESTORE_SCENARIOS:
+        if args.scenario in RESTORE_SCENARIOS or args.scenario == 'bulk-delete':
             code = ('restore_content_expired' if args.scenario in ('restore-expired', 'restore-compacted')
                     else 'stale_deletion')
             for r in response['result']['results']:
@@ -129,6 +143,8 @@ def main():
         terminal = begin(f)
         fixture.update(request=request, receipt=response, downloads=downloads,
                        terminal_pages=[page(f, terminal, i) for i in range(terminal['page_count'])])
+        if args.scenario in bulk.SCENARIOS:
+            bulk.check_recovery(args.scenario, fixture)
         if args.scenario in SCENARIOS or args.scenario == 'restore-visible':
             fixture['visible_order'] = projected(f)
         args.output.write_text(json.dumps(fixture), encoding='utf-8')

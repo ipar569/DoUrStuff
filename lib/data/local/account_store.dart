@@ -1,13 +1,16 @@
 import 'dart:convert';
 
 import 'package:drift/drift.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../domain/account_sync.dart';
 import '../../domain/account_sync_codec.dart';
 import '../../domain/account_sync_policy.dart';
 import '../../domain/account_sync_rpc.dart';
-import 'database.dart' hide AccountOperation;
+import '../../domain/account_task_validation.dart';
+import 'account_bulk.dart';
 import 'account_command_validation.dart';
+import 'database.dart' hide AccountOperation;
 
 /// A read model for recovery/projection work, not a native task or an upload.
 /// Original operations remain separate from accepted state; no implicit rebase.
@@ -153,6 +156,131 @@ final class AccountStore {
     List<OperationDependency> dependencies = const [],
     RestorePrecondition? restore,
     required DateTime occurredAtUtc,
+  }) => _commitCommand(
+    operationId: operationId,
+    entity: entity,
+    command: command,
+    patches: patches,
+    dependencies: dependencies,
+    restore: restore,
+    occurredAtUtc: occurredAtUtc,
+  );
+
+  /// Captures selection order before the first await. Repeated appearances of
+  /// the same task in grouped views must agree on the entire original intent.
+  Future<List<AccountOperation>> commitBulk({
+    required String batchId,
+    required Iterable<BulkTaskTarget> targets,
+    required DateTime occurredAtUtc,
+  }) async {
+    final selection = <String, BulkTaskTarget>{};
+    for (final target in targets) {
+      final previous = selection[target.taskId];
+      if (previous != null &&
+          (previous.command != target.command ||
+              canonicalSyncJson(previous.patch.toJson()) !=
+                  canonicalSyncJson(target.patch.toJson()) ||
+              previous.restore?.deleteOperationId !=
+                  target.restore?.deleteOperationId)) {
+        throw const FormatException('Conflicting bulk targets for one task.');
+      }
+      selection[target.taskId] = target;
+    }
+    if (selection.isEmpty || !isAccountUuid(batchId)) {
+      throw const FormatException(
+        'Bulk intent needs a UUID and selected tasks.',
+      );
+    }
+    return db.transaction(() async {
+      final operations = <AccountOperation>[];
+      for (final target in selection.values) {
+        final index = operations.length;
+        // The first UUID anchors the retry even if the caller changes the
+        // selection. Count and index distinguish shorter or reordered retries.
+        operations.add(
+          await _commitCommand(
+            operationId: index == 0
+                ? batchId
+                : const Uuid().v5(
+                    'e9a7c397-7078-45cd-9c44-720e749ce110',
+                    '$batchId/$index',
+                  ),
+            entity: SyncEntity(SyncEntityKind.task, [target.taskId]),
+            command: target.command,
+            patches: {target.group: target.patch},
+            restore: target.restore,
+            occurredAtUtc: occurredAtUtc,
+            bulkProvenance: {
+              'bulk_id': batchId,
+              'bulk_index': index,
+              'bulk_count': selection.length,
+            },
+          ),
+        );
+      }
+      return List.unmodifiable(operations);
+    });
+  }
+
+  /// Bind undo to this exact local operation. An equivalent or unsuccessful
+  /// status change cannot authorize reversal of someone else's transition.
+  Future<BulkTaskTarget?> undoTarget(AccountOperation original) async {
+    if (original.command != 'task.delete' &&
+        original.command != 'task.status') {
+      throw ArgumentError('Expected a task deletion or status change.');
+    }
+    final local = await projection(original.entity);
+    final source = local.proposals
+        .where((p) => p.operation.payloadIdentity == original.payloadIdentity)
+        .firstOrNull;
+    if (source == null) return null;
+    final taskId = original.entity.key.single;
+    final shadow = local.accepted;
+    final existence = shadow?.fields['existence'];
+    if (original.command == 'task.delete' &&
+        existence?.value == false &&
+        shadow?.deleteOperationId == original.operationId) {
+      return BulkTaskTarget.restore(
+        taskId,
+        RestorePrecondition(original.operationId, existence!.revision),
+      );
+    }
+    final group = original.command == 'task.delete'
+        ? 'existence'
+        : 'status_group';
+    final accepted = source.acceptedFields[group];
+    if (source.needsReconciliation ||
+        source.outcomes[group] != 'applied' ||
+        accepted == null) {
+      return null;
+    }
+    if (original.command == 'task.delete') {
+      return BulkTaskTarget.restore(
+        taskId,
+        RestorePrecondition(original.operationId, accepted.revision),
+      );
+    }
+    final before = BulkTaskTarget.baseValue(original.patches[group]!.base);
+    if (!validAccountStatusGroup(before) ||
+        canonicalSyncJson(before) == canonicalSyncJson(accepted.value)) {
+      return null;
+    }
+    return BulkTaskTarget.status(
+      taskId,
+      ObservedBase(accepted.revision, accepted.value),
+      before,
+    );
+  }
+
+  Future<AccountOperation> _commitCommand({
+    required String operationId,
+    required SyncEntity entity,
+    required String command,
+    required Map<String, FieldPatch> patches,
+    List<OperationDependency> dependencies = const [],
+    RestorePrecondition? restore,
+    required DateTime occurredAtUtc,
+    Map<String, Object?> bulkProvenance = const {},
   }) => db.transaction(() async {
     await _guard();
     if (!occurredAtUtc.isUtc) throw ArgumentError('Expected UTC provenance.');
@@ -179,7 +307,10 @@ final class AccountStore {
       patches: patches,
       dependencies: dependencies,
       restore: restore,
-      provenance: {'occurred_at': occurredAtUtc.millisecondsSinceEpoch},
+      provenance: {
+        'occurred_at': occurredAtUtc.millisecondsSinceEpoch,
+        ...bulkProvenance,
+      },
     );
     if (!validLocalAccountCommand(operation)) {
       throw const FormatException(

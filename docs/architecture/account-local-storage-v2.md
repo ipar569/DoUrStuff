@@ -40,9 +40,33 @@ continue when a dependency needs recovery.
 Observed bases can bind receipt values while pull is behind. An intervening
 pending field cannot be overwritten through an older observed/predecessor base;
 same-field chains must refer to their actual predecessor. No preview invents a
-server revision. Bulk commands and undo remain outside this bounded command API.
+server revision.
 Native auth/secure persistence feasibility and representation gates
 remain prerequisites for enabling the app account path.
+
+### Bulk task status, delete and undo
+
+`commitBulk` takes a caller-owned batch UUID, UTC provenance and the ordered
+selection. Each task supplies its own observed or predecessor base. Identical
+appearances in grouped views collapse to the first position. Contradictory
+targets for one task reject the selection. One SQLite transaction records
+all operations, original payloads, contiguous sequences, before/after history
+and reminder invalidations. Retry with the same selection, timestamp and UUID.
+The first operation uses the batch UUID. Subsequent UUIDs derive from the batch
+and index. The existing v2 provenance object carries `bulk_id`, `bulk_index`
+and `bulk_count` so a shorter, extended or reordered retry fails atomically.
+
+PostgreSQL processes ordinary per-task commands. Receipt dispositions, recovery
+and bounded upload pages remain per the existing protocol. To undo an applied
+status change, `undoTarget` proposes that task's original status/completion
+pair against the accepted transition's own revision. If the original pair
+already matched, even an applied receipt produces no inverse. A pending or equivalent
+status change supplies no evidence that this operation changed the field.
+For delete undo, the caller needs the winning deletion UUID and revision from
+its applied receipt or matching downloaded tombstone. A locally pending delete
+alone cannot supply a revision. Capture the eligible inverse targets once and
+submit them with a fresh batch UUID. Later peer edits or replacement deletions
+can put individual inverses into conflict or recovery while others succeed.
 
 ### Exact-deletion task restore
 

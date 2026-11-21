@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:dourstuff/data/local/account_bulk.dart';
 import 'package:dourstuff/data/local/account_store.dart';
 import 'package:dourstuff/data/local/database.dart' hide AccountOperation;
 import 'package:dourstuff/domain/account_sync.dart';
@@ -147,6 +148,137 @@ void main() {
         {'existence': FieldPatch(ObservedBase(target.revision, false), true)},
     dependencies: dependencies,
     occurredAtUtc: now,
+  );
+
+  test('bulk intent rolls back earlier members and retries once across reopen', () async {
+    final first = BulkTaskTarget.delete(id(2), ObservedBase(5, true));
+    final second = BulkTaskTarget.delete(id(3), ObservedBase(8, true));
+    Future<List<AccountOperation>> commit(List<BulkTaskTarget> targets) =>
+        store.commitBulk(batchId: id(30), targets: targets, occurredAtUtc: now);
+    await db.customStatement(
+      "CREATE TRIGGER fail_bulk BEFORE INSERT ON account_notification_dirty "
+      "WHEN NEW.entity_key LIKE '%${id(3)}%' BEGIN SELECT RAISE(ABORT,'second bulk member'); END",
+    );
+    await expectLater(
+      commit([first, second]),
+      throwsA(predicate((e) => e.toString().contains('second bulk member'))),
+    );
+    for (final table in [
+      'account_operations',
+      'account_originals',
+      'account_command_history',
+      'account_notification_dirty',
+    ]) {
+      expect(await count(table), 0);
+    }
+    expect(await next(), 1);
+    await db.customStatement('DROP TRIGGER fail_bulk');
+    final originals = await commit([first, second, first]);
+    expect(originals.map((op) => op.sequence), [1, 2]);
+    await db.close();
+    db = AppDatabase.file(File('${dir.path}/profile.sqlite'));
+    store = await AccountStore.open(db, id(1));
+    final again = await commit([first, second]);
+    expect(
+      again.map((op) => op.payloadIdentity),
+      originals.map((op) => op.payloadIdentity),
+    );
+    for (final changed in [
+      [first],
+      [first, second, BulkTaskTarget.delete(id(4), ObservedBase(7, true))],
+      [second, first],
+      [first, BulkTaskTarget.delete(id(3), ObservedBase(9, true))],
+    ]) {
+      await expectLater(commit(changed), throwsStateError);
+    }
+    await expectLater(
+      commit([first, BulkTaskTarget.delete(id(2), ObservedBase(6, true))]),
+      throwsFormatException,
+    );
+    expect(await next(), 3);
+    expect(await count('account_command_history'), 2);
+    final dirty = await db
+        .customSelect('SELECT generation FROM account_notification_dirty')
+        .get();
+    expect(dirty.map((r) => r.read<int>('generation')), [1, 1]);
+    expect(await store.undoTarget(originals.first), isNull);
+  });
+
+  test(
+    'selection freezes pending predecessor and values before another edit',
+    () async {
+      final creation = await create();
+      final base = PredecessorBase(
+        creation.operationId,
+        creation.sequence,
+        creation.patches['status_group']!.value,
+      );
+      final after = {'status': 'completed', 'completed_at': 123};
+      final selection = [BulkTaskTarget.status(task.key.single, base, after)];
+      final pending = store.commitBulk(
+        batchId: id(32),
+        targets: selection,
+        occurredAtUtc: now,
+      );
+      selection.clear();
+      after['completed_at'] = 999;
+      final op = (await pending).single;
+      expect(op.patches['status_group']!.base.toJson(), base.toJson());
+      expect((await store.projection(task)).values['status_group'], {
+        'status': 'completed',
+        'completed_at': 123,
+      });
+      expect(await store.undoTarget(op), isNull);
+      await acknowledge(op);
+      final undo = await store.undoTarget(op);
+      expect(undo!.patch.value, creation.patches['status_group']!.value);
+      expect(
+        undo.patch.base.toJson(),
+        ObservedBase(6, op.patches['status_group']!.value).toJson(),
+      );
+    },
+  );
+
+  test(
+    'fresh status no-op gets no inverse even with an applied receipt',
+    () async {
+      final creation = await create();
+      final current = creation.patches['status_group']!.value;
+      final original = (await store.commitBulk(
+        batchId: id(33),
+        targets: [
+          BulkTaskTarget.status(
+            task.key.single,
+            PredecessorBase(creation.operationId, creation.sequence, current),
+            current,
+          ),
+        ],
+        occurredAtUtc: now,
+      )).single;
+      await acknowledge(original);
+      expect(await store.undoTarget(original), isNull);
+    },
+  );
+
+  test(
+    'delete undo accepts a matching downloaded deletion before its receipt',
+    () async {
+      final original = (await store.commitBulk(
+        batchId: id(31),
+        targets: [BulkTaskTarget.delete(id(2), ObservedBase(2, true))],
+        occurredAtUtc: now,
+      )).single;
+      await download([
+        ShadowRecord(
+          entity: task,
+          fields: {'existence': AcceptedField(6, false)},
+          deleteOperationId: original.operationId,
+        ),
+      ]);
+      final target = await store.undoTarget(original);
+      expect(target!.restore!.revision, 6);
+      expect(target.restore!.deleteOperationId, original.operationId);
+    },
   );
 
   test('restore shape rejects mismatched revisions, bases, extra fields and dependencies atomically', () async {
