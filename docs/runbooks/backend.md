@@ -386,6 +386,11 @@ Replace persistence explicitly and scope pending sign-in attempts as well as
 account sessions. This is moving-main documentation, not a tested dependency
 pin; verify APIs and native restart/sign-out cleanup against the selected release.
 
+The [November feasibility check](../verification/phase-3.md#current-handoff--native-github-pkce-feasibility-22-november-2026)
+tested `supabase_flutter 2.18.3`. It exposes separate `localStorage` and
+`pkceAsyncStorage` options. Use the version-specific findings for the native
+prototype.
+
 The accepted architecture sections 8–9 define server tables, cursor locking,
 field revisions, receipts, bootstrap snapshots, retention and account isolation.
 Supabase supplies primitives, not this replication implementation.
