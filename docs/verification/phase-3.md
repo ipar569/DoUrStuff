@@ -14,7 +14,12 @@ Before returning the browser URL, the coordinator binds the sealed verifier
 to that generation, backend and redirect. The configured callback endpoint
 must match exactly and carry the original `attempt` query parameter. An
 unmatched success or provider error leaves the current attempt available.
-The installed receiver must preserve the original spelling of the URI.
+The installed receiver must preserve the original spelling of the URI. A
+fragment always disqualifies a code exchange. For a correlated error the
+coordinator also recognizes the pinned server's fragment that mirrors the
+query error fields and carries its empty `sb` marker. A device clock reading
+before attempt creation invalidates the pending verifier and any late commit.
+[Pinned Supabase error redirect](https://github.com/supabase/auth/blob/v2.197.0/internal/api/external.go#L758-L780)
 
 Each exchange or refresh claims its input once under a SQLite write lock.
 The network and credential protection run outside that transaction. A

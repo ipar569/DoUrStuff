@@ -108,7 +108,13 @@ final class SignInCoordinator {
       "UPDATE auth_slot SET phase='guest',generation=NULL,"
       "owner=NULL,expires=NULL,secret=NULL ";
 
-  void _expire() => _db.execute('$_clear WHERE expires <= ?', [_now]);
+  void _expire() {
+    final now = _now;
+    _db.execute('$_clear WHERE expires <= ? OR expires > ?', [
+      now,
+      now + _lifetime.inMilliseconds,
+    ]);
+  }
 
   String _context(String kind, String generation, String? owner) => jsonEncode([
     _backend.toString(),
@@ -174,10 +180,11 @@ final class SignInCoordinator {
         prepared.verifier,
       );
       if (_closed) return null;
+      final now = _now;
       _db.execute(
         "UPDATE auth_slot SET phase='pending',secret=? "
-        "WHERE generation=? AND phase='preparing' AND expires>?",
-        [sealed, generation, _now],
+        "WHERE generation=? AND phase='preparing' AND expires>? AND expires<=?",
+        [sealed, generation, now, now + _lifetime.inMilliseconds],
       );
       if (_db.updatedRows == 0) {
         _expire();
@@ -206,39 +213,50 @@ final class SignInCoordinator {
     return _db.updatedRows == 1;
   }
 
+  static Map<String, String>? _parameters(String encoded) {
+    final values = <String, String>{};
+    for (final part in encoded.split('&')) {
+      final split = part.indexOf('=');
+      if (split < 1) return null;
+      final key = Uri.decodeQueryComponent(part.substring(0, split));
+      final value = Uri.decodeQueryComponent(part.substring(split + 1));
+      if (values.containsKey(key)) return null;
+      values[key] = value;
+    }
+    return values;
+  }
+
   /// Compare the original endpoint spelling before Dart URI normalization.
   /// The round-tripped attempt parameter correlates old successes AND errors.
   Future<SignInResult> callback(String raw) async {
     _expire();
+    if (raw.length > 8192) return SignInResult.ignored;
     final query = raw.indexOf('?');
-    if (raw.length > 8192 ||
-        query < 0 ||
-        raw.substring(0, query) != _redirect.toString() ||
-        raw.contains('#')) {
+    if (query < 0 || raw.substring(0, query) != _redirect.toString()) {
       return SignInResult.ignored;
     }
-    final values = <String, String>{};
+    final hash = raw.indexOf('#', query);
+    final Map<String, String>? values;
+    Map<String, String>? errorMirror;
     try {
-      for (final part in raw.substring(query + 1).split('&')) {
-        final split = part.indexOf('=');
-        if (split < 1) return SignInResult.ignored;
-        final key = Uri.decodeQueryComponent(part.substring(0, split));
-        final value = Uri.decodeQueryComponent(part.substring(split + 1));
-        if (values.containsKey(key) || value.trim().isEmpty) {
-          return SignInResult.ignored;
-        }
-        values[key] = value;
+      values = _parameters(raw.substring(query + 1, hash < 0 ? null : hash));
+      if (hash >= 0) {
+        // GoTrue sets URL.Fragment to a form-encoded copy of its error
+        // fields plus sb=. Unwrap the outer URL fragment encoding first.
+        errorMirror = _parameters(Uri.decodeComponent(raw.substring(hash + 1)));
+        if (errorMirror == null) return SignInResult.ignored;
       }
     } on ArgumentError {
       return SignInResult.ignored;
     } on FormatException {
       return SignInResult.ignored;
     }
+    if (values == null) return SignInResult.ignored;
     final generation = values['attempt'];
     if (generation == null || !isAccountUuid(generation)) {
       return SignInResult.ignored;
     }
-    if (values.containsKey('error') &&
+    if (values['error']?.trim().isNotEmpty == true &&
         values.keys.every(
           const {
             'attempt',
@@ -247,6 +265,17 @@ final class SignInCoordinator {
             'error_code',
           }.contains,
         )) {
+      if (errorMirror != null) {
+        final expected = {...values}..remove('attempt');
+        expected.removeWhere((_, value) => value.isEmpty);
+        expected['sb'] = '';
+        if (errorMirror.length != expected.length ||
+            expected.entries.any(
+              (entry) => errorMirror![entry.key] != entry.value,
+            )) {
+          return SignInResult.ignored;
+        }
+      }
       _db.execute("$_clear WHERE generation=? AND phase='pending'", [
         generation,
       ]);
@@ -255,7 +284,12 @@ final class SignInCoordinator {
           : SignInResult.ignored;
     }
     final code = values['code'];
-    if (values.length != 2 || code == null) return SignInResult.ignored;
+    if (hash >= 0 ||
+        values.length != 2 ||
+        code == null ||
+        code.trim().isEmpty) {
+      return SignInResult.ignored;
+    }
     return _redeem(generation, code);
   }
 
@@ -316,10 +350,18 @@ final class SignInCoordinator {
         session.refreshToken,
       );
       if (_closed) return SignInResult.ignored;
+      final now = _now;
       _db.execute(
         "UPDATE auth_slot SET phase='active',owner=?,secret=?,expires=NULL "
-        "WHERE generation=? AND phase=? AND (expires IS NULL OR expires>?)",
-        [session.owner, sealed, generation, claimed, _now],
+        "WHERE generation=? AND phase=? AND (expires IS NULL OR (expires>? AND expires<=?))",
+        [
+          session.owner,
+          sealed,
+          generation,
+          claimed,
+          now,
+          now + _lifetime.inMilliseconds,
+        ],
       );
       if (_db.updatedRows == 1) return SignInResult.committed;
       _expire();

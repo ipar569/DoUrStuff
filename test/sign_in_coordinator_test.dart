@@ -285,6 +285,60 @@ void main() {
     },
   );
 
+  test('clock correction across restart or during a secure write retires the attempt', () async {
+    final first = await begin();
+    auth.close();
+    clock.time = clock.time.subtract(const Duration(days: 1));
+    auth = reopen();
+    expect(auth.pendingGeneration, isNull);
+    expect(await auth.callback(callback(first)), SignInResult.ignored);
+    expect(provider.calls, 0);
+
+    void rewind() {
+      clock.time = clock.time.subtract(const Duration(days: 1));
+    }
+
+    vault.beforeSeal = (_) async => rewind();
+    expect(await auth.begin(), isNull);
+    expect(auth.pendingGeneration, isNull);
+
+    vault.beforeSeal = null;
+    final next = await begin();
+    vault.beforeSeal = (_) async => rewind();
+    expect(await auth.callback(callback(next)), SignInResult.ignored);
+    expect(auth.retainedSession, isNull);
+    expect(auth.pendingGeneration, isNull);
+  });
+
+  test('pinned GoTrue error redirect retires only its correlated attempt', () async {
+    // Go net/url form-encodes the description, then URL-escapes its fragment.
+    const fields =
+        'error=access_denied&error_code=bad_oauth_callback&error_description=Denied%3A+cancelled';
+    const mirror =
+        'error=access_denied&error_code=bad_oauth_callback&error_description=Denied%253A+cancelled&sb=';
+    final first = await begin();
+    final second = await begin();
+    expect(
+      await auth.callback('${first.browserUrl}&$fields#$mirror'),
+      SignInResult.ignored,
+    );
+    final error = '${second.browserUrl}&$fields';
+    for (final fragment in [
+      'sb=',
+      '$mirror&code=x',
+      '$mirror&access_token=x',
+      '$mirror&sb=',
+      mirror.replaceFirst('denied', 'other'),
+      mirror.replaceFirst('sb=', 'sb=x'),
+    ]) {
+      expect(await auth.callback('$error#$fragment'), SignInResult.ignored);
+    }
+    expect(auth.pendingGeneration, second.generation);
+    expect(await auth.callback('$error#$mirror'), SignInResult.reauthenticate);
+    expect(await auth.callback(callback(second)), SignInResult.ignored);
+    expect(provider.calls, 0);
+  });
+
   for (final refresh in [false, true]) {
     test(
       'duplicate and late X ${refresh ? "refresh" : "exchange"} across two connections',
