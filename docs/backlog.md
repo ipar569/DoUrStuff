@@ -413,6 +413,14 @@ candidate plugin's C++ ATL build prerequisite. Test Android Keystore recovery
 before activation. The installed callback and live
 GitHub tests remain open. See the [feasibility handoff](verification/phase-3.md#current-handoff--native-github-pkce-feasibility-22-november-2026).
 
+22 November bounded sign-in coordinator. The disabled account path now has
+a durable PKCE attempt, one-time callback claim and owner-checked refresh
+credential commit. Sign-out retains pending SQLite edits. Next, implement
+native record protection and test Windows per-owner failure isolation and
+Android Keystore recovery, followed by installed callback routing and a live
+development GitHub exchange. Account activation and installed-native
+acceptance remain open. See the [coordinator handoff](verification/phase-3.md#current-handoff--bounded-sign-in-coordinator-22-november-2026).
+
 ## Phase 4: recurrence, calendar and reminders
 
 Bounded deterministic generation/history; immutable future segments and offline
