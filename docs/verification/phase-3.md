@@ -1,5 +1,139 @@
 # Phase 3 verification
 
+## Current handoff — native GitHub PKCE feasibility, 22 November 2026
+
+Proceed with an isolated auth-attempt coordinator and storage
+adapter prototype. Keep the app in guest mode. The pinned SDK can generate the
+GitHub PKCE challenge, and a second Windows process recovered its verifier
+through DPAPI. Routing a system-browser callback into the correct profile and
+preserving credentials across native lifecycle failures still need evidence.
+The baseline is `23a941b4961e10e1192f3cf8c29641fff86551d2`.
+[PR 30 handoff](https://github.com/ipar569/DoUrStuff/pull/30#issuecomment-7059106653)
+
+### What each runner needs
+
+| Surface | Observed in this checkout | Next native check |
+| --- | --- | --- |
+| Android | `app.dourstuff.dourstuff` has a launcher-only, exported `singleTop` FlutterActivity. The main manifest sets `allowBackup="false"`. Debug/profile manifests declare Internet access. Both candidate plugins and the pinned app target a minimum API of 24. | Prefer a verified HTTPS App Link when an owned development domain and signing fingerprint are available. Register its exact host/path for VIEW, DEFAULT and BROWSABLE. With `app_links` as the receiver, disable Flutter's competing deep-link handler. Test a terminated app and a warm activity, including an activity recreated while the browser is open. Inspect the merged manifest used for the test. [Android App Links](https://developer.android.com/training/app-links/add-applinks) |
+| Windows | The Win32 runner passes argv to Dart, creates a new window, and the guest entry point consumes no callback arguments. CI packages an unpackaged executable. | Register one development protocol for the test installation. Verify cold activation and forwarding to the existing instance before a second engine opens a vault or database. The pinned `app_links` example uses `SendAppLinkToInstance()`; simultaneous starts or a failed forward still require a single writer. Exercise install, upgrade and uninstall with the intended package identity. MSIX protocol declaration and unpackaged registration are distinct gates. [Windows URI activation](https://learn.microsoft.com/en-us/windows/apps/develop/launch/handle-uri-activation) |
+
+GitHub returns to the development Supabase Auth callback (`/auth/v1/callback`).
+Supabase then redirects to the app URI supplied through `redirectTo`. The
+checked-in local configuration has loopback web redirects and no GitHub provider
+stanza. A live test needs a synthetic GitHub identity, a configured development
+OAuth app, exact native redirect entries, and an Auth endpoint reachable from
+both devices. Keep the GitHub secret at the provider. Launch the system browser
+and handle only the PKCE authorization code. The code is single-use and valid
+for five minutes after issuance. [GitHub setup](https://supabase.com/docs/guides/auth/social-sign-in/auth-github)
+· [Redirect URLs](https://supabase.com/docs/guides/auth/redirect-urls)
+· [PKCE exchange](https://supabase.com/docs/guides/auth/sessions/pkce-flow)
+
+### SDK and credential storage
+
+The isolated Flutter 3.47.6 probe resolved `supabase_flutter 2.18.3`,
+`gotrue 2.27.3`, `app_links 7.2.2`, `flutter_secure_storage 11.2.0` and
+`flutter_secure_storage_windows 4.2.2`. Use these versions to reproduce the
+experiment. The Supabase Flutter v3 changelog flags breaking API changes. The
+October notes about a single `asyncStorage` hook were based on upstream main.
+The published v2 package uses the two hooks below. [Published SDK](https://pub.dev/packages/supabase_flutter/versions/2.18.3)
+· [Supabase changelog](https://supabase.com/changelog/supabase-flutter-v3)
+
+- `FlutterAuthClientOptions.localStorage` receives serialized session JSON.
+  `pkceAsyncStorage` independently receives the verifier under one fixed SDK
+  key. Both default to shared preferences. Turning off session persistence
+  alone leaves the verifier there. Scope the latter adapter to the immutable
+  sign-in attempt. Use memory-only SDK session storage during exchange and
+  explicitly persist the checked Supabase session to the owner's secure slot.
+  Exclude unnecessary GitHub provider tokens. Never log a callback URL, session,
+  code or verifier, including through the SDK's verbose logging.
+- The SDK's default link observer accepts token fragments even in PKCE mode,
+  as confirmed by its mocked callback suite. For the prototype use
+  `detectSessionInUri: false` and one callback receiver. Match the configured
+  scheme, authority, port and path exactly. Reject userinfo, fragments,
+  ambiguous/duplicate parameters and missing or empty codes. Handle a provider
+  error without exchanging a code or cancelling a newer attempt. Call
+  `exchangeCodeForSession` on an attempt-scoped client with auto-refresh
+  disabled. Its signed-in event must pass the same checks as the returned
+  session before it can reach the active profile.
+- Android secure storage uses Keystore-backed key protection and AES-GCM.
+  The candidate's default `resetOnError` is true. Select explicit fail-closed
+  options and test key loss, lock/unlock, restart, OEM device transfer and
+  backup/restore with synthetic credentials. Key loss must surface reauthentication
+  while retaining the owner's SQLite work. [Storage plugin](https://pub.dev/packages/flutter_secure_storage/versions/11.2.0)
+  · [Android backup behavior](https://developer.android.com/identity/data/autobackup)
+- On Windows the selected Dart FFI path uses current-user DPAPI over **one
+  encrypted map**. Its regular write flushes directly to that file, its lock
+  is per plugin instance, and its loader deletes the file on certain decryption
+  or decoding errors. Keys for X and Y provide logical isolation during normal
+  operation. A damaged file can cost both sessions. Before choosing this
+  backend for the app, prove crash-safe replacement and per-owner failure
+  isolation, or test a per-record Windows storage implementation. Keep the
+  fresh app's legacy compatibility path disabled. [Windows plugin source archive](https://pub.dev/api/archives/flutter_secure_storage_windows-4.2.2.tar.gz)
+  · [DPAPI scope](https://learn.microsoft.com/en-us/windows/win32/api/dpapi/nf-dpapi-cryptprotectdata)
+
+### Profile switching and acceptance
+
+`lib/main.dart` opens only the guest database. `AuthSessionStore` in
+`lib/domain/ports.dart` covers refresh tokens. It has no native implementation
+or attempt-verifier contract. `AccountStore.open` validates the owner and
+advances a generation **in that owner's file**. Opening Y therefore cannot
+invalidate an outstanding X authentication, refresh, or callback by itself.
+
+1. Before browser launch, durably associate one active attempt with the
+   backend identity, redirect, unpredictable attempt ID, activation generation,
+   optional expected owner and secure verifier. Bind writes to that context
+   even before the user's identity is known. Retain the single pending attempt
+   across process death with an expiry. Cancellation, replacement, expiry and
+   sign-out invalidate the attempt and retire its verifier.
+2. Serialize callback claims across processes. Verify the outstanding attempt
+   before exchange and again after every asynchronous boundary that could
+   commit a session or open a profile. An old callback sent to the same URI
+   can fail with the newer verifier. Its error must leave the newer attempt
+   available. On ambiguous post-exchange process death, reconcile a durably
+   committed session or require a fresh sign-in. Never replay a consumed code.
+3. Bind the session to the authenticated Supabase user UUID and backend
+   established by the exchange. Ignore any identity supplied by the callback URI.
+   For reauthentication require the expected owner. Invalidate outgoing
+   workers, listeners and pending credential writes before switching from X
+   to Y or guest. Serialize secure writes/deletions so a late X refresh cannot
+   recreate X's signed-out session. Close the old database and clear its
+   projections/notifications. Preserve offline work, keep guest adoption
+   explicit, and distinguish offline use of an open profile from reopening a
+   signed-out one.
+
+Next bounded increment: implement the coordinator behind a disabled account
+path. Exercise cancel/restart, duplicate delivery, an X exchange or refresh
+finishing after switching to Y, unexpected owner, storage failure and
+sign-out with pending edits using synthetic inputs. Then run the native
+callback/storage matrix on installed Android and Windows clients, including
+a separate Windows user. Live GitHub exchange, installed-native acceptance,
+account activation, native task projection and the two-client worker remain open.
+
+### Verification
+
+See the [isolated probe and exact commands](native-pkce-probe.md). The two
+published SDK suites passed 17 tests using mock link delivery, transport and
+preferences. Separate Windows processes passed the write and reopen checks
+using the real secure-storage plugin and DPAPI. The recovered verifier
+reproduced the SDK's S256 challenge. Deleting X and the attempt preserved Y.
+The initial Flutter test selected Android options on the Windows host and
+failed on a missing legacy method channel. The corrected fixture selects
+Windows options and runs in a fresh scratch directory.
+
+With the baseline runners and candidate plugins in scratch packages:
+
+| Command | Result |
+| --- | --- |
+| `flutter build apk --debug --no-pub --target-platform android-arm64` (Java 21) | Compiled with both native plugins registered. The merged debug manifest contained Internet permission, disabled backup and a launcher-only main activity. The first bare-shell build lacked plugin registration and was excluded. The first registered build failed closing Kotlin incremental caches. The scratch-only non-incremental retry passed. |
+| `flutter build windows --release --no-pub` | **Blocked on this host**. The Windows secure-storage C++ plugin requires `atlstr.h`. Visual Studio 18 Build Tools produced C1083 and `vswhere -all -products * -requires Microsoft.VisualStudio.Component.VC.ATL` returned no installation. Test on an ATL-equipped toolchain if retaining this candidate. The passing DPAPI probe runs through Dart FFI and does not compile that C++ plugin. |
+
+The repository command `flutter test --no-pub --concurrency=1 --reporter expanded
+test/account_store_test.dart test/domain_test.dart test/local_database_test.dart`
+passed 26 tests, including owner mismatch and stale-generation checks on
+SQLite. The feasibility probes used synthetic values outside the application
+package. The production dependency lock, retained schemas and backend were
+untouched.
+
 ## Current handoff — account bulk status, delete and undo, 21 November 2026
 
 This increment builds on [PR 29](https://github.com/ipar569/DoUrStuff/pull/29#issuecomment-7051521612)

@@ -404,6 +404,15 @@ and secure session/verifier storage feasibility check before activation. Native
 materialization, recovery/export, adoption, worker and installed acceptance
 remain open. See the [verification handoff](verification/phase-3.md).
 
+22 November native GitHub PKCE feasibility. The published SDK needs separate
+session and verifier storage hooks. A two-process Windows probe recovered the
+verifier through DPAPI. Next, prototype a sign-in attempt bound to profile
+generation, callback validation and owner-checked session persistence behind
+the disabled account path. Resolve Windows vault failure isolation and the
+candidate plugin's C++ ATL build prerequisite. Test Android Keystore recovery
+before activation. The installed callback and live
+GitHub tests remain open. See the [feasibility handoff](verification/phase-3.md#current-handoff--native-github-pkce-feasibility-22-november-2026).
+
 ## Phase 4: recurrence, calendar and reminders
 
 Bounded deterministic generation/history; immutable future segments and offline
