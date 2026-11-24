@@ -1,5 +1,73 @@
 # Phase 3 verification
 
+## Current handoff — bounded sign-in coordinator, 22 November 2026
+
+The guest entry point still opens only the guest database. The Phase 3.2
+prototype adds a Dart GoTrue 2.27.3 adapter and a separate installation-wide
+SQLite journal. Its baseline is PR 31 at
+`bd3bf2d6b3a59168a6d8c3ea146cd5f2b45a6e97`.
+[Feasibility review](https://github.com/ipar569/DoUrStuff/pull/31#issuecomment-7072891178)
+
+Beginning sign-in replaces the outgoing credential and commits a fresh random
+generation, the optional expected owner and a ten-minute attempt deadline.
+Before returning the browser URL, the coordinator binds the sealed verifier
+to that generation, backend and redirect. The configured callback endpoint
+must match exactly and carry the original `attempt` query parameter. An
+unmatched success or provider error leaves the current attempt available.
+The installed receiver must preserve the original spelling of the URI. A
+fragment always disqualifies a code exchange. For a correlated error the
+coordinator also recognizes the pinned server's fragment that mirrors the
+query error fields and carries its empty `sb` marker. A device clock reading
+before attempt creation invalidates the pending verifier and any late commit.
+[Pinned Supabase error redirect](https://github.com/supabase/auth/blob/v2.197.0/internal/api/external.go#L758-L780)
+
+Each exchange or refresh claims its input once under a SQLite write lock.
+The network and credential protection run outside that transaction. A
+second conditional write commits the protected refresh token only while the
+generation and phase still match. The adapter uses a memory-only SDK client
+in a private isolate, with automatic refresh disabled. Only the authenticated
+Supabase owner and refresh credential cross back into the coordinator.
+The journal holds one active session. Switching accounts signs out the old
+generation. Sign-out never opens an account or guest task file.
+
+On restart, an unclaimed callback can resume. Losing the process after a
+claim requires a fresh sign-in unless the credential commit already succeeded.
+Persisted owner metadata allows a scoped refresh. Reopening that owner's
+task database still requires successful authentication. The coordinator has
+no authority to open profiles, run a worker, adopt guest data or start the UI.
+
+### Verification on the Windows host
+
+- `flutter test --no-pub --concurrency=1 --reporter expanded test/sign_in_coordinator_test.dart`
+  exercises the actual SDK against a synthetic loopback HTTP server, plus
+  cancellation, restart, duplicate claims, malformed and stale callbacks,
+  expiry, late X exchanges, refreshes and protected writes after switching
+  to Y, owner/backend mismatch, and injected protection and SQLite failures.
+  The retention case reopens X's real SQLite profile and compares the complete
+  pending operation with the original after sign-out and a Y login.
+- `python tool/local_backend.py --start` passed after Docker Desktop started.
+  The foundation, apply and snapshots harnesses ran sequentially with
+  `--supabase .tools/supabase/supabase.exe --wire-output <capture>`.
+  They passed 8, 11 and 14 real PostgreSQL integration groups respectively.
+  `dart run tool/check_backend_wire.dart <capture>` validated 10, 32 and 84 replies.
+- The task PR records final Flutter, native build, CI and review results.
+  The Android build initially picked Java 11. The local Flutter configuration
+  under `.tools/pr28-flutter-config` selects the project's JDK 21 via `APPDATA`.
+
+### Next increment
+
+Implement and test native record protection for the journal's
+`CredentialProtection` contract. Test Windows per-owner key or ciphertext
+failure, interrupted replacement and another Windows user. The earlier DPAPI
+reopen probe passed. The earlier storage plugin candidate still needs the MSVC
+ATL headers to compile. Test Android Keystore lock, key loss and restore with
+retained SQLite edits. Then verify the exact attempt parameter survives the
+development Supabase redirect and installed cold/warm Android and Windows
+delivery, including Windows single-instance forwarding. This prototype uses
+synthetic record protection and exercises no installed callback or live
+GitHub exchange. Keep account activation, native projection, lifecycle,
+worker and two-device acceptance open. No production or release action.
+
 ## Current handoff — native GitHub PKCE feasibility, 22 November 2026
 
 Proceed with an isolated auth-attempt coordinator and storage
