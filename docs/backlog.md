@@ -421,6 +421,14 @@ Android Keystore recovery, followed by installed callback routing and a live
 development GitHub exchange. Account activation and installed-native
 acceptance remain open. See the [coordinator handoff](verification/phase-3.md#current-handoff--bounded-sign-in-coordinator-22-november-2026).
 
+24 November native credential protection. The disabled sign-in path can seal
+individual journal records with Windows current-user DPAPI or Android Keystore.
+The native probe exercises interrupted writes, owner-bound ciphertext and
+retention of exact pending edits after lock and missing-key restore. Next,
+verify development redirects and installed Android/Windows callback delivery.
+Account activation, physical/OEM and packaged Windows acceptance, workers and
+two-device gates remain open. See the [native record handoff](verification/phase-3.md#current-handoff--native-credential-records-24-november-2026).
+
 ## Phase 4: recurrence, calendar and reminders
 
 Bounded deterministic generation/history; immutable future segments and offline

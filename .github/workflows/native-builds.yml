@@ -58,3 +58,10 @@ jobs:
           path: dourstuff-windows-unpackaged.zip
           if-no-files-found: error
           retention-days: 7
+      - if: github.event_name == 'pull_request'
+        name: Build the synthetic credential probe
+        run: flutter build windows --release --no-pub -t tool/credential_record_probe.dart
+      - if: github.event_name == 'pull_request'
+        name: Exercise interrupted replacement and a separate Windows user
+        shell: pwsh
+        run: ./tool/test_windows_credentials.ps1

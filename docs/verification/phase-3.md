@@ -1,5 +1,90 @@
 # Phase 3 verification
 
+## Current handoff — native credential records, 24 November 2026
+
+PR 32 merged at `de09ad906f0e8c9d7f9f9262997f8a88161536ed`.
+The dormant coordinator now has a native `CredentialProtection` implementation.
+The guest entry point still opens only its guest profile. On Windows each record
+uses current-user DPAPI. The full journal context supplies optional entropy.
+A fresh 32-byte key inside each protected payload authenticates the complete
+DPAPI blob with HMAC-SHA256. The runner checks the Windows session lock before
+and after each operation. The PR's Windows check exercises a second standard
+Windows user on a disposable hosted machine and requires successful same-user
+DPAPI controls for both identities. See the PR for that run's result.
+[Microsoft's integrity guidance](https://learn.microsoft.com/en-us/windows/win32/api/dpapi/nf-dpapi-cryptunprotectdata)
+
+Android uses one app-private, non-exportable Android Keystore AES-256 key.
+Each seal uses a fresh provider-generated 96-bit IV and GCM with a 128-bit tag
+and the full journal context as associated data. Native credential operations
+require API 28+, an enrolled secure screen lock and an unlocked device.
+Earlier APIs and devices without a secure lock fail closed. Opening a restored
+record never creates a key. A fresh sign-in can provision a missing key.
+Both platforms return ciphertext to the coordinator for its conditional SQLite
+commit. The app does not store a token map or use ATL.
+[Android Keystore lock behavior](https://developer.android.com/reference/android/security/keystore/KeyGenParameterSpec.Builder#setUnlockedDeviceRequired(boolean))
+
+### Native recovery evidence
+
+The alternate target `tool/credential_record_probe.dart` uses a synthetic sign-in
+provider, the production platform channel, sign-in journal and account store.
+It creates an offline task operation and compares its complete payload identity
+digest and pending transport state after reopening. The probe uses no network
+credentials. Keep this target out of distributed guest artifacts.
+
+- Windows NT 10.0.26300, unpackaged runner. Build with `flutter build windows
+  --release --no-pub -t tool/credential_record_probe.dart`. Pass a fresh fixture
+  directory as the runner's only argument. Put each phase in its `mode` file
+  before starting a new process. `seed → verify → interrupt → verify` passed.
+  X rejected a Y context, a changed byte and appended bytes. Y still opened.
+  Exiting with a sealed replacement inside an uncommitted SQLite transaction
+  recovered the original credential. `interrupt-refresh → recover-refresh`
+  exercises the other crash boundary. After the committed one-time claim, a
+  process lost before the replacement commits must sign in again.
+- Android 11 API 30, Google APIs x86_64 build `RSR1.240422.006/12134477`.
+  Built with `flutter build apk --debug --no-pub --target-platform android-x64
+  -t tool/credential_record_probe.dart`. Installed only in disposable emulator
+  sessions. With a secure test PIN, `seed` and `verify` passed across process
+  restarts. With `dumpsys trust` reporting `deviceLocked=1`, `locked` rejected
+  both native operations and the coordinator returned `storageUnavailable`
+  before a provider refresh. With `deviceLocked=0`, `unlock` reopened the
+  original X ciphertext and completed a fresh sign-in.
+- Copied only the closed synthetic fixture to a fresh API 30 userdata image.
+  `lost` rejected the original ciphertext and refresh, signed in again to
+  provision a new key, rejected the old record again, and refreshed the new
+  session. The pending operation still matched. This was a file-level restore.
+  Android Auto Backup is disabled in the manifest. Physical OEM transfer,
+  hardware protection level, packaged Windows lifecycle and installed callback
+  acceptance remain open.
+
+To repeat the Android phases on a disposable debug install, create
+`files/credential-record-probe` with `adb shell run-as app.dourstuff.dourstuff`.
+Write the phase name to `mode` there, force-stop the probe, and start
+`app.dourstuff.dourstuff/.MainActivity`. Wait for `result` to read
+`passed <phase>`. For restore, archive only that fixture directory once the
+probe exits, install on fresh userdata with a secure PIN, extract the fixture
+into the same app-private location with `run-as`, and run `lost`. Keep the
+retained installation and its Keystore intact.
+
+### Regression evidence and next increment
+
+`flutter pub get --enforce-lockfile`, `dart run build_runner build`, the
+generated Dart diff, `dart format --output=none --set-exit-if-changed lib test
+tool`, and `flutter analyze --no-pub` passed. `flutter test --no-pub
+--concurrency=1 --reporter expanded` passed 255 tests, including the separate
+27-test domain, local database and coordinator run. After Docker Desktop
+started, `python tool/local_backend.py --start` passed. The foundation, apply
+and snapshots harnesses ran sequentially with `--supabase
+.tools/supabase/supabase.exe --wire-output <capture>`. They passed 8, 11 and
+14 groups. `dart run tool/check_backend_wire.dart <capture>` validated 10, 32
+and 84 replies. The HTTP, local backend and retention helper suites passed
+10 tests. The PR records final builds, independent review and CI.
+
+Next, verify the exact attempt parameter through a configured development
+Supabase redirect and installed cold/warm callback delivery, including Windows
+single-instance forwarding. Live GitHub exchange needs an authorized development
+OAuth app and synthetic identity. Keep account activation, profile projection,
+workers, two-device acceptance and all production/release gates open.
+
 ## Current handoff — bounded sign-in coordinator, 22 November 2026
 
 The guest entry point still opens only the guest database. The Phase 3.2
