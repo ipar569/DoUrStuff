@@ -429,6 +429,14 @@ verify development redirects and installed Android/Windows callback delivery.
 Account activation, physical/OEM and packaged Windows acceptance, workers and
 two-device gates remain open. See the [native record handoff](verification/phase-3.md#current-handoff--native-credential-records-24-november-2026).
 
+27 November callback checks. Local Supabase Auth rejected GitHub authorization
+before redirect. Android could not resolve the probe URI cold or warm. Windows
+had no probe protocol association and a second direct launch started a second
+Flutter engine. Resume with an authorized development OAuth app and synthetic
+identity to verify the exact returned `attempt`, then complete native routing
+and single-instance forwarding. Installed-native and account activation gates
+remain open. See the [callback handoff](verification/phase-3.md#current-handoff--native-callback-routing-27-november-2026).
+
 ## Phase 4: recurrence, calendar and reminders
 
 Bounded deterministic generation/history; immutable future segments and offline
