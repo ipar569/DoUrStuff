@@ -1,5 +1,37 @@
 # Phase 3 verification
 
+## Current handoff — native callback routing, 27 November 2026
+
+Tested the guest build and native runners at PR 33 merge
+`c167498c0961ad4b0a394767771bcd2c3b8b786d`. The live GitHub PKCE exchange
+is blocked before redirect. The synthetic native routing checks below used
+the existing test URI `app.dourstuff.probe://auth/callback` with a fresh
+`attempt`. The authorized development callback URI still needs confirmation.
+
+| Boundary | Evidence |
+| --- | --- |
+| Development Auth | After Docker Desktop started, `python tool/local_backend.py --start` verified nine pinned services and loopback-only bindings. On that stack, `GET /auth/v1/settings` returned HTTP 200 with GitHub disabled. A GitHub S256 request to `GET /auth/v1/authorize` with the probe redirect returned HTTP 400 (provider disabled). No provider redirect or exchange occurred. |
+| Android cold and warm | Built the guest target with `flutter build apk --debug --no-pub --target-platform android-x64` using the isolated JDK 21 configuration. Installed on disposable Android 11/API 30 x86_64 userdata. Sent `am start -W -a android.intent.action.VIEW -c android.intent.category.BROWSABLE -d <probe-uri> -p app.dourstuff.dourstuff` after force-stop and again after launching MainActivity and confirming a live PID. Both attempts returned “unable to resolve”. The warm PID survived. |
+| Windows protocol activation | For the current user, `AssocQueryStringW` with `ASSOCF_IS_PROTOCOL` and the open command returned `0x80070483` (no association) for `app.dourstuff.probe`. The HTTPS control resolved. Shell callback delivery is blocked at registration. |
+| Windows runner forwarding | Built the current native runner with `flutter build windows --debug --no-pub -t <disposable-probe.dart>`. The probe wrote a PID-named marker and a callback-present flag when Dart started, then kept the window alive. Launched the executable with a synthetic callback argument, waited for its marker, and launched it again with a fresh callback. Both processes were alive together and produced distinct markers. The second launch started another engine. This direct-argument test bypassed shell registration and used no vault or guest database. |
+
+`flutter test --no-pub --concurrency=1 --reporter expanded
+test/sign_in_coordinator_test.dart` passed all 15 coordinator tests, including
+exact callback matching, replay handling and retention of pending edits. The
+first warm Android attempt used a pre-existing APK whose Flutter library had
+the wrong ABI. The explicit x86_64 build above supplied the warm result.
+The initial build selected JDK 11 and failed before compilation.
+
+Resume with the authorized development Supabase origin, its registered native
+redirect, and browser access to a synthetic GitHub identity. Keep the OAuth
+secret in provider configuration. Verify that the returned URI carries the
+original `attempt` exactly once and that the claimed verifier completes the
+live exchange. Register and exercise the development receivers cold and warm.
+On Windows, verify forwarding to the original instance before a second engine
+opens a vault or database. Installed-native acceptance, account activation
+and two-device gates remain open. Production changes and releases require
+separate authorization.
+
 ## Current handoff — native credential records, 24 November 2026
 
 PR 32 merged at `de09ad906f0e8c9d7f9f9262997f8a88161536ed`.
